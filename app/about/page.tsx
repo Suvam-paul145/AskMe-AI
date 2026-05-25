@@ -3,7 +3,7 @@
 import React from "react";
 import Navbar from "@/components/navbar";
 import Footer from "@/components/footer";
-import { Brain, Heart, GraduationCap, Calendar, Compass, Milestone } from "lucide-react";
+import { Brain, Heart, GraduationCap, Calendar, Compass, Milestone, Sparkles } from "lucide-react";
 
 export default function AboutPage() {
   const values = [
@@ -46,34 +46,44 @@ export default function AboutPage() {
   ];
 
   return (
-    <div className="flex flex-col min-h-screen bg-background neural-grid relative">
+    <div className="flex flex-col min-h-screen bg-[#040406] text-white neural-overlay relative select-none">
       <Navbar />
 
-      <main className="flex-1 mx-auto max-w-7xl w-full px-4 py-16 sm:px-6 lg:px-8">
+      {/* Ambient background glows */}
+      <div className="absolute top-1/4 left-1/4 w-[450px] h-[450px] bg-primary/5 rounded-full filter blur-[120px] pointer-events-none animate-breathe" />
+      <div className="absolute bottom-20 right-10 w-[300px] h-[300px] bg-[#6366f1]/5 rounded-full filter blur-[80px] pointer-events-none" />
+
+      <main className="flex-1 mx-auto max-w-7xl w-full px-4 py-16 sm:px-6 lg:px-8 relative z-10">
         
         {/* Story Hero */}
-        <div className="grid grid-cols-1 gap-12 lg:grid-cols-2 lg:items-center mb-20">
+        <div className="grid grid-cols-1 gap-12 lg:grid-cols-2 lg:items-center mb-24">
           <div className="space-y-6">
-            <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl text-foreground">
-              We are building the <br />
+            <div className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/10 px-3.5 py-1 text-[10px] font-bold text-primary dark:text-purple-400 uppercase tracking-widest biometric-glow mb-2">
+              <Sparkles className="h-3.5 w-3.5 animate-pulse" />
+              <span>CLOS Manifesto</span>
+            </div>
+
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-white cinematic-title leading-[1.05]">
+              A Manifesto for <br />
               <span className="bg-gradient-to-r from-primary via-purple-400 to-indigo-400 bg-clip-text text-transparent">
-                Tesla of EdTech
+                Human Intelligence.
               </span>
             </h1>
-            <p className="text-lg text-muted-foreground leading-relaxed">
-              EdTech platforms are stuck in the 2010s: selling video libraries and static text files. AskMe AI was born to change this by designing a **Cognitive Operating System** that dynamically adapts to how your neural networks retrieve information.
+            <p className="text-sm md:text-base text-zinc-400 leading-relaxed font-light">
+              EdTech software is stuck in static video lists and flat text feeds. AskMe AI was created to design a **Cognitive Operating System** that dynamically adapts to how your neural networks retrieve information.
             </p>
-            <p className="text-sm text-zinc-500 leading-relaxed">
-              We leverage modern high-dimensional vector embeddings, custom mathematical calibration indices, and socratic chat tutors to help you learn faster and preserve information.
+            <p className="text-xs text-zinc-500 leading-relaxed font-light font-mono">
+              We leverage high-dimensional vector embeddings, custom mathematical calibration indices, and socratic chat interfaces to accelerate cognitive speeds and reduce memory decay.
             </p>
           </div>
 
-          <div className="flex justify-center">
-            <div className="rounded-2xl border border-border bg-card/40 p-8 glass-card max-w-[440px] shadow-xl relative overflow-hidden">
+          <div className="flex justify-center lg:justify-end">
+            <div className="rounded-3xl border border-white/5 bg-[#0d0d11]/80 p-8 glass-card max-w-[440px] shadow-2xl relative overflow-hidden matte-layer spatial-shadow-lg group">
+              <div className="absolute inset-x-0 h-1/2 w-full scanner-sweep pointer-events-none opacity-20" />
               <div className="absolute top-0 right-0 w-[150px] h-[150px] radial-glow opacity-25 pointer-events-none" />
-              <Heart className="h-10 w-10 text-primary mb-4" />
-              <h3 className="text-xl font-bold text-foreground mb-2">Our Mission</h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">
+              <Heart className="h-10 w-10 text-primary mb-4 animate-pulse biometric-glow" />
+              <h3 className="text-sm font-bold text-white mb-2 uppercase tracking-wide">Our Mission</h3>
+              <p className="text-xs text-zinc-400 leading-relaxed font-light">
                 To maximize human cognitive efficiency and reduce studying stress. We believe studying shouldn't feel like a chore; it should feel like an integrated sync between your brain and a high-performance system.
               </p>
             </div>
@@ -82,21 +92,21 @@ export default function AboutPage() {
 
         {/* Methodology Core Values */}
         <div className="mb-24 space-y-12">
-          <div className="text-center max-w-2xl mx-auto">
-            <h2 className="text-3xl font-bold tracking-tight text-foreground">Our Cognitive Philosophy</h2>
-            <p className="mt-3 text-muted-foreground">Every component in AskMe AI is grounded in clinical neuroscientific research.</p>
+          <div className="text-center max-w-2xl mx-auto space-y-2">
+            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-white cinematic-title">Our Cognitive Philosophy</h2>
+            <p className="text-xs text-zinc-400 font-light">Every component in AskMe AI is grounded in clinical neuroscientific research.</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {values.map((v) => {
               const Icon = v.icon;
               return (
-                <div key={v.title} className="rounded-xl border border-border bg-card/20 p-6 glass-card shadow-sm space-y-4">
-                  <div className={`p-2 bg-muted rounded-xl w-fit ${v.color}`}>
+                <div key={v.title} className="rounded-3xl border border-white/5 bg-[#0d0d11]/40 p-6 glass-card shadow-lg space-y-4 matte-layer hover:border-primary/20 transition-all duration-300">
+                  <div className={`p-2.5 rounded-xl border border-white/5 bg-white/5 w-fit ${v.color}`}>
                     <Icon className="h-5 w-5" />
                   </div>
-                  <h3 className="text-lg font-bold text-foreground">{v.title}</h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed">{v.description}</p>
+                  <h3 className="text-sm font-bold text-white uppercase tracking-wide">{v.title}</h3>
+                  <p className="text-xs text-zinc-400 leading-relaxed font-light">{v.description}</p>
                 </div>
               );
             })}
@@ -105,20 +115,20 @@ export default function AboutPage() {
 
         {/* Timeline milestones */}
         <div className="max-w-4xl mx-auto space-y-12">
-          <div className="text-center">
-            <h2 className="text-3xl font-bold tracking-tight text-foreground">Timeline Milestones</h2>
-            <p className="mt-3 text-muted-foreground">Our journey towards cognitive intelligence models.</p>
+          <div className="text-center space-y-2">
+            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-white cinematic-title">Timeline Milestones</h2>
+            <p className="text-xs text-zinc-400 font-light font-mono">Our journey towards cognitive intelligence models.</p>
           </div>
 
-          <div className="relative border-l border-border pl-6 space-y-8 ml-4">
+          <div className="relative border-l border-white/5 pl-8 space-y-8 ml-4">
             {milestones.map((m) => (
-              <div key={m.title} className="relative">
-                <span className="absolute -left-[31px] top-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary ring-4 ring-background">
-                  <Milestone className="h-2 w-2 text-white" />
+              <div key={m.title} className="relative group">
+                <span className="absolute -left-[39px] top-1 flex h-4.5 w-4.5 items-center justify-center rounded-full bg-primary ring-4 ring-[#040406] shadow-[0_0_10px_rgba(139,92,246,0.2)]">
+                  <Milestone className="h-2.5 w-2.5 text-white" />
                 </span>
-                <span className="text-xs font-bold text-primary dark:text-purple-400">{m.date}</span>
-                <h3 className="text-lg font-bold text-foreground mt-0.5">{m.title}</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed mt-1">{m.description}</p>
+                <span className="text-[10px] font-bold text-primary dark:text-purple-400 font-mono tracking-widest uppercase">{m.date}</span>
+                <h3 className="text-sm font-bold text-white mt-0.5 uppercase tracking-wide">{m.title}</h3>
+                <p className="text-xs text-zinc-400 leading-relaxed mt-1 font-light">{m.description}</p>
               </div>
             ))}
           </div>

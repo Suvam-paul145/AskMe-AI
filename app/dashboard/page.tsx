@@ -255,7 +255,11 @@ export default function DashboardPage() {
     <div className="flex flex-col min-h-screen bg-[#040406] text-white neural-overlay relative select-none">
       <Navbar />
 
-      <main className="flex-1 mx-auto max-w-7xl w-full px-4 py-8 sm:px-6 lg:px-8">
+      {/* Background ambient glows */}
+      <div className="absolute top-10 left-10 w-[350px] h-[350px] bg-primary/5 rounded-full filter blur-[100px] pointer-events-none animate-breathe" />
+      <div className="absolute bottom-20 right-10 w-[300px] h-[300px] bg-[#6366f1]/5 rounded-full filter blur-[80px] pointer-events-none" />
+
+      <main className="flex-1 mx-auto max-w-7xl w-full px-4 py-8 sm:px-6 lg:px-8 relative z-10">
         
         {/* Core conscious 3-column grid layout */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch h-full">
@@ -263,7 +267,9 @@ export default function DashboardPage() {
           {/* COLUMN 1 — AI IDENTITY (col-span-3) */}
           <div className="lg:col-span-3 space-y-6 flex flex-col justify-between">
             {/* AI Mentor Sync status */}
-            <div className="border border-border bg-card/25 p-5 rounded-2xl glass-card relative overflow-hidden space-y-4">
+            <div className="border border-white/5 bg-[#0d0d11]/80 p-5 rounded-2xl glass-card relative overflow-hidden space-y-4 matte-layer spatial-shadow-lg group">
+              {/* Scan sweep line */}
+              <div className="absolute inset-x-0 h-1/2 w-full scanner-sweep pointer-events-none" />
               <div className="absolute top-0 right-0 w-[100px] h-[100px] radial-glow opacity-20 pointer-events-none" />
               
               <div className="flex items-center gap-3">
@@ -271,34 +277,34 @@ export default function DashboardPage() {
                   <Brain className="h-5.5 w-5.5" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-foreground">AskMe CLOS</h3>
-                  <p className="text-[10px] text-emerald-500 font-bold uppercase tracking-wider">Sync: Optimal</p>
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-foreground">AskMe CLOS</h3>
+                  <p className="text-[9px] text-emerald-400 font-bold uppercase tracking-widest biometric-glow">Sync: Optimal</p>
                 </div>
               </div>
 
-              <div className="h-[1px] bg-border" />
+              <div className="h-[1px] bg-white/5" />
 
               <div className="space-y-2">
-                <span className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider">Focus State</span>
-                <p className="text-xs text-muted-foreground leading-relaxed">
+                <span className="text-[9px] uppercase font-bold text-zinc-500 tracking-[0.2em]">Focus State</span>
+                <p className="text-xs text-zinc-300 leading-relaxed font-light">
                   "Flow State active. Spaced repetition decay maps indicate review priority is concentrated in Electromagnetics."
                 </p>
               </div>
 
-              <div className="h-[1px] bg-border" />
+              <div className="h-[1px] bg-white/5" />
 
               {/* Streaks stats */}
               <div className="flex items-center justify-between">
-                <span className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider">Active Mission</span>
-                <div className="flex items-center gap-1 text-orange-500 font-bold text-xs">
+                <span className="text-[9px] uppercase font-bold text-zinc-500 tracking-[0.2em]">Active Mission</span>
+                <div className="flex items-center gap-1.5 text-orange-400 font-bold text-xs">
                   <Flame className="h-4 w-4 fill-current animate-pulse" />
-                  <span>{streak}d Streak</span>
+                  <span className="biometric-glow">{streak}d Streak</span>
                 </div>
               </div>
             </div>
 
             {/* Daily targets progress */}
-            <div className="border border-border bg-card/25 p-5 rounded-2xl glass-card space-y-4">
+            <div className="border border-white/5 bg-[#0d0d11]/80 p-5 rounded-2xl glass-card space-y-4 matte-layer spatial-shadow-lg">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-foreground flex items-center gap-1.5">
                   <Target className="h-4 w-4 text-primary" />
@@ -306,25 +312,25 @@ export default function DashboardPage() {
                 </span>
                 <span className="text-xs text-primary dark:text-purple-400 font-extrabold">{dailyGoalProgress}%</span>
               </div>
-              <div className="w-full bg-muted rounded-full h-1 overflow-hidden">
+              <div className="w-full bg-white/5 rounded-full h-1 overflow-hidden">
                 <div 
-                  className="bg-primary h-full transition-all duration-300"
+                  className="bg-primary h-full transition-all duration-500"
                   style={{ width: `${dailyGoalProgress}%` }}
                 />
               </div>
-              <p className="text-[10px] text-zinc-500 leading-normal">
+              <p className="text-[9px] text-zinc-500 leading-normal font-light">
                 Ingest notes and solve doubts to reach 100% daily calibration.
               </p>
             </div>
           </div>
 
           {/* COLUMN 2 — COGNITIVE SPACE (col-span-6) */}
-          <div className="lg:col-span-6 border border-border bg-card/20 rounded-3xl glass-card flex flex-col justify-between overflow-hidden relative min-h-[460px] p-6">
+          <div className="lg:col-span-6 border border-white/5 bg-[#0d0d11]/50 rounded-3xl glass-card flex flex-col justify-between overflow-hidden relative min-h-[460px] p-6 matte-layer spatial-shadow-lg">
             <div className="absolute top-0 right-0 w-[200px] h-[200px] radial-glow opacity-25 pointer-events-none" />
 
             {/* Header info */}
-            <div className="flex items-center justify-between border-b border-border/80 pb-4">
-              <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
+            <div className="flex items-center justify-between border-b border-white/5 pb-4">
+              <h3 className="text-xs font-bold text-foreground flex items-center gap-2 uppercase tracking-wider">
                 <Activity className="h-4.5 w-4.5 text-primary" />
                 Cognitive Topology Graph
               </h3>
@@ -338,16 +344,16 @@ export default function DashboardPage() {
 
             {/* Node metadata info footer inside canvas card */}
             {selectedNode && (
-              <div className="border-t border-border pt-4 mt-2 flex items-center justify-between gap-4 animate-float">
+              <div className="border-t border-white/5 pt-4 mt-2 flex items-center justify-between gap-4 animate-drift">
                 <div className="space-y-1">
-                  <h4 className="text-xs font-bold text-foreground">{selectedNode.label}</h4>
-                  <span className={`inline-block text-[9px] uppercase font-bold px-2 py-0.5 rounded-full border ${getStatusColor(selectedNode.status)}`}>
+                  <h4 className="text-xs font-bold text-white">{selectedNode.label}</h4>
+                  <span className={`inline-block text-[8px] uppercase font-bold tracking-wider px-2.5 py-0.5 rounded-full border ${getStatusColor(selectedNode.status)}`}>
                     {selectedNode.status}
                   </span>
                 </div>
                 <div className="text-right">
                   <span className="text-xs text-primary dark:text-purple-400 font-extrabold">{selectedNode.strength}% strength</span>
-                  <p className="text-[9px] text-zinc-500 font-medium">Memory decay speed: low</p>
+                  <p className="text-[9px] text-zinc-500 font-medium font-light">Memory decay speed: low</p>
                 </div>
               </div>
             )}
@@ -356,9 +362,9 @@ export default function DashboardPage() {
           {/* COLUMN 3 — ADAPTIVE INTELLIGENCE (col-span-3) */}
           <div className="lg:col-span-3 space-y-6 flex flex-col justify-between">
             {/* Weak topics predictions */}
-            <div className="border border-border bg-card/25 p-5 rounded-2xl glass-card space-y-5">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                <AlertTriangle className="h-4.5 w-4.5 text-rose-500 animate-pulse" />
+            <div className="border border-white/5 bg-[#0d0d11]/80 p-5 rounded-2xl glass-card space-y-5 matte-layer spatial-shadow-lg">
+              <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-400 flex items-center gap-1.5">
+                <AlertTriangle className="h-4 w-4 text-rose-500 animate-pulse" />
                 Decay Predictions
               </h3>
 
@@ -367,9 +373,9 @@ export default function DashboardPage() {
                   <p className="text-xs text-zinc-500 py-2">No critical memory decay predicted.</p>
                 ) : (
                   weakTopics.slice(0, 3).map((topic) => (
-                    <div key={topic} className="flex items-center justify-between bg-rose-500/5 border border-rose-500/10 rounded-xl p-3 text-xs text-rose-500 font-semibold">
+                    <div key={topic} className="flex items-center justify-between bg-rose-500/5 border border-rose-500/10 rounded-xl p-3 text-xs text-rose-400 font-semibold shadow-[0_0_15px_rgba(244,63,94,0.03)]">
                       <span>{topic}</span>
-                      <span className="text-[9px] bg-rose-500/10 px-2 py-0.5 rounded-full font-bold">Priority Review</span>
+                      <span className="text-[9px] bg-rose-500/10 px-2 py-0.5 rounded-full font-bold biometric-glow">Priority</span>
                     </div>
                   ))
                 )}
@@ -377,24 +383,24 @@ export default function DashboardPage() {
             </div>
 
             {/* Calibrations and focus analytics list */}
-            <div className="border border-border bg-card/25 p-5 rounded-2xl glass-card space-y-5">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                <Clock className="h-4.5 w-4.5 text-primary" />
+            <div className="border border-white/5 bg-[#0d0d11]/80 p-5 rounded-2xl glass-card space-y-5 matte-layer spatial-shadow-lg">
+              <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-400 flex items-center gap-1.5">
+                <Clock className="h-4 w-4 text-primary" />
                 Focus Calibrations
               </h3>
 
               <div className="grid grid-cols-1 gap-3">
                 <div className="flex items-center justify-between text-xs font-semibold">
-                  <span className="text-muted-foreground">Confidence Accuracy</span>
-                  <span className="text-foreground">84%</span>
+                  <span className="text-zinc-400 font-light">Confidence Accuracy</span>
+                  <span className="text-white font-mono font-bold">84%</span>
                 </div>
                 <div className="flex items-center justify-between text-xs font-semibold">
-                  <span className="text-muted-foreground">Exam Readiness</span>
-                  <span className="text-primary dark:text-purple-400 font-bold">88% ready</span>
+                  <span className="text-zinc-400 font-light">Exam Readiness</span>
+                  <span className="text-primary dark:text-purple-400 font-bold biometric-glow">88%</span>
                 </div>
                 <div className="flex items-center justify-between text-xs font-semibold">
-                  <span className="text-muted-foreground">Spacing efficiency</span>
-                  <span className="text-foreground">92%</span>
+                  <span className="text-zinc-400 font-light">Spacing efficiency</span>
+                  <span className="text-white font-mono font-bold">92%</span>
                 </div>
               </div>
             </div>
@@ -403,10 +409,10 @@ export default function DashboardPage() {
             <div className="space-y-2">
               <Link
                 href="/workspace"
-                className="w-full inline-flex items-center justify-between rounded-xl border border-border bg-card hover:bg-muted/60 p-3.5 text-xs font-bold text-foreground transition-all group"
+                className="w-full inline-flex items-center justify-between rounded-xl border border-white/5 bg-[#0d0d11]/90 hover:bg-[#121217] p-3.5 text-xs font-bold text-white transition-all duration-300 group spatial-shadow-lg matte-layer"
               >
                 <span>Study Active Workspace</span>
-                <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-all" />
+                <ArrowRight className="h-4 w-4 text-zinc-500 group-hover:text-primary transition-all group-hover:translate-x-1" />
               </Link>
             </div>
           </div>

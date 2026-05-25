@@ -4,7 +4,6 @@ import React from "react";
 import Navbar from "@/components/navbar";
 import Footer from "@/components/footer";
 import { BookOpen, Calendar, Clock, ArrowRight, Brain, Sparkles } from "lucide-react";
-import Link from "next/link";
 
 export default function BlogPage() {
   const posts = [
@@ -38,22 +37,26 @@ export default function BlogPage() {
   ];
 
   return (
-    <div className="flex flex-col min-h-screen bg-background neural-grid relative">
+    <div className="flex flex-col min-h-screen bg-[#040406] text-white neural-overlay relative select-none">
       <Navbar />
 
-      <main className="flex-1 mx-auto max-w-7xl w-full px-4 py-16 sm:px-6 lg:px-8">
+      {/* Atmospheric ambient background glows */}
+      <div className="absolute top-1/4 left-1/4 w-[450px] h-[450px] bg-primary/5 rounded-full filter blur-[120px] pointer-events-none animate-breathe" />
+      <div className="absolute bottom-20 right-10 w-[300px] h-[300px] bg-[#6366f1]/5 rounded-full filter blur-[80px] pointer-events-none" />
+
+      <main className="flex-1 mx-auto max-w-7xl w-full px-4 py-16 sm:px-6 lg:px-8 relative z-10">
         
         {/* Header */}
         <div className="text-center max-w-3xl mx-auto mb-16 space-y-4">
-          <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-4 py-1 text-xs font-semibold text-primary dark:text-purple-400">
-            <Sparkles className="h-3.5 w-3.5" />
-            <span>AskMe Science Dispatch</span>
+          <div className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/10 px-3.5 py-1 text-[10px] font-bold text-primary dark:text-purple-400 uppercase tracking-widest biometric-glow mb-2">
+            <Sparkles className="h-3.5 w-3.5 animate-pulse" />
+            <span>Scientific Recall Journal</span>
           </div>
-          <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl text-foreground">
-            Active Recall & Spaced Repetition Science
+          <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-white cinematic-title">
+            Scientific Recall Journal
           </h1>
-          <p className="text-lg text-muted-foreground">
-            Explore neuroscientific papers, technical retrospectives, and cognitive study tricks verified by data.
+          <p className="text-xs text-zinc-400 max-w-lg mx-auto font-light leading-relaxed">
+            Explore neuroscientific publications, spacing calibrations, and vector indexing strategies.
           </p>
         </div>
 
@@ -64,32 +67,32 @@ export default function BlogPage() {
             return (
               <article
                 key={post.title}
-                className="rounded-2xl border border-border bg-card/40 p-6 flex flex-col justify-between shadow-sm hover:shadow-md transition-all duration-300 glass-card glowing-border group"
+                className="rounded-3xl border border-white/5 bg-[#0d0d11]/45 p-6 flex flex-col justify-between shadow-2xl transition-all duration-500 hover:border-primary/20 hover:scale-[1.02] group matte-layer spatial-shadow-lg"
               >
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground">
+                  <div className="flex items-center justify-between font-mono text-[9px]">
+                    <span className="uppercase font-bold tracking-wider text-zinc-500">
                       {post.category}
                     </span>
-                    <span className="text-xs text-zinc-500">{post.date}</span>
+                    <span className="text-zinc-500 font-light">{post.date}</span>
                   </div>
 
-                  <h3 className="text-lg font-bold text-foreground group-hover:text-primary transition-colors leading-snug">
+                  <h3 className="text-sm font-bold text-white group-hover:text-primary transition-colors leading-snug uppercase tracking-wide">
                     {post.title}
                   </h3>
 
-                  <p className="text-sm text-zinc-400 leading-relaxed">
+                  <p className="text-xs text-zinc-400 leading-relaxed font-light">
                     {post.excerpt}
                   </p>
                 </div>
 
-                <div className="pt-6 border-t border-border/80 mt-6 flex items-center justify-between text-xs">
-                  <span className="text-zinc-500 font-medium">{post.readTime}</span>
+                <div className="pt-5 border-t border-white/5 mt-6 flex items-center justify-between text-xs">
+                  <span className="text-zinc-500 font-mono font-light text-[10px]">{post.readTime}</span>
                   <a
                     href="#"
-                    className="text-primary dark:text-purple-400 font-semibold flex items-center gap-1 hover:underline"
+                    className="text-primary dark:text-purple-400 font-bold flex items-center gap-1.5 hover:underline"
                   >
-                    Read Article
+                    <span>Inspect Abstract</span>
                     <ArrowRight className="h-3.5 w-3.5" />
                   </a>
                 </div>

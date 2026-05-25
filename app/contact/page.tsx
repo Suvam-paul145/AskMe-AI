@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import Navbar from "@/components/navbar";
 import Footer from "@/components/footer";
-import { Send, CheckCircle, HelpCircle, Mail, MessageSquare } from "lucide-react";
+import { Send, CheckCircle, HelpCircle, Mail, MessageSquare, Sparkles } from "lucide-react";
 
 export default function ContactPage() {
   const [formData, setFormData] = useState({
@@ -24,46 +24,59 @@ export default function ContactPage() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-background neural-grid relative">
+    <div className="flex flex-col min-h-screen bg-[#040406] text-white neural-overlay relative select-none">
       <Navbar />
 
-      <main className="flex-1 mx-auto max-w-7xl w-full px-4 py-16 sm:px-6 lg:px-8">
+      {/* Atmospheric ambient background glows */}
+      <div className="absolute top-1/4 left-1/4 w-[450px] h-[450px] bg-primary/5 rounded-full filter blur-[120px] pointer-events-none animate-breathe" />
+      <div className="absolute bottom-20 right-10 w-[300px] h-[300px] bg-[#6366f1]/5 rounded-full filter blur-[80px] pointer-events-none" />
+
+      <main className="flex-1 mx-auto max-w-7xl w-full px-4 py-16 sm:px-6 lg:px-8 relative z-10">
         
         <div className="grid grid-cols-1 gap-12 lg:grid-cols-12 lg:items-start max-w-5xl mx-auto">
           
           {/* Left info content */}
           <div className="lg:col-span-5 space-y-6 lg:sticky lg:top-24">
-            <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl text-foreground">
-              Get in Touch with our team
+            <div className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/10 px-3.5 py-1 text-[10px] font-bold text-primary dark:text-purple-400 uppercase tracking-widest biometric-glow mb-2 animate-pulse">
+              <Sparkles className="h-3.5 w-3.5" />
+              <span>Transmitter Channel Open</span>
+            </div>
+
+            <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-white cinematic-title leading-tight">
+              Sync with <br />
+              <span className="bg-gradient-to-r from-primary via-purple-400 to-indigo-400 bg-clip-text text-transparent">
+                Cognitive Control.
+              </span>
             </h1>
-            <p className="text-lg text-muted-foreground leading-relaxed">
-              Have doubts about the vector search embedding logic? Want to report an active recall scheduling bug? Contact support directly.
+            <p className="text-xs text-zinc-400 leading-relaxed font-light">
+              Have questions about the vector embeddings logic? Want to report a spaced-repetition spacing bug? Sync with the transmitter directly.
             </p>
 
-            <div className="space-y-4 pt-4 border-t border-border/80">
-              <div className="flex items-center gap-3 text-sm text-foreground">
-                <Mail className="h-5 w-5 text-primary shrink-0" />
+            <div className="space-y-4 pt-6 border-t border-white/5 font-light">
+              <div className="flex items-center gap-3 text-xs text-zinc-300">
+                <Mail className="h-4.5 w-4.5 text-primary shrink-0" />
                 <span>support@askme-ai.com</span>
               </div>
-              <div className="flex items-center gap-3 text-sm text-foreground">
-                <HelpCircle className="h-5 w-5 text-primary shrink-0" />
+              <div className="flex items-center gap-3 text-xs text-zinc-300">
+                <HelpCircle className="h-4.5 w-4.5 text-primary shrink-0" />
                 <span>Documentation center active 24/7</span>
               </div>
-              <div className="flex items-center gap-3 text-sm text-foreground">
-                <MessageSquare className="h-5 w-5 text-primary shrink-0" />
-                <span>Response average speed: &lt; 2 hours</span>
+              <div className="flex items-center gap-3 text-xs text-zinc-300">
+                <MessageSquare className="h-4.5 w-4.5 text-primary shrink-0" />
+                <span>Response speed: &lt; 2 hours</span>
               </div>
             </div>
           </div>
 
           {/* Right form card */}
-          <div className="lg:col-span-7 bg-card/40 border border-border p-6 md:p-8 rounded-2xl glass-card relative overflow-hidden">
+          <div className="lg:col-span-7 bg-[#0b0b0e]/95 border border-white/5 p-6 md:p-8 rounded-3xl glass-card relative overflow-hidden matte-layer spatial-shadow-lg">
+            <div className="absolute inset-x-0 h-1/2 w-full scanner-sweep pointer-events-none opacity-20" />
             <div className="absolute top-0 right-0 w-[200px] h-[200px] radial-glow opacity-25 pointer-events-none" />
 
             <form onSubmit={handleSubmit} className="space-y-5">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label htmlFor="name" className="text-xs font-semibold text-muted-foreground uppercase">Your Name</label>
+                <div className="space-y-2">
+                  <label htmlFor="name" className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider">Your Name</label>
                   <input
                     type="text"
                     id="name"
@@ -71,12 +84,12 @@ export default function ContactPage() {
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     placeholder="Enter name"
-                    className="w-full rounded-xl border border-border bg-zinc-950/40 px-3.5 py-2 text-sm text-foreground focus:border-primary focus:outline-none transition-all"
+                    className="w-full rounded-xl border border-white/5 bg-[#09090b]/60 px-4 py-3.5 text-xs text-white focus:border-primary focus:outline-none transition-all placeholder-zinc-700 font-light"
                   />
                 </div>
 
-                <div className="space-y-1.5">
-                  <label htmlFor="email" className="text-xs font-semibold text-muted-foreground uppercase">Email Address</label>
+                <div className="space-y-2">
+                  <label htmlFor="email" className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider">Email Address</label>
                   <input
                     type="email"
                     id="email"
@@ -84,18 +97,18 @@ export default function ContactPage() {
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     placeholder="student@askme-ai.com"
-                    className="w-full rounded-xl border border-border bg-zinc-950/40 px-3.5 py-2 text-sm text-foreground focus:border-primary focus:outline-none transition-all"
+                    className="w-full rounded-xl border border-white/5 bg-[#09090b]/60 px-4 py-3.5 text-xs text-white focus:border-primary focus:outline-none transition-all placeholder-zinc-700 font-light"
                   />
                 </div>
               </div>
 
-              <div className="space-y-1.5">
-                <label htmlFor="topic" className="text-xs font-semibold text-muted-foreground uppercase">Reason for Contact</label>
+              <div className="space-y-2">
+                <label htmlFor="topic" className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider">Reason for Sync</label>
                 <select
                   id="topic"
                   value={formData.topic}
                   onChange={(e) => setFormData({ ...formData, topic: e.target.value })}
-                  className="w-full rounded-xl border border-border bg-zinc-950/40 px-3.5 py-2 text-sm text-foreground focus:border-primary focus:outline-none transition-all"
+                  className="w-full rounded-xl border border-white/5 bg-[#09090b]/80 px-4 py-3 text-xs text-zinc-300 focus:border-primary focus:outline-none transition-all"
                 >
                   <option value="general">General Inquiry</option>
                   <option value="support">Technical Support</option>
@@ -104,8 +117,8 @@ export default function ContactPage() {
                 </select>
               </div>
 
-              <div className="space-y-1.5">
-                <label htmlFor="message" className="text-xs font-semibold text-muted-foreground uppercase">Your Message</label>
+              <div className="space-y-2">
+                <label htmlFor="message" className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider">Your Transmission</label>
                 <textarea
                   id="message"
                   required
@@ -113,22 +126,22 @@ export default function ContactPage() {
                   value={formData.message}
                   onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                   placeholder="Explain your request..."
-                  className="w-full rounded-xl border border-border bg-zinc-950/40 px-3.5 py-2 text-sm text-foreground focus:border-primary focus:outline-none transition-all resize-none"
+                  className="w-full rounded-xl border border-white/5 bg-[#09090b]/60 px-4 py-3.5 text-xs text-white focus:border-primary focus:outline-none transition-all resize-none placeholder-zinc-750 font-light leading-relaxed"
                 />
               </div>
 
               <button
                 type="submit"
-                className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-primary py-3.5 text-sm font-bold text-white shadow-md hover:bg-primary/95 transition-all glowing-border"
+                className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-primary py-3.5 text-xs font-bold text-white shadow-md hover:bg-primary/95 transition-all glowing-border duration-300"
               >
-                <Send className="h-4.5 w-4.5" />
-                Submit Request
+                <Send className="h-4 w-4" />
+                <span>Submit Transmission</span>
               </button>
 
               {submitted && (
-                <div className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 rounded-xl p-4 flex items-center gap-2 animate-pulse text-sm">
-                  <CheckCircle className="h-5 w-5 shrink-0" />
-                  <span>Success! Your request has been transmitted. Our cognitive support loop will follow up shortly.</span>
+                <div className="bg-emerald-500/5 border border-emerald-500/10 text-emerald-400 rounded-xl p-4 flex items-center gap-2.5 animate-pulse text-xs font-semibold biometric-glow mt-4">
+                  <CheckCircle className="h-4.5 w-4.5 shrink-0" />
+                  <span>Success! Transmission secure. Spacing loop dispatch scheduled shortly.</span>
                 </div>
               )}
             </form>

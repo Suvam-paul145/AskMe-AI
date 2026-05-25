@@ -215,3 +215,25 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(139, 92, 246, 0.25);
 }
+
+/* Biometric & Cyber System Visuals */
+@keyframes sweepY {
+  0% { transform: translateY(-100%); opacity: 0; }
+  15% { opacity: 0.8; }
+  85% { opacity: 0.8; }
+  100% { transform: translateY(100%); opacity: 0; }
+}
+
+.scanner-sweep {
+  animation: sweepY 4s linear infinite;
+  background: linear-gradient(to bottom, transparent, rgba(139, 92, 246, 0.4), transparent);
+}
+
+.biometric-glow {
+  text-shadow: 0 0 10px rgba(139, 92, 246, 0.45);
+}
+
+.grid-cyber {
+  background-image: radial-gradient(rgba(139, 92, 246, 0.08) 1px, transparent 1px);
+  background-size: 16px 16px;
+}

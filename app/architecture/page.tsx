@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Navbar from "@/components/navbar";
 import Footer from "@/components/footer";
 import { 
@@ -12,11 +12,16 @@ import {
   MessageSquare, 
   Bot,
   Zap,
-  Info
+  Info,
+  Sparkles,
+  Terminal,
+  Activity as PulseIcon
 } from "lucide-react";
 
 export default function ArchitecturePage() {
-  const [activeStep, setActiveStep] = useState<number | null>(null);
+  const [activeStep, setActiveStep] = useState(0);
+  const [simulationLogs, setSimulationLogs] = useState<string[]>([]);
+  const logsContainerRef = useRef<HTMLDivElement | null>(null);
 
   const steps = [
     {
@@ -75,90 +80,188 @@ export default function ArchitecturePage() {
     }
   ];
 
+  // Simulation step tick
+  useEffect(() => {
+    const step = steps[activeStep];
+    const logPool = [
+      `[PIPELINE] Initializing node step 0${step.id}: ${step.title}`,
+      `[RESOLVER] Mapping dependencies for ${step.subtitle}`,
+      `[DATAFLOW] Executed telemetry diagnostic: ${step.details}`,
+      `[STATUS] Step 0${step.id} fully sync'd.`
+    ];
+
+    setSimulationLogs(prev => [
+      ...prev,
+      ...logPool.map(log => `[${new Date().toLocaleTimeString()}] ${log}`)
+    ].slice(-30)); // limit to last 30 logs
+
+  }, [activeStep]);
+
+  // Scroll logs window to bottom
+  useEffect(() => {
+    if (logsContainerRef.current) {
+      logsContainerRef.current.scrollTop = logsContainerRef.current.scrollHeight;
+    }
+  }, [simulationLogs]);
+
   return (
-    <div className="flex flex-col min-h-screen bg-background neural-grid relative">
+    <div className="flex flex-col min-h-screen bg-[#040406] text-white neural-overlay relative select-none">
       <Navbar />
 
-      <main className="flex-1 mx-auto max-w-7xl w-full px-4 py-16 sm:px-6 lg:px-8">
+      {/* Atmospheric ambient background glows */}
+      <div className="absolute top-1/4 left-1/4 w-[450px] h-[450px] bg-primary/5 rounded-full filter blur-[120px] pointer-events-none animate-breathe" />
+      <div className="absolute bottom-20 right-10 w-[300px] h-[300px] bg-[#6366f1]/5 rounded-full filter blur-[80px] pointer-events-none" />
+
+      <main className="flex-1 mx-auto max-w-7xl w-full px-4 py-16 sm:px-6 lg:px-8 relative z-10">
         
         {/* Header */}
-        <div className="text-center max-w-3xl mx-auto mb-16 space-y-4">
-          <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl text-foreground">
-            Cognitive RAG Pipeline Architecture
+        <div className="text-center max-w-3xl mx-auto mb-20 space-y-6">
+          <div className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/10 px-3.5 py-1 text-[10px] font-bold text-primary dark:text-purple-400 uppercase tracking-widest biometric-glow">
+            <Sparkles className="h-3.5 w-3.5 animate-pulse" />
+            <span>Architecture Specification</span>
+          </div>
+
+          <h1 className="text-5xl md:text-7xl font-extrabold tracking-tighter leading-[0.95] cinematic-title text-foreground">
+            RAG Pipeline. <br />
+            <span className="bg-gradient-to-r from-white via-zinc-400 to-zinc-600 bg-clip-text text-transparent">
+              Mapped in Dimensions.
+            </span>
           </h1>
-          <p className="text-lg text-muted-foreground">
-            How AskMe AI converts raw notes and syllabus textbooks into real-time interactive active recall components.
+          <p className="text-sm text-zinc-400 max-w-lg mx-auto font-light leading-relaxed">
+            Technical blueprint detailing how AskMe AI parses notebooks, computes embeddings, and synthesizes active recall environments.
           </p>
         </div>
 
-        {/* Pipeline Diagram Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 relative">
+        {/* Pipeline Interface Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-stretch">
           
-          {steps.map((step, idx) => {
-            const Icon = step.icon;
-            const isHovered = activeStep === step.id;
-            return (
-              <div
-                key={step.id}
-                onMouseEnter={() => setActiveStep(step.id)}
-                onMouseLeave={() => setActiveStep(null)}
-                className={`relative rounded-2xl border bg-card p-6 shadow-sm transition-all duration-300 glass-card flex flex-col justify-between overflow-hidden cursor-pointer ${
-                  isHovered ? "border-primary shadow-lg scale-[1.02]" : "border-border"
-                }`}
-              >
-                {/* Glow layer */}
-                {isHovered && (
-                  <div className="absolute top-0 right-0 w-[150px] h-[150px] radial-glow opacity-30 pointer-events-none" />
-                )}
-
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-primary dark:text-purple-400 bg-primary/10 px-2.5 py-1 rounded-full">
-                      Step 0{step.id}
+          {/* Left: Step navigation lists */}
+          <div className="lg:col-span-4 space-y-3 flex flex-col justify-between">
+            <div className="space-y-3">
+              <span className="text-[10px] uppercase font-bold tracking-widest text-zinc-500 font-mono block mb-2">Select Pipeline Node</span>
+              {steps.map((step, idx) => {
+                const Icon = step.icon;
+                const isActive = activeStep === idx;
+                return (
+                  <button
+                    key={step.id}
+                    onClick={() => setActiveStep(idx)}
+                    className={`w-full flex items-center gap-4 text-left p-4 rounded-2xl border transition-all duration-300 tactile-card ${
+                      isActive 
+                        ? "border-primary/40 bg-primary/5 text-white" 
+                        : "border-white/5 bg-[#0d0d11]/40 text-zinc-400 hover:text-white"
+                    }`}
+                  >
+                    <span className="text-xs font-mono font-bold text-primary dark:text-purple-400 bg-primary/10 px-2 py-0.5 rounded-md">
+                      0{step.id}
                     </span>
-                    <div className={`flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br ${step.color} border`}>
-                      <Icon className="h-5 w-5" />
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-bold uppercase tracking-wider">{step.title}</div>
+                      <div className="text-[10px] text-zinc-500 font-light truncate mt-0.5">{step.subtitle}</div>
+                    </div>
+                    <ArrowRight className={`h-4 w-4 transition-transform duration-300 ${isActive ? "translate-x-1 text-primary" : "text-zinc-600"}`} />
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Note box */}
+            <div className="bg-[#0d0d11]/40 border border-white/5 p-4 rounded-2xl flex items-start gap-3 mt-6">
+              <Info className="h-4.5 w-4.5 text-primary shrink-0 mt-0.5" />
+              <div className="text-[10px] text-zinc-400 leading-relaxed font-light">
+                For rapid local development diagnostics, the pipeline runs client-side vector synthesis, maintaining zero database latency and high refresh rates.
+              </div>
+            </div>
+          </div>
+
+          {/* Right: Immersive node display & simulated visualization */}
+          <div className="lg:col-span-8 flex flex-col gap-6">
+            
+            {/* Displaying detailed specs of selected step */}
+            {(() => {
+              const currentStep = steps[activeStep];
+              const Icon = currentStep.icon;
+              return (
+                <div className="bg-[#0d0d11]/80 border border-white/5 p-8 rounded-3xl glass-card relative overflow-hidden matte-layer spatial-shadow-lg flex-1 flex flex-col justify-between">
+                  <div className="absolute top-0 right-0 w-[200px] h-[200px] radial-glow opacity-15 pointer-events-none" />
+                  <div className="absolute inset-x-0 h-1/2 w-full scanner-sweep pointer-events-none opacity-5" />
+
+                  <div className="space-y-6">
+                    <div className="flex items-center justify-between border-b border-white/5 pb-4">
+                      <div className="flex items-center gap-4">
+                        <div className={`flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br ${currentStep.color} border shadow-lg`}>
+                          <Icon className="h-6 w-6" />
+                        </div>
+                        <div>
+                          <div className="text-[9px] uppercase font-bold tracking-widest text-primary dark:text-purple-400 font-mono">Pipeline Node 0{currentStep.id}</div>
+                          <h3 className="text-xl font-extrabold uppercase text-white mt-0.5">{currentStep.title}</h3>
+                        </div>
+                      </div>
+                      <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest">{currentStep.subtitle}</span>
+                    </div>
+
+                    <p className="text-sm text-zinc-400 leading-relaxed font-light">
+                      {currentStep.description}
+                    </p>
+
+                    <div className="bg-[#040406]/60 border border-white/5 rounded-2xl p-5 space-y-2">
+                      <div className="text-[9px] uppercase font-bold text-zinc-500 font-mono tracking-widest">Internal Logic Specifications</div>
+                      <p className="text-xs text-zinc-300 leading-relaxed font-mono">
+                        {currentStep.details}
+                      </p>
                     </div>
                   </div>
 
-                  <div>
-                    <h3 className="text-lg font-bold text-foreground">{step.title}</h3>
-                    <p className="text-xs font-semibold text-muted-foreground">{step.subtitle}</p>
-                  </div>
-
-                  <p className="text-sm text-muted-foreground leading-relaxed">
-                    {step.description}
-                  </p>
-                </div>
-
-                {/* Additional interactive specs drawer */}
-                <div className={`mt-6 pt-4 border-t border-border transition-all duration-300 ${
-                  isHovered ? "opacity-100 block" : "opacity-60"
-                }`}>
-                  <div className="flex items-start gap-2 text-xs text-foreground/80">
-                    <Info className="h-4 w-4 text-primary shrink-0 mt-0.5" />
-                    <span>{step.details}</span>
+                  {/* Flow progress diagram indicator */}
+                  <div className="mt-8 pt-6 border-t border-white/5 flex items-center justify-between text-xs font-mono text-zinc-500">
+                    <span>STATUS: CALIBRATED</span>
+                    <div className="flex items-center gap-1.5">
+                      {steps.map((s, idx) => (
+                        <div 
+                          key={s.id}
+                          className={`h-1.5 w-8 rounded-full transition-all duration-300 ${
+                            idx <= activeStep 
+                              ? "bg-primary shadow-[0_0_8px_rgba(139,92,246,0.5)]" 
+                              : "bg-white/5"
+                          }`}
+                        />
+                      ))}
+                    </div>
                   </div>
                 </div>
+              );
+            })()}
 
-                {/* Flow connector line on desktops */}
-                {idx < 5 && (
-                  <div className="hidden lg:block absolute top-1/2 -right-4 -translate-y-1/2 z-10 text-border">
-                    {idx % 3 !== 2 && <ArrowRight className="h-6 w-6 text-primary/40" />}
+            {/* Live Terminal logs simulator */}
+            <div className="bg-[#040406] border border-white/5 p-5 rounded-3xl font-mono text-xs space-y-3 relative overflow-hidden">
+              <div className="flex items-center justify-between text-[10px] text-zinc-500 font-bold">
+                <div className="flex items-center gap-2">
+                  <Terminal className="h-4 w-4 text-primary" />
+                  <span>ARCHITECTURE TELEMETRY READOUT</span>
+                </div>
+                <div className="flex items-center gap-1.5 text-emerald-400">
+                  <PulseIcon className="h-3 w-3 animate-pulse" />
+                  <span>RECEIVING LIVE STREAM</span>
+                </div>
+              </div>
+              
+              <div 
+                ref={logsContainerRef}
+                className="max-h-[110px] overflow-y-auto text-[10px] text-zinc-400 space-y-1.5 scroll-smooth"
+              >
+                {simulationLogs.map((log, i) => (
+                  <div key={i} className="whitespace-pre-wrap font-mono text-zinc-400 border-l-2 border-primary/20 pl-2">
+                    {log}
                   </div>
+                ))}
+                {simulationLogs.length === 0 && (
+                  <div className="text-zinc-600 italic">Logs system initialized. Click a step to simulate telemetry.</div>
                 )}
               </div>
-            );
-          })}
+            </div>
 
-        </div>
-
-        {/* Footer Technical Note banner */}
-        <div className="mt-16 bg-card/60 border border-border p-6 rounded-2xl flex flex-col sm:flex-row items-center gap-4 text-sm text-muted-foreground max-w-4xl mx-auto">
-          <Zap className="h-6 w-6 text-primary shrink-0 animate-pulse" />
-          <div>
-            <strong className="text-foreground">SaaS Scaling Note:</strong> For the hackathon MVP, step 3 (embeddings) and step 4 (index vector query) utilize our high-performance client-side simulation engine, maintaining zero-latency dashboard metrics and memory updates.
           </div>
+
         </div>
 
       </main>

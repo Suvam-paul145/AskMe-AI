@@ -1,277 +1,434 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Navbar from "@/components/navbar";
 import Footer from "@/components/footer";
 import { 
+  Sparkles, 
+  ArrowRight, 
   Upload, 
   Brain, 
-  Cpu, 
-  LineChart, 
-  Calendar, 
-  Sparkles, 
-  GraduationCap, 
-  ArrowRight, 
+  Compass, 
+  ShieldCheck, 
   Flame, 
-  Zap, 
-  BookOpen, 
-  Activity 
+  Zap 
 } from "lucide-react";
 
-export default function Home() {
-  const [activeTab, setActiveTab] = useState("summarizer");
+// --- CUSTOM 3D PROJECTION GRAPH COMPONENT ---
+function Custom3DGraph({ scene }: { scene: number }) {
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const [hoveredNode, setHoveredNode] = useState<string | null>(null);
 
-  const bentoFeatures = [
-    {
-      id: "summarizer",
-      title: "Active-Recall Summarizer",
-      description: "Auto-extracts formulas, core concepts, exam warnings, and common student mistakes instantly from raw documents.",
-      icon: BookOpen,
-      color: "from-purple-500/20 to-indigo-500/20 text-purple-400",
-      accent: "bg-purple-500",
-      badge: "OCR & Synthesis"
-    },
-    {
-      id: "chat",
-      title: "Interactive Doubt Solver",
-      description: "Ask your personalized AI tutor deep conceptual doubts with reference nodes linked directly to your uploaded text.",
-      icon: Brain,
-      color: "from-blue-500/20 to-cyan-500/20 text-blue-400",
-      accent: "bg-blue-500",
-      badge: "RAG Model"
-    },
-    {
-      id: "quiz",
-      title: "Calibration Quiz Engine",
-      description: "Adapts question difficulty in real-time. Highlights incorrect topics and logs them directly to your weak topics registry.",
-      icon: Cpu,
-      color: "from-pink-500/20 to-rose-500/20 text-pink-400",
-      accent: "bg-pink-500",
-      badge: "Adaptive Testing"
-    },
-    {
-      id: "graph",
-      title: "Interactive Memory Graph",
-      description: "Visualizes your study chapters as an interconnected neural network. Concept nodes change color based on recall strength.",
-      icon: Activity,
-      color: "from-emerald-500/20 to-teal-500/20 text-emerald-400",
-      accent: "bg-emerald-500",
-      badge: "Visual Nodes"
-    },
-    {
-      id: "dna",
-      title: "Learning DNA Profile",
-      description: "Calculates an 8-dimensional cognitive chart detailing consistency, retention levels, and your learning archetype.",
-      icon: LineChart,
-      color: "from-amber-500/20 to-orange-500/20 text-amber-400",
-      accent: "bg-amber-500",
-      badge: "Analytics"
-    },
-    {
-      id: "planner",
-      title: "Autopilot Study Planner",
-      description: "Generates custom calendars with spaced-repetition triggers and urgent flags. Auto-recalibrates if you miss a goal.",
-      icon: Calendar,
-      color: "from-red-500/20 to-violet-500/20 text-red-400",
-      accent: "bg-red-500",
-      badge: "Autopilot"
-    }
-  ];
+  // 3D Nodes Definition
+  const nodes = useRef([
+    { id: "n-1", label: "Coulomb's Law", x: -120, y: -80, z: -50, status: "mastered", strength: 88, px: 0, py: 0, scale: 1 },
+    { id: "n-2", label: "Electric Field", x: 100, y: -40, z: 90, status: "learning", strength: 75, px: 0, py: 0, scale: 1 },
+    { id: "n-3", label: "Electric Potential", x: -60, y: 90, z: -80, status: "weak", strength: 40, px: 0, py: 0, scale: 1 },
+    { id: "n-4", label: "Superposition", x: 140, y: 80, z: -60, status: "mastered", strength: 92, px: 0, py: 0, scale: 1 },
+    { id: "n-5", label: "Gauss's Law", x: 40, y: -100, z: -120, status: "forgotten", strength: 25, px: 0, py: 0, scale: 1 },
+    { id: "n-6", label: "DNA Replication", x: -90, y: 40, z: 120, status: "learning", strength: 80, px: 0, py: 0, scale: 1 },
+    { id: "n-7", label: "Transcription", x: 110, y: -60, z: -90, status: "learning", strength: 70, px: 0, py: 0, scale: 1 },
+    { id: "n-8", label: "Translation", x: -70, y: -120, z: 60, status: "weak", strength: 35, px: 0, py: 0, scale: 1 }
+  ]);
+
+  const links = useRef([
+    { source: 0, target: 1 },
+    { source: 0, target: 2 },
+    { source: 1, target: 4 },
+    { source: 5, target: 6 },
+    { source: 6, target: 7 }
+  ]);
+
+  // Rotations
+  const rotY = useRef(0);
+  const rotX = useRef(0);
+  const mouse = useRef({ x: 0, y: 0, isDown: false, lastX: 0, lastY: 0 });
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    let animId: number;
+    const focalLength = 300;
+
+    const resize = () => {
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = canvas.parentElement?.clientWidth ? canvas.parentElement.clientWidth * dpr : 500 * dpr;
+      canvas.height = canvas.parentElement?.clientHeight ? canvas.parentElement.clientHeight * dpr : 400 * dpr;
+      ctx.scale(dpr, dpr);
+    };
+
+    window.addEventListener("resize", resize);
+    resize();
+
+    // Mouse/Drag handlers for 3D rotation
+    const onMouseDown = (e: MouseEvent) => {
+      mouse.current.isDown = true;
+      mouse.current.lastX = e.clientX;
+      mouse.current.lastY = e.clientY;
+    };
+
+    const onMouseMove = (e: MouseEvent) => {
+      const rect = canvas.getBoundingClientRect();
+      // Track hover detection relative to scale
+      const mX = e.clientX - rect.left;
+      const mY = e.clientY - rect.top;
+      
+      let matchedNode: string | null = null;
+      nodes.current.forEach(n => {
+        const dx = mX - n.px;
+        const dy = mY - n.py;
+        const dist = Math.sqrt(dx*dx + dy*dy);
+        if (dist < 15 * n.scale) {
+          matchedNode = n.label;
+        }
+      });
+      setHoveredNode(matchedNode);
+
+      if (!mouse.current.isDown) return;
+      const dx = e.clientX - mouse.current.lastX;
+      const dy = e.clientY - mouse.current.lastY;
+      rotY.current += dx * 0.4;
+      rotX.current -= dy * 0.4;
+      mouse.current.lastX = e.clientX;
+      mouse.current.lastY = e.clientY;
+    };
+
+    const onMouseUp = () => {
+      mouse.current.isDown = false;
+    };
+
+    canvas.addEventListener("mousedown", onMouseDown);
+    canvas.addEventListener("mousemove", onMouseMove);
+    window.addEventListener("mouseup", onMouseUp);
+
+    // Main Draw loop
+    const render = () => {
+      if (!ctx || !canvas) return;
+      const width = canvas.width / (window.devicePixelRatio || 1);
+      const height = canvas.height / (window.devicePixelRatio || 1);
+      ctx.clearRect(0, 0, width, height);
+
+      // Auto rotation drift if not drag dragging
+      if (!mouse.current.isDown) {
+        rotY.current += 0.15;
+        rotX.current = Math.sin(Date.now() * 0.0005) * 5;
+      }
+
+      const radY = rotY.current * Math.PI / 180;
+      const radX = rotX.current * Math.PI / 180;
+
+      // Project Nodes
+      const projected = nodes.current.map(node => {
+        let x = node.x;
+        let y = node.y;
+        let z = node.z;
+
+        // Apply Scene variations
+        if (scene === 1) {
+          // Chaos: drift particles randomly
+          const t = Date.now() * 0.001;
+          x += Math.sin(t + node.x) * 20;
+          y += Math.cos(t + node.y) * 20;
+        } else if (scene === 2) {
+          // Awakening: snap particles towards center cluster
+          x *= 0.6;
+          y *= 0.6;
+          z *= 0.6;
+        }
+
+        // Rotate Y
+        let x1 = x * Math.cos(radY) - z * Math.sin(radY);
+        let z1 = x * Math.sin(radY) + z * Math.cos(radY);
+
+        // Rotate X
+        let y1 = y * Math.cos(radX) - z1 * Math.sin(radX);
+        let z2 = y * Math.sin(radX) + z1 * Math.cos(radX);
+
+        // 3D Perspective Scale
+        const scale = focalLength / (focalLength + z2);
+        const px = (width / 2) + x1 * scale;
+        const py = (height / 2) + y1 * scale;
+
+        // Store screen coordinates for hover math
+        node.px = px;
+        node.py = py;
+        node.scale = scale;
+
+        return {
+          ...node,
+          px,
+          py,
+          scale,
+          z2
+        };
+      });
+
+      // Depth Sort (draw background nodes first)
+      projected.sort((a, b) => b.z2 - a.z2);
+
+      // Draw Links (only in scene >= 2)
+      if (scene >= 2) {
+        ctx.shadowBlur = 0; // Disable shadow for line drawing
+        links.current.forEach(link => {
+          const s = projected.find(n => n.id === nodes.current[link.source].id);
+          const t = projected.find(n => n.id === nodes.current[link.target].id);
+
+          if (s && t) {
+            ctx.beginPath();
+            ctx.moveTo(s.px, s.py);
+            ctx.lineTo(t.px, t.py);
+            
+            // Fade line opacity based on 3D depth
+            const alpha = Math.min(1, Math.max(0.05, (s.scale + t.scale) / 2 - 0.2));
+            ctx.strokeStyle = scene === 2 
+              ? `rgba(168, 85, 247, ${alpha * 0.5})` 
+              : `rgba(168, 85, 247, ${alpha * 0.75})`;
+            ctx.lineWidth = scene === 2 ? 1.25 : 1.75;
+            ctx.stroke();
+          }
+        });
+      }
+
+      // Draw Nodes
+      projected.forEach(node => {
+        const radius = (node.status === "weak" ? 7 : 5) * node.scale;
+        
+        ctx.beginPath();
+        ctx.arc(node.px, node.py, radius, 0, Math.PI * 2);
+
+        // Color maps
+        let strokeColor = "rgba(255, 255, 255, 0.95)";
+        let fillStyle = "rgba(255, 255, 255, 0.3)";
+        
+        if (scene === 2) {
+          strokeColor = "rgba(168, 85, 247, 0.95)";
+          fillStyle = "rgba(168, 85, 247, 0.35)";
+        } else if (scene >= 3) {
+          if (node.status === "mastered") {
+            strokeColor = "rgb(96, 165, 250)"; // Blue stable
+            fillStyle = "rgba(96, 165, 250, 0.25)";
+          } else if (node.status === "weak" || node.status === "forgotten") {
+            strokeColor = "rgb(251, 113, 133)"; // Red pulsing
+            fillStyle = `rgba(251, 113, 133, ${0.25 + Math.sin(Date.now() * 0.005) * 0.15})`;
+          } else {
+            strokeColor = "rgb(192, 132, 252)"; // Purple learning
+            fillStyle = "rgba(192, 132, 252, 0.2)";
+          }
+        }
+
+        ctx.strokeStyle = strokeColor;
+        ctx.fillStyle = fillStyle;
+        ctx.lineWidth = 1.8 * node.scale;
+
+        // Apply premium neon glow shadow
+        ctx.shadowColor = strokeColor;
+        ctx.shadowBlur = 12 * node.scale;
+
+        ctx.fill();
+        ctx.stroke();
+
+        // Reset shadow blur
+        ctx.shadowBlur = 0;
+
+        // Pulsing decay rings for weak concepts
+        if (scene >= 3 && (node.status === "weak" || node.status === "forgotten")) {
+          const ringRad = radius + (Date.now() * 0.015) % 15;
+          const ringAlpha = 1 - (ringRad - radius) / 15;
+          ctx.beginPath();
+          ctx.arc(node.px, node.py, ringRad, 0, Math.PI * 2);
+          ctx.strokeStyle = `rgba(244, 63, 94, ${ringAlpha * 0.4})`;
+          ctx.lineWidth = 0.5;
+          ctx.stroke();
+        }
+
+        // Node Label (only if closer or hovered)
+        if (scene >= 3 && node.scale > 0.75) {
+          ctx.fillStyle = "rgba(255, 255, 255, 0.45)";
+          ctx.font = `${Math.round(9 * node.scale)}px sans-serif`;
+          ctx.textAlign = "center";
+          ctx.fillText(node.label, node.px, node.py + radius + 12);
+        }
+      });
+
+      animId = requestAnimationFrame(render);
+    };
+
+    render();
+
+    return () => {
+      cancelAnimationFrame(animId);
+      window.removeEventListener("resize", resize);
+      canvas.removeEventListener("mousedown", onMouseDown);
+      canvas.removeEventListener("mousemove", onMouseMove);
+    };
+  }, [scene]);
 
   return (
-    <div className="flex flex-col min-h-screen bg-background neural-grid relative">
+    <div className="w-full h-full relative select-none">
+      <canvas ref={canvasRef} className="w-full h-full block touch-none" />
+      {/* Interactive HUD HUD */}
+      {hoveredNode && (
+        <div className="absolute top-4 left-4 bg-zinc-950/80 border border-border/80 px-3.5 py-2 rounded-xl text-[10px] uppercase font-bold tracking-wider text-primary dark:text-purple-400 backdrop-blur-md animate-pulse">
+          Active: {hoveredNode}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// --- MAIN CINEMATIC LANDING SCREEN ---
+export default function Home() {
+  const [activeScene, setActiveScene] = useState(1);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+
+  // Track scroll position to trigger scenes transitions
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollPos = window.scrollY;
+      const height = window.innerHeight;
+
+      // Determine active scene based on viewport scroll sections
+      if (scrollPos < height * 0.8) {
+        setActiveScene(1); // Chaos
+      } else if (scrollPos >= height * 0.8 && scrollPos < height * 1.8) {
+        setActiveScene(2); // AI Awakening
+      } else if (scrollPos >= height * 1.8 && scrollPos < height * 2.8) {
+        setActiveScene(3); // Memory Visualization
+      } else if (scrollPos >= height * 2.8 && scrollPos < height * 3.8) {
+        setActiveScene(4); // Morphing Dashboard
+      } else {
+        setActiveScene(5); // Mastery
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  return (
+    <div ref={containerRef} className="bg-[#040406] text-white neural-overlay relative min-h-screen">
       <Navbar />
 
-      {/* Hero Section */}
-      <section className="relative overflow-hidden pt-20 pb-16 md:pt-32 md:pb-28">
-        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] radial-glow opacity-60 pointer-events-none" />
+      {/* Floating 3D Graph center viewer (sticky across scroll scenes) */}
+      <div className="fixed inset-0 z-0 pointer-events-none lg:pointer-events-auto flex items-center justify-center lg:justify-end lg:pr-24">
+        <div className="w-full max-w-[500px] h-[500px] opacity-40 lg:opacity-100 transition-opacity duration-700">
+          <Custom3DGraph scene={activeScene} />
+        </div>
+      </div>
 
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative">
-          <div className="grid grid-cols-1 gap-12 lg:grid-cols-12 lg:items-center">
-            
-            {/* Left Content */}
-            <div className="space-y-8 lg:col-span-7 text-center lg:text-left">
-              <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-4 py-1.5 text-xs font-semibold text-primary dark:text-purple-400 animate-pulse">
-                <Sparkles className="h-3.5 w-3.5" />
-                <span>Introducing Cognitive Learning OS (CLOS)</span>
-              </div>
+      {/* SCENE 1: CHAOS */}
+      <section className="relative z-10 min-h-screen flex items-center px-6 md:px-12 max-w-7xl mx-auto">
+        <div className="max-w-xl space-y-6 animate-drift">
+          <div className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/10 px-3.5 py-1 text-xs font-semibold text-primary dark:text-purple-400">
+            <Sparkles className="h-3 w-3 animate-pulse" />
+            <span>Scene 01: Cognitive Noise</span>
+          </div>
 
-              <h1 className="text-4xl font-extrabold tracking-tight sm:text-6xl text-foreground">
-                AI That Learns <br />
-                <span className="bg-gradient-to-r from-primary via-purple-400 to-indigo-400 bg-clip-text text-transparent">
-                  How You Learn
-                </span>
-              </h1>
+          <h1 className="text-5xl md:text-7xl font-extrabold tracking-tighter leading-none cinematic-title text-foreground">
+            Your Mind. <br />
+            <span className="text-zinc-600">Fragmented.</span>
+          </h1>
 
-              <p className="max-w-2xl mx-auto lg:mx-0 text-lg md:text-xl text-muted-foreground leading-relaxed">
-                Stop studying linearly. Ingest your textbooks and lecture notes, and let AskMe AI build an interactive neural knowledge graph, adapt quizzes to your memory gaps, and calibrate your personalized syllabus.
-              </p>
+          <p className="text-sm md:text-base text-muted-foreground leading-relaxed">
+            Syllabus files scattered. Core definitions decaying. Traditional reading creates an illusion of competence while memory retention fades.
+          </p>
 
-              <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4">
-                <Link
-                  href="/upload"
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3.5 text-base font-bold text-white shadow-lg hover:bg-primary/95 transition-all glowing-border"
-                >
-                  <Upload className="h-5 w-5" />
-                  Upload Notes & Files
-                </Link>
-                <Link
-                  href="/dashboard"
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl border border-border bg-card px-6 py-3.5 text-base font-bold text-foreground hover:bg-muted/50 transition-all"
-                >
-                  <span>Explore Demo Dashboard</span>
-                  <ArrowRight className="h-4.5 w-4.5" />
-                </Link>
-              </div>
-
-              {/* Simple metrics */}
-              <div className="grid grid-cols-3 gap-6 pt-4 border-t border-border/80">
-                <div>
-                  <h3 className="text-2xl font-bold text-foreground">98.4%</h3>
-                  <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Retention Rate</p>
-                </div>
-                <div>
-                  <h3 className="text-2xl font-bold text-foreground">10x</h3>
-                  <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Syllabus Ingestion</p>
-                </div>
-                <div>
-                  <h3 className="text-2xl font-bold text-foreground">12,000+</h3>
-                  <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Active Minds</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Right Visual Mesh simulator */}
-            <div className="lg:col-span-5 flex justify-center">
-              <div className="relative w-full max-w-[420px] aspect-square rounded-2xl border border-border bg-card/40 backdrop-blur-md p-6 glass-card shadow-2xl flex flex-col justify-between overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-tr from-primary/5 via-transparent to-transparent pointer-events-none" />
-                
-                {/* SVG Visualizer Simulation */}
-                <div className="h-[250px] w-full relative flex items-center justify-center">
-                  <svg className="w-full h-full" viewBox="0 0 400 300">
-                    {/* Connection lines */}
-                    <line x1="200" y1="150" x2="100" y2="80" stroke="rgba(139,92,246,0.3)" strokeWidth="2" strokeDasharray="3 3" />
-                    <line x1="200" y1="150" x2="300" y2="90" stroke="rgba(139,92,246,0.3)" strokeWidth="2" />
-                    <line x1="200" y1="150" x2="140" y2="230" stroke="rgba(244,63,94,0.4)" strokeWidth="2.5" />
-                    <line x1="200" y1="150" x2="270" y2="220" stroke="rgba(16,185,129,0.3)" strokeWidth="2" />
-                    
-                    {/* Core Hub */}
-                    <circle cx="200" cy="150" r="18" className="fill-primary/20 stroke-primary stroke-[2] animate-pulse" />
-                    <text x="200" y="154" textAnchor="middle" fill="currentColor" className="text-[10px] font-bold text-primary dark:text-purple-400">Hub</text>
-
-                    {/* Nodes */}
-                    <circle cx="100" cy="80" r="12" className="fill-blue-500/20 stroke-blue-500 stroke-[2]" />
-                    <text x="100" y="112" textAnchor="middle" fill="currentColor" className="text-[10px] text-muted-foreground">Physics</text>
-
-                    <circle cx="300" cy="90" r="14" className="fill-indigo-500/20 stroke-indigo-500 stroke-[2]" />
-                    <text x="300" y="122" textAnchor="middle" fill="currentColor" className="text-[10px] text-muted-foreground">Biology</text>
-
-                    <circle cx="140" cy="230" r="10" className="fill-rose-500/20 stroke-rose-500 stroke-[2] animate-bounce" />
-                    <text x="140" y="258" textAnchor="middle" fill="currentColor" className="text-[10px] text-rose-500 font-semibold">Weak Area</text>
-
-                    <circle cx="270" cy="220" r="13" className="fill-emerald-500/20 stroke-emerald-500 stroke-[2]" />
-                    <text x="270" y="250" textAnchor="middle" fill="currentColor" className="text-[10px] text-emerald-500 font-semibold">Mastered</text>
-                  </svg>
-                </div>
-
-                {/* Simulated Activity Feed */}
-                <div className="border-t border-border pt-4">
-                  <div className="flex items-center justify-between text-xs mb-2">
-                    <span className="text-muted-foreground font-medium flex items-center gap-1.5">
-                      <GraduationCap className="h-3.5 w-3.5 text-primary" />
-                      Cognitive Alignment Status
-                    </span>
-                    <span className="text-emerald-500 font-bold bg-emerald-500/10 px-2 py-0.5 rounded-full">Optimal</span>
-                  </div>
-                  <div className="bg-muted/40 rounded-xl p-2.5 text-xs text-foreground/80 flex items-center justify-between">
-                    <span>Active Topic: <strong>Coulomb's Law</strong></span>
-                    <span className="text-primary font-bold">88% strength</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
+          <div className="flex items-center gap-4 text-xs font-bold text-zinc-500 uppercase tracking-widest pt-4">
+            <span>Scroll to awaken</span>
+            <div className="h-5 w-[1px] bg-zinc-800" />
+            <span className="animate-pulse">↓</span>
           </div>
         </div>
       </section>
 
-      {/* Bento Grid Section */}
-      <section className="py-20 border-t border-border bg-card/20 relative">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-3xl mx-auto mb-16">
-            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl text-foreground">
-              Ten Engines. One Unified Cognitive OS.
-            </h2>
-            <p className="mt-4 text-lg text-muted-foreground">
-              We replaced disjointed flashcard widgets and standalone chatbots with a singular neural loop that updates your learning profile on every interaction.
-            </p>
+      {/* SCENE 2: AWAKENING */}
+      <section className="relative z-10 min-h-screen flex items-center px-6 md:px-12 max-w-7xl mx-auto">
+        <div className="max-w-xl space-y-6">
+          <div className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/10 px-3.5 py-1 text-xs font-semibold text-primary dark:text-purple-400">
+            <Sparkles className="h-3 w-3" />
+            <span>Scene 02: Ingestion</span>
           </div>
 
-          {/* Bento Grid */}
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {bentoFeatures.map((feat) => {
-              const Icon = feat.icon;
-              return (
-                <div
-                  key={feat.id}
-                  className="rounded-2xl border border-border bg-card p-6 shadow-sm hover:shadow-md transition-all duration-300 glass-card glowing-border group flex flex-col justify-between"
-                >
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div className={`flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br ${feat.color}`}>
-                        <Icon className="h-5 w-5" />
-                      </div>
-                      <span className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground/80 bg-muted/60 px-2.5 py-1 rounded-full">
-                        {feat.badge}
-                      </span>
-                    </div>
+          <h2 className="text-5xl md:text-6xl font-extrabold tracking-tighter leading-none cinematic-title">
+            The Spark of <br />
+            <span className="text-primary dark:text-purple-400">Organization.</span>
+          </h2>
 
-                    <h3 className="text-lg font-bold text-foreground group-hover:text-primary transition-colors">
-                      {feat.title}
-                    </h3>
-                    <p className="text-sm text-muted-foreground leading-relaxed">
-                      {feat.description}
-                    </p>
-                  </div>
-
-                  <div className="pt-6">
-                    <Link
-                      href="/workspace"
-                      className="text-xs font-semibold text-primary dark:text-purple-400 flex items-center gap-1 hover:underline"
-                    >
-                      Launch Module
-                      <ArrowRight className="h-3 w-3" />
-                    </Link>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+          <p className="text-sm md:text-base text-muted-foreground leading-relaxed">
+            AskMe CLOS ingests raw textbooks and slides, aligning chaotic strings into clean semantic concept coordinates.
+          </p>
         </div>
       </section>
 
-      {/* Visual Demo Showcase */}
-      <section className="py-20 border-t border-border">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="bg-gradient-to-r from-primary/10 via-purple-500/5 to-transparent rounded-3xl border border-primary/20 p-8 md:p-12 shadow-xl flex flex-col md:flex-row items-center justify-between gap-8">
-            <div className="space-y-4 max-w-xl">
-              <h2 className="text-2xl font-bold tracking-tight text-white md:text-3xl">
-                Ready to calibrate your learning path?
-              </h2>
-              <p className="text-muted-foreground text-sm md:text-base leading-relaxed">
-                Take our mock workspace for a spin. Instantly upload notes, simulate deep doubt questions, score custom MCQ attempts, and watch your DNA graph realign.
-              </p>
-            </div>
-            <div>
-              <Link
-                href="/upload"
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3.5 text-base font-bold text-white shadow-lg hover:bg-primary/95 transition-all glowing-border"
-              >
-                Ingest Your Syllabus Free
-                <ArrowRight className="h-5 w-5" />
-              </Link>
-            </div>
+      {/* SCENE 3: MEMORY VISUALIZATION */}
+      <section className="relative z-10 min-h-screen flex items-center px-6 md:px-12 max-w-7xl mx-auto">
+        <div className="max-w-xl space-y-6">
+          <div className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/10 px-3.5 py-1 text-xs font-semibold text-primary dark:text-purple-400">
+            <Sparkles className="h-3 w-3" />
+            <span>Scene 03: The Map</span>
+          </div>
+
+          <h2 className="text-5xl md:text-6xl font-extrabold tracking-tighter leading-none cinematic-title">
+            Mapped in <br />
+            <span className="bg-gradient-to-r from-white via-zinc-400 to-zinc-600 bg-clip-text text-transparent">
+              Real Time.
+            </span>
+          </h2>
+
+          <p className="text-sm md:text-base text-muted-foreground leading-relaxed">
+            A three-dimensional topological map of your memory. Drag the canvas to rotate nodes. Weak concepts pulse red; mastered structures stabilize.
+          </p>
+        </div>
+      </section>
+
+      {/* SCENE 4: ADAPTIVE INTELLIGENCE */}
+      <section className="relative z-10 min-h-screen flex items-center px-6 md:px-12 max-w-7xl mx-auto">
+        <div className="max-w-xl space-y-6">
+          <div className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/10 px-3.5 py-1 text-xs font-semibold text-primary dark:text-purple-400">
+            <Sparkles className="h-3 w-3 animate-pulse" />
+            <span>Scene 04: The Morphing Interface</span>
+          </div>
+
+          <h2 className="text-5xl md:text-6xl font-extrabold tracking-tighter leading-none cinematic-title">
+            Evolves with <br />
+            <span className="text-primary dark:text-purple-400">Your Brain.</span>
+          </h2>
+
+          <p className="text-sm md:text-base text-muted-foreground leading-relaxed">
+            The workspace restructures itself. Quiz vectors alter difficulty paths dynamically, generating automated spacing tasks.
+          </p>
+        </div>
+      </section>
+
+      {/* SCENE 5: MASTERY */}
+      <section className="relative z-10 min-h-screen flex items-center px-6 md:px-12 max-w-7xl mx-auto">
+        <div className="max-w-xl space-y-6">
+          <div className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/10 px-3.5 py-1 text-xs font-semibold text-primary dark:text-purple-400">
+            <Sparkles className="h-3 w-3" />
+            <span>Scene 05: Clarity</span>
+          </div>
+
+          <h2 className="text-5xl md:text-7xl font-extrabold tracking-tighter leading-none cinematic-title">
+            Calm. Focus. <br />
+            <span className="text-zinc-500">Solidified.</span>
+          </h2>
+
+          <p className="text-sm md:text-base text-muted-foreground leading-relaxed">
+            Clarity attained. Knowledge compiled. Transition into an environment constructed for human cognitive evolution.
+          </p>
+
+          <div className="pt-6">
+            <Link
+              href="/upload"
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3.5 text-sm font-bold text-white shadow-lg hover:bg-primary/95 transition-all glowing-border"
+            >
+              <Upload className="h-4.5 w-4.5" />
+              Map Your Knowledge System
+            </Link>
           </div>
         </div>
       </section>

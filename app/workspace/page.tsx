@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import Navbar from "@/components/navbar";
-import { useStore, DocumentNode, ChatMessage } from "@/lib/store";
+import { useStore } from "@/lib/store";
 import { 
   FileText, 
   BookOpen, 
@@ -16,7 +16,11 @@ import {
   CheckCircle,
   TrendingUp,
   Play,
-  RefreshCw
+  RefreshCw,
+  Brain,
+  Sparkles,
+  ChevronRight,
+  CornerDownRight
 } from "lucide-react";
 import Link from "next/link";
 
@@ -76,7 +80,7 @@ export default function WorkspacePage() {
 
       addMessage(activeDoc.id, aiResponse, "ai", [activeDoc.title]);
       setIsAiReplying(false);
-    }, 1200);
+    }, 1500);
   };
 
   // Mock Flashcards
@@ -126,22 +130,26 @@ export default function WorkspacePage() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-background relative select-none">
+    <div className="flex flex-col min-h-screen bg-[#040406] text-white neural-overlay relative select-none">
       <Navbar />
 
+      {/* Decorative ambient background glows */}
+      <div className="absolute top-0 right-1/4 w-[500px] h-[500px] bg-primary/5 rounded-full filter blur-[120px] pointer-events-none animate-breathe" />
+      <div className="absolute bottom-10 left-10 w-[300px] h-[300px] bg-[#6366f1]/5 rounded-full filter blur-[80px] pointer-events-none" />
+
       {activeDoc ? (
-        <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 overflow-hidden h-[calc(100vh-64px)]">
+        <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 overflow-hidden h-[calc(100vh-64px)] relative z-10">
           
           {/* Left panel: Documents list & summaries (col-span-5) */}
-          <div className="lg:col-span-5 border-r border-border bg-card/20 flex flex-col overflow-y-auto p-4 md:p-6 space-y-6">
+          <div className="lg:col-span-5 border-r border-white/5 bg-[#070709]/80 backdrop-blur-xl flex flex-col overflow-y-auto p-6 space-y-6">
             
             {/* Document list row */}
-            <div className="space-y-2">
-              <h2 className="text-xs uppercase font-bold tracking-wider text-muted-foreground flex items-center gap-2">
-                <FileText className="h-4 w-4" />
+            <div className="space-y-3">
+              <h2 className="text-[10px] uppercase font-bold tracking-[0.25em] text-zinc-500 flex items-center gap-2">
+                <FileText className="h-4 w-4 text-primary animate-pulse" />
                 Active Study Library
               </h2>
-              <div className="grid grid-cols-1 gap-2">
+              <div className="grid grid-cols-1 gap-2.5">
                 {documents.map((doc) => {
                   const isSelected = doc.id === selectedDocId;
                   return (
@@ -152,14 +160,17 @@ export default function WorkspacePage() {
                         setRtmEvaluation("");
                         setRtmAnswer("");
                       }}
-                      className={`flex items-center justify-between text-left p-3 rounded-xl border transition-all ${
+                      className={`flex items-center justify-between text-left p-3.5 rounded-xl border transition-all duration-300 tactile-card ${
                         isSelected 
-                          ? "border-primary bg-primary/5 text-primary shadow-sm" 
-                          : "border-border bg-card/50 hover:bg-muted text-muted-foreground hover:text-foreground"
+                          ? "border-primary bg-primary/10 text-white shadow-[0_0_15px_rgba(139,92,246,0.15)]" 
+                          : "border-white/5 bg-[#0d0d11]/40 hover:bg-[#0d0d11]/85 text-zinc-400 hover:text-white"
                       }`}
                     >
-                      <span className="text-xs font-semibold truncate max-w-[240px]">{doc.title}</span>
-                      <span className="text-[10px] text-zinc-500">{doc.size}</span>
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div className={`h-1.5 w-1.5 rounded-full ${isSelected ? "bg-primary animate-ping" : "bg-zinc-600"}`} />
+                        <span className="text-xs font-semibold truncate max-w-[280px]">{doc.title}</span>
+                      </div>
+                      <span className="text-[9px] text-zinc-500 bg-white/5 px-2 py-0.5 rounded-md font-mono">{doc.size}</span>
                     </button>
                   );
                 })}
@@ -168,57 +179,63 @@ export default function WorkspacePage() {
 
             {/* Document Summary display */}
             <div className="space-y-4">
-              <h2 className="text-xs uppercase font-bold tracking-wider text-muted-foreground flex items-center gap-2">
-                <BookOpen className="h-4 w-4" />
+              <h2 className="text-[10px] uppercase font-bold tracking-[0.25em] text-zinc-500 flex items-center gap-2">
+                <BookOpen className="h-4 w-4 text-primary" />
                 Auto-Synthesis Summaries
               </h2>
 
-              <div className="bg-card/40 border border-border rounded-xl p-5 space-y-5 glass-card">
+              <div className="bg-[#0b0b0e]/90 border border-white/5 rounded-2xl p-6 space-y-6 glass-card matte-layer spatial-shadow-lg">
                 {/* Overview */}
-                <div className="space-y-1">
-                  <h4 className="text-xs font-bold text-foreground">Synthesis Overview</h4>
-                  <p className="text-xs text-muted-foreground leading-relaxed">{activeDoc.summary.overview}</p>
+                <div className="space-y-2">
+                  <h4 className="text-[10px] uppercase tracking-wider font-bold text-zinc-400">Synthesis Overview</h4>
+                  <p className="text-xs text-zinc-300 leading-relaxed font-light">{activeDoc.summary.overview}</p>
                 </div>
 
                 {/* Keypoints */}
-                <div className="space-y-1.5">
-                  <h4 className="text-xs font-bold text-foreground">Active Memory Points</h4>
-                  <ul className="space-y-1 text-xs text-muted-foreground list-disc pl-4">
+                <div className="space-y-3">
+                  <h4 className="text-[10px] uppercase tracking-wider font-bold text-zinc-400">Active Memory Points</h4>
+                  <ul className="space-y-2.5 text-xs text-zinc-300">
                     {activeDoc.summary.keyPoints.map((kp, idx) => (
-                      <li key={idx}>{kp}</li>
+                      <li key={idx} className="flex items-start gap-2">
+                        <ChevronRight className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" />
+                        <span className="font-light">{kp}</span>
+                      </li>
                     ))}
                   </ul>
                 </div>
 
                 {/* Formulas */}
-                <div className="space-y-2">
-                  <h4 className="text-xs font-bold text-foreground">Key Mathematical Models</h4>
+                <div className="space-y-3">
+                  <h4 className="text-[10px] uppercase tracking-wider font-bold text-zinc-400">Key Mathematical Models</h4>
                   <div className="grid grid-cols-1 gap-2">
                     {activeDoc.summary.formulas.map((frm, idx) => (
-                      <code key={idx} className="bg-primary/5 border border-primary/20 text-primary dark:text-purple-400 p-2.5 rounded-lg text-[10px] block font-mono">
-                        {frm}
-                      </code>
+                      <div key={idx} className="bg-primary/5 border border-primary/10 p-3 rounded-xl flex items-center justify-between group">
+                        <code className="text-primary dark:text-purple-400 text-[10px] font-mono tracking-wide">
+                          {frm}
+                        </code>
+                        <Sparkles className="h-3.5 w-3.5 text-primary/45 opacity-0 group-hover:opacity-100 transition-opacity" />
+                      </div>
                     ))}
                   </div>
                 </div>
 
                 {/* Warnings Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
                   {/* Confusions */}
-                  <div className="bg-rose-500/5 border border-rose-500/10 rounded-xl p-3.5 space-y-1">
-                    <h5 className="text-[10px] font-bold text-rose-500 flex items-center gap-1">
-                      <AlertTriangle className="h-3.5 w-3.5" />
+                  <div className="bg-rose-500/5 border border-rose-500/10 rounded-xl p-4 space-y-1.5">
+                    <h5 className="text-[10px] font-bold text-rose-400 flex items-center gap-1.5 uppercase tracking-wider">
+                      <AlertTriangle className="h-3.5 w-3.5 text-rose-500" />
                       Confusion Warning
                     </h5>
-                    <p className="text-[10px] text-zinc-400 leading-normal">{activeDoc.summary.confusedTopics[0]}</p>
+                    <p className="text-[10px] text-zinc-400 leading-normal font-light">{activeDoc.summary.confusedTopics[0]}</p>
                   </div>
                   {/* Tips */}
-                  <div className="bg-amber-500/5 border border-amber-500/10 rounded-xl p-3.5 space-y-1">
-                    <h5 className="text-[10px] font-bold text-amber-500 flex items-center gap-1">
-                      <TrendingUp className="h-3.5 w-3.5" />
+                  <div className="bg-amber-500/5 border border-amber-500/10 rounded-xl p-4 space-y-1.5">
+                    <h5 className="text-[10px] font-bold text-amber-400 flex items-center gap-1.5 uppercase tracking-wider">
+                      <TrendingUp className="h-3.5 w-3.5 text-amber-500" />
                       Exam Warnings
                     </h5>
-                    <p className="text-[10px] text-zinc-400 leading-normal">{activeDoc.summary.examTips[0]}</p>
+                    <p className="text-[10px] text-zinc-400 leading-normal font-light">{activeDoc.summary.examTips[0]}</p>
                   </div>
                 </div>
 
@@ -228,10 +245,11 @@ export default function WorkspacePage() {
           </div>
 
           {/* Right panel: Chat chatbot / flashcards / RTM (col-span-7) */}
-          <div className="lg:col-span-7 flex flex-col overflow-hidden h-full bg-card/10">
+          <div className="lg:col-span-7 flex flex-col overflow-hidden h-full bg-[#050507]/90 relative">
+            
             {/* Header Tabs Navigation */}
-            <div className="border-b border-border bg-card/60 backdrop-blur-md flex items-center justify-between px-4">
-              <div className="flex">
+            <div className="border-b border-white/5 bg-[#09090b]/80 backdrop-blur-md flex items-center justify-between px-6 py-2">
+              <div className="flex gap-1">
                 {[
                   { id: "chat", name: "Doubt Solver", icon: MessageSquare },
                   { id: "flashcards", name: "Holographic Cards", icon: Lightbulb },
@@ -243,10 +261,10 @@ export default function WorkspacePage() {
                     <button
                       key={tab.id}
                       onClick={() => setActiveTab(tab.id as any)}
-                      className={`flex items-center gap-2 px-5 py-4 text-xs font-semibold border-b-2 transition-all ${
+                      className={`flex items-center gap-2 px-4 py-3.5 text-xs font-semibold border-b-2 transition-all duration-300 ${
                         isActive 
                           ? "border-primary text-primary dark:text-purple-400" 
-                          : "border-transparent text-muted-foreground hover:text-foreground"
+                          : "border-transparent text-zinc-500 hover:text-zinc-300"
                       }`}
                     >
                       <Icon className="h-4 w-4" />
@@ -260,7 +278,7 @@ export default function WorkspacePage() {
               {quizzes[activeDoc.id] && (
                 <Link
                   href={`/quiz?docId=${activeDoc.id}`}
-                  className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary dark:text-purple-400 px-3.5 py-1.5 text-xs font-bold hover:bg-primary/20 transition-all"
+                  className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary dark:text-purple-400 px-4 py-1.5 text-xs font-bold hover:bg-primary/20 transition-all shadow-[0_0_10px_rgba(139,92,246,0.1)]"
                 >
                   <Cpu className="h-3.5 w-3.5 animate-pulse" />
                   <span>Calibrate Quiz</span>
@@ -269,13 +287,13 @@ export default function WorkspacePage() {
             </div>
 
             {/* Dynamic Tab Body Panel */}
-            <div className="flex-1 overflow-y-auto p-4 md:p-6">
+            <div className="flex-1 overflow-y-auto p-6 flex flex-col">
               
               {/* Tab 1: AI Chat Doubt Solver */}
               {activeTab === "chat" && (
-                <div className="flex flex-col h-full justify-between gap-4">
+                <div className="flex flex-col h-full justify-between gap-6 flex-1">
                   {/* Messages list */}
-                  <div className="flex-1 space-y-4 max-h-[460px] overflow-y-auto pr-2">
+                  <div className="flex-1 space-y-4 max-h-[440px] overflow-y-auto pr-2">
                     {activeThread.map((msg) => (
                       <div 
                         key={msg.id} 
@@ -283,43 +301,44 @@ export default function WorkspacePage() {
                           msg.sender === "user" ? "ml-auto items-end" : "mr-auto items-start"
                         }`}
                       >
-                        <div className={`rounded-2xl p-4 text-sm leading-relaxed ${
+                        <div className={`rounded-2xl p-4 text-xs leading-relaxed ${
                           msg.sender === "user" 
-                            ? "bg-primary text-white" 
-                            : "bg-card border border-border text-foreground glass-card shadow-sm"
+                            ? "bg-primary text-white font-medium" 
+                            : "bg-[#0c0c0f]/90 border border-white/5 text-zinc-200 glass-card shadow-sm matte-layer"
                         }`}>
                           {msg.text}
                         </div>
-                        <span className="text-[10px] text-zinc-500 px-1">{msg.timestamp}</span>
+                        <span className="text-[9px] text-zinc-500 px-2 font-mono">{msg.timestamp}</span>
                       </div>
                     ))}
 
-                    {/* AI Loading state */}
+                    {/* Simulated AI wave thinking loader */}
                     {isAiReplying && (
-                      <div className="mr-auto items-start max-w-[80%] flex items-center gap-2">
-                        <div className="bg-card border border-border rounded-2xl px-4 py-3 text-sm text-muted-foreground glass-card flex items-center gap-2">
-                          <div className="h-2 w-2 rounded-full bg-primary animate-bounce [animation-delay:-0.3s]" />
-                          <div className="h-2 w-2 rounded-full bg-primary animate-bounce [animation-delay:-0.15s]" />
-                          <div className="h-2 w-2 rounded-full bg-primary animate-bounce" />
+                      <div className="mr-auto items-start max-w-[80%] w-full animate-float">
+                        <div className="bg-[#0b0b0e]/90 border border-white/5 rounded-2xl p-4 w-full glass-card space-y-2 matte-layer">
+                          <div className="h-1.5 w-full rounded bg-white/5 overflow-hidden relative border border-white/10">
+                            <div className="absolute inset-y-0 left-0 w-1/2 bg-gradient-to-r from-transparent via-primary to-transparent animate-pulse wave-thinking" />
+                          </div>
+                          <span className="text-[10px] text-primary dark:text-purple-400 font-bold uppercase tracking-wider block animate-pulse">Stitching memory vectors...</span>
                         </div>
                       </div>
                     )}
                   </div>
 
                   {/* Message Form */}
-                  <form onSubmit={handleSendMessage} className="flex gap-2 pt-4 border-t border-border/80">
+                  <form onSubmit={handleSendMessage} className="flex gap-2 pt-4 border-t border-white/5 mt-auto">
                     <input
                       type="text"
                       required
                       value={chatInput}
                       onChange={(e) => setChatInput(e.target.value)}
                       placeholder="Ask AI Doubt (e.g. 'explain formula', 'give exam tip'...)"
-                      className="w-full rounded-xl border border-border bg-card/60 px-4 py-3 text-sm text-foreground focus:border-primary focus:outline-none transition-all"
+                      className="w-full rounded-xl border border-white/5 bg-[#09090b]/60 px-4 py-3.5 text-xs text-zinc-200 focus:border-primary focus:outline-none transition-all placeholder-zinc-600 font-light"
                     />
                     <button
                       type="submit"
                       disabled={isAiReplying}
-                      className="rounded-xl bg-primary px-5 text-white hover:bg-primary/95 transition-all shadow-md flex items-center justify-center shrink-0"
+                      className="rounded-xl bg-primary px-6 text-white hover:bg-primary/95 transition-all shadow-md flex items-center justify-center shrink-0"
                     >
                       <Send className="h-4.5 w-4.5" />
                     </button>
@@ -329,62 +348,63 @@ export default function WorkspacePage() {
 
               {/* Tab 2: Holographic Flashcards */}
               {activeTab === "flashcards" && (
-                <div className="flex flex-col items-center justify-center h-full max-w-md mx-auto space-y-8">
-                  <div className="text-center">
-                    <h3 className="text-sm font-semibold text-muted-foreground uppercase">Holographic Deck Review</h3>
-                    <p className="text-xs text-zinc-500 mt-1">Review active concepts coordinates. Double click to flip card.</p>
+                <div className="flex flex-col items-center justify-center h-full max-w-md mx-auto space-y-8 py-4">
+                  <div className="text-center space-y-1.5">
+                    <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest">Holographic Deck Review</h3>
+                    <p className="text-[10px] text-zinc-500 font-light">Toggle details to review memory anchors. Tap to flip.</p>
                   </div>
 
                   {/* Card Flip Container */}
                   <div 
                     onClick={() => setIsFlipped(!isFlipped)}
                     className="relative w-full aspect-[1.6/1] cursor-pointer group"
-                    style={{ perspective: "1000px" }}
+                    style={{ perspective: "1200px" }}
                   >
                     <div 
-                      className="w-full h-full rounded-2xl border border-border transition-transform duration-500 shadow-lg relative"
+                      className="w-full h-full rounded-2xl border transition-transform duration-500 relative"
                       style={{ 
                         transformStyle: "preserve-3d",
-                        transform: isFlipped ? "rotateY(180deg)" : "rotateY(0)"
+                        transform: isFlipped ? "rotateY(180deg)" : "rotateY(0)",
+                        borderColor: isFlipped ? "rgba(139, 92, 246, 0.2)" : "rgba(255, 255, 255, 0.05)"
                       }}
                     >
                       {/* Front Side */}
                       <div 
-                        className="absolute inset-0 bg-card/85 glass-card rounded-2xl flex flex-col items-center justify-center p-6 text-center"
+                        className="absolute inset-0 bg-[#0d0d11]/95 glass-card rounded-2xl flex flex-col items-center justify-center p-6 text-center matte-layer shadow-2xl"
                         style={{ backfaceVisibility: "hidden" }}
                       >
-                        <HelpCircle className="h-6 w-6 text-primary mb-3" />
-                        <h4 className="text-base font-bold text-foreground">{flashcards[currentCardIndex].q}</h4>
-                        <span className="text-[10px] text-zinc-500 uppercase font-bold absolute bottom-4">Tap to reveal answer</span>
+                        <HelpCircle className="h-6 w-6 text-primary mb-3.5 animate-pulse" />
+                        <h4 className="text-sm font-bold text-white leading-relaxed px-4">{flashcards[currentCardIndex].q}</h4>
+                        <span className="text-[9px] text-zinc-600 uppercase font-semibold tracking-wider absolute bottom-4">Tap to flip card</span>
                       </div>
 
                       {/* Back Side */}
                       <div 
-                        className="absolute inset-0 bg-primary/10 border border-primary/30 rounded-2xl flex flex-col items-center justify-center p-6 text-center"
+                        className="absolute inset-0 bg-primary/5 border border-primary/20 rounded-2xl flex flex-col items-center justify-center p-6 text-center shadow-2xl"
                         style={{ 
                           backfaceVisibility: "hidden", 
                           transform: "rotateY(180deg)" 
                         }}
                       >
-                        <CheckCircle className="h-6 w-6 text-primary dark:text-purple-400 mb-3" />
-                        <h4 className="text-base font-mono font-semibold text-foreground leading-relaxed">{flashcards[currentCardIndex].a}</h4>
-                        <span className="text-[10px] text-zinc-500 uppercase font-bold absolute bottom-4">Tap to hide</span>
+                        <CheckCircle className="h-6 w-6 text-primary dark:text-purple-400 mb-3.5" />
+                        <h4 className="text-sm font-mono font-semibold text-white leading-relaxed px-4">{flashcards[currentCardIndex].a}</h4>
+                        <span className="text-[9px] text-zinc-500 uppercase font-semibold tracking-wider absolute bottom-4">Tap to reverse</span>
                       </div>
                     </div>
                   </div>
 
                   {/* Rating Actions */}
                   {isFlipped && (
-                    <div className="flex gap-4 w-full justify-center">
+                    <div className="flex gap-4 w-full justify-center animate-drift">
                       <button
                         onClick={() => handleFlashcardRating(false)}
-                        className="rounded-xl border border-rose-500/20 bg-rose-500/5 hover:bg-rose-500/10 px-5 py-2.5 text-xs font-bold text-rose-500 transition-all"
+                        className="rounded-xl border border-rose-500/20 bg-rose-500/5 hover:bg-rose-500/10 px-6 py-3 text-xs font-bold text-rose-400 transition-all duration-300"
                       >
                         Try Again
                       </button>
                       <button
                         onClick={() => handleFlashcardRating(true)}
-                        className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 hover:bg-emerald-500/10 px-5 py-2.5 text-xs font-bold text-emerald-500 transition-all"
+                        className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 hover:bg-emerald-500/10 px-6 py-3 text-xs font-bold text-emerald-400 transition-all duration-300 shadow-[0_0_15px_rgba(16,185,129,0.05)]"
                       >
                         Mark Mastered (+10 XP)
                       </button>
@@ -395,38 +415,43 @@ export default function WorkspacePage() {
 
               {/* Tab 3: Reverse Teacher Mode (RTM) */}
               {activeTab === "rtm" && (
-                <div className="flex flex-col h-full justify-between gap-6 max-w-2xl mx-auto">
-                  <div className="space-y-4">
+                <div className="flex flex-col h-full justify-between gap-6 max-w-2xl mx-auto w-full">
+                  <div className="space-y-5">
                     {/* Prompt Box */}
-                    <div className="bg-primary/5 border border-primary/20 rounded-2xl p-5 space-y-2 relative overflow-hidden">
-                      <div className="absolute top-0 right-0 w-[100px] h-[100px] radial-glow opacity-25 pointer-events-none" />
-                      <div className="flex items-center gap-2 text-xs font-bold text-primary dark:text-purple-400 uppercase">
-                        <GraduationCap className="h-4.5 w-4.5" />
+                    <div className="bg-primary/5 border border-primary/10 rounded-2xl p-5 space-y-2 relative overflow-hidden matte-layer">
+                      <div className="absolute top-0 right-0 w-[120px] h-[120px] bg-primary/10 rounded-full filter blur-2xl pointer-events-none" />
+                      <div className="flex items-center gap-2 text-[10px] font-bold text-primary dark:text-purple-400 uppercase tracking-widest">
+                        <GraduationCap className="h-4 w-4" />
                         <span>Reverse Teacher Prompt</span>
                       </div>
-                      <h3 className="text-base font-semibold text-foreground leading-snug">{rtmQuestion}</h3>
+                      <h3 className="text-sm font-semibold text-white leading-relaxed">{rtmQuestion}</h3>
                     </div>
 
                     {/* Answer area */}
                     {!rtmEvaluation && (
                       <form onSubmit={handleRtmSubmit} className="space-y-4">
-                        <textarea
-                          required
-                          rows={6}
-                          value={rtmAnswer}
-                          onChange={(e) => setRtmAnswer(e.target.value)}
-                          placeholder="Type your detailed explanation here. Include formulas, definitions, and mechanisms to maximize coverage score..."
-                          className="w-full rounded-xl border border-border bg-card/60 p-4 text-sm text-foreground focus:border-primary focus:outline-none transition-all resize-none"
-                        />
+                        <div className="relative">
+                          <textarea
+                            required
+                            rows={6}
+                            value={rtmAnswer}
+                            onChange={(e) => setRtmAnswer(e.target.value)}
+                            placeholder="Type your detailed explanation here. Include formulas, definitions, and mechanisms to maximize coverage score..."
+                            className="w-full rounded-xl border border-white/5 bg-[#09090b]/60 p-4 text-xs text-zinc-200 focus:border-primary focus:outline-none transition-all resize-none font-light leading-relaxed placeholder-zinc-600"
+                          />
+                          <div className="absolute bottom-3 right-3 text-[10px] text-zinc-500 font-mono">
+                            {rtmAnswer.length} chars
+                          </div>
+                        </div>
                         <button
                           type="submit"
                           disabled={rtmLoading}
-                          className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-primary py-3.5 text-sm font-bold text-white shadow-md hover:bg-primary/95 transition-all glowing-border"
+                          className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-primary py-3.5 text-xs font-bold text-white shadow-md hover:bg-primary/95 transition-all glowing-border"
                         >
                           {rtmLoading ? (
-                            <RefreshCw className="h-4.5 w-4.5 animate-spin" />
+                            <RefreshCw className="h-4 w-4 animate-spin" />
                           ) : (
-                            <Play className="h-4.5 w-4.5" />
+                            <Play className="h-4 w-4" />
                           )}
                           <span>Analyze Conceptual Coverage</span>
                         </button>
@@ -435,20 +460,57 @@ export default function WorkspacePage() {
 
                     {/* Evaluation Output */}
                     {rtmEvaluation && (
-                      <div className="space-y-4">
-                        <div className="bg-card border border-border rounded-xl p-5 text-sm text-muted-foreground leading-relaxed glass-card">
-                          {rtmEvaluation.split("\n").map((line, idx) => (
-                            <p key={idx} className="mb-2">{line}</p>
-                          ))}
+                      <div className="space-y-5 animate-drift">
+                        <div className="bg-[#0b0b0e]/95 border border-white/5 rounded-2xl p-6 text-xs leading-relaxed glass-card matte-layer shadow-2xl">
+                          <div className="flex items-center gap-2 text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-4 border-b border-white/5 pb-2">
+                            <Brain className="h-4 w-4 text-primary animate-pulse" />
+                            <span>Evaluation Feedback</span>
+                          </div>
+                          
+                          <div className="space-y-3.5 text-zinc-300 font-light">
+                            {rtmEvaluation.split("\n").map((line, idx) => {
+                              if (line.startsWith("* **Conceptual Accuracy:**")) {
+                                return (
+                                  <div key={idx} className="flex items-center justify-between bg-primary/5 p-3 rounded-xl border border-primary/10">
+                                    <span className="font-semibold text-white">Conceptual Accuracy Score</span>
+                                    <span className="font-mono text-primary font-bold text-sm">{line.split(":")[1]}</span>
+                                  </div>
+                                );
+                              }
+                              if (line.startsWith("* **Semantic Gaps Detected:**")) {
+                                return (
+                                  <div key={idx} className="space-y-1.5 bg-rose-500/5 p-4 rounded-xl border border-rose-500/10">
+                                    <span className="font-semibold text-rose-400 flex items-center gap-1.5">
+                                      <AlertTriangle className="h-4 w-4 shrink-0" />
+                                      Detected Semantic Gaps
+                                    </span>
+                                    <p className="text-[11px] text-zinc-400 leading-relaxed font-light">{line.split(":")[1]}</p>
+                                  </div>
+                                );
+                              }
+                              if (line.startsWith("* **Cognitive archetypes update:**")) {
+                                return (
+                                  <div key={idx} className="flex items-center gap-2 text-emerald-400 font-medium py-1">
+                                    <CheckCircle className="h-4 w-4" />
+                                    <span>{line.substring(2)}</span>
+                                  </div>
+                                );
+                              }
+                              return (
+                                <p key={idx} className="leading-relaxed">{line}</p>
+                              );
+                            })}
+                          </div>
                         </div>
+
                         <button
                           onClick={() => {
                             setRtmEvaluation("");
                             setRtmAnswer("");
                           }}
-                          className="w-full rounded-xl border border-border bg-card hover:bg-muted py-2.5 text-xs font-bold text-foreground transition-all"
+                          className="w-full rounded-xl border border-white/5 bg-[#0d0d11]/80 hover:bg-[#0d0d11] py-3 text-xs font-bold text-zinc-300 hover:text-white transition-all duration-300"
                         >
-                          Try Another active recall session
+                          Try Another Active Recall Session
                         </button>
                       </div>
                     )}

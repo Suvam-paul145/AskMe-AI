@@ -3,16 +3,36 @@
 import React, { useState } from "react";
 import Navbar from "@/components/navbar";
 import { useStore } from "@/lib/store";
-import { MessageSquare, Send, Cpu, Bot, Mic, MicOff, Info } from "lucide-react";
+import { 
+  Send, 
+  Bot, 
+  Cpu, 
+  HelpCircle, 
+  Layers, 
+  Activity, 
+  Calendar, 
+  Sparkles, 
+  Info,
+  Mic,
+  MicOff,
+  Brain
+} from "lucide-react";
 
 export default function ChatPage() {
   const { documents, selectedDocId, chatThreads, addMessage } = useStore();
   const [inputText, setInputText] = useState("");
-  const [voiceActive, setVoiceActive] = useState(false);
   const [isAiReplying, setIsAiReplying] = useState(false);
+  const [voiceActive, setVoiceActive] = useState(false);
 
+  // Active doc references
   const activeDoc = documents.find(d => d.id === selectedDocId) || documents[0];
   const activeThread = activeDoc ? (chatThreads[activeDoc.id] || []) : [];
+
+  // Dynamic context metrics matching user query
+  const [prereqGaps, setPrereqGaps] = useState<string[]>(["Permittivity constants", "Vector geometry integration"]);
+  const [relatedConcepts, setRelatedConcepts] = useState<string[]>(["Superposition Principle", "Electric Field mappings"]);
+  const [memoryStrength, setMemoryStrength] = useState<number>(75);
+  const [revisionUrgency, setRevisionUrgency] = useState<string>("Low (Calibrated)");
 
   const handleSend = (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,126 +43,200 @@ export default function ChatPage() {
     addMessage(activeDoc.id, userText, "user");
     setIsAiReplying(true);
 
+    // Dynamic shift of context side panels based on input keywords
+    const lower = userText.toLowerCase();
     setTimeout(() => {
-      let aiResponse = `Calculated response for your query on '${activeDoc.title}': The documentation suggests checking basic formulas and active concepts coordinates. Let me know if you would like me to generate a custom test question for this section!`;
+      if (lower.includes("formula") || lower.includes("law")) {
+        setPrereqGaps(["Shell theorem limitations", "Vector cross products"]);
+        setRelatedConcepts(["Gauss's law index", "Coulomb mechanical limits"]);
+        setMemoryStrength(62);
+        setRevisionUrgency("High (Decaying)");
+      } else {
+        setPrereqGaps(["Permittivity constants", "Vector geometry integration"]);
+        setRelatedConcepts(["Superposition Principle", "Electric Field mappings"]);
+        setMemoryStrength(80);
+        setRevisionUrgency("Low (Calibrated)");
+      }
+
+      let aiResponse = `Cognitive RAG context match processed for '${activeDoc.title}': The documentation details structural coordinates and equations. Let me know if you would like to run a Reverse Teacher aktive recall session to test coverage!`;
       addMessage(activeDoc.id, aiResponse, "ai");
       setIsAiReplying(false);
-    }, 1200);
-  };
-
-  const handleVoiceToggle = () => {
-    setVoiceActive(!voiceActive);
+    }, 2000); // 2 second response simulation for the thinking animation to breathe
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-background relative select-none">
+    <div className="flex flex-col min-h-screen bg-[#040406] text-white neural-overlay relative select-none">
       <Navbar />
 
-      <main className="flex-1 max-w-4xl mx-auto w-full px-4 py-8 flex flex-col justify-between h-[calc(100vh-64px)]">
+      <main className="flex-1 max-w-7xl mx-auto w-full px-4 py-6 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-12 gap-8 h-[calc(100vh-64px)] overflow-hidden">
         
-        {/* Top Info Banner */}
-        {activeDoc && (
-          <div className="bg-card border border-border p-3.5 rounded-xl glass-card text-xs flex items-center justify-between shadow-sm">
-            <span className="text-muted-foreground flex items-center gap-1.5">
-              <Bot className="h-4 w-4 text-primary shrink-0" />
-              Connected Model Context: <strong className="text-foreground truncate max-w-[200px]">{activeDoc.title}</strong>
-            </span>
-            <span className="text-[10px] text-zinc-500">{activeDoc.size} cached vectors</span>
-          </div>
-        )}
+        {/* LEFT COLUMN — AI DOUBT CHAT PANEL (col-span-8) */}
+        <div className="lg:col-span-8 flex flex-col justify-between h-full bg-card/15 border border-border/80 rounded-3xl p-6 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-[150px] h-[150px] radial-glow opacity-20 pointer-events-none" />
 
-        {/* Message Thread Area */}
-        <div className="flex-1 overflow-y-auto my-6 space-y-4 pr-2">
-          {activeThread.length === 0 ? (
-            <div className="h-full flex flex-col items-center justify-center text-center p-8 space-y-4">
-              <MessageSquare className="h-12 w-12 text-primary dark:text-purple-400" />
-              <h2 className="text-lg font-bold text-foreground">Launch conversation tutor</h2>
-              <p className="text-xs text-muted-foreground max-w-xs">Select study notes from the sidebar library in the study workspace to feed context vectors here.</p>
+          {/* Active doc HUD header */}
+          {activeDoc && (
+            <div className="flex items-center justify-between border-b border-border/80 pb-4 text-xs font-semibold text-zinc-500">
+              <span className="flex items-center gap-1.5">
+                <Bot className="h-4 w-4 text-primary animate-pulse" />
+                Active Context: <strong className="text-foreground truncate max-w-[180px]">{activeDoc.title}</strong>
+              </span>
+              <span className="text-[10px] bg-primary/10 border border-primary/20 text-primary dark:text-purple-400 px-2.5 py-0.5 rounded-full font-bold">RAG Active</span>
             </div>
-          ) : (
-            activeThread.map((msg) => (
-              <div 
-                key={msg.id}
-                className={`flex flex-col gap-1 max-w-[85%] ${
-                  msg.sender === "user" ? "ml-auto items-end" : "mr-auto items-start"
-                }`}
-              >
-                <div className={`rounded-2xl p-4 text-sm leading-relaxed ${
-                  msg.sender === "user" 
-                    ? "bg-primary text-white" 
-                    : "bg-card border border-border text-foreground glass-card shadow-sm"
-                }`}>
-                  {msg.text}
+          )}
+
+          {/* Chat message list area */}
+          <div className="flex-1 overflow-y-auto my-4 space-y-4 pr-2 max-h-[380px]">
+            {activeThread.length === 0 ? (
+              <div className="h-full flex flex-col items-center justify-center text-center p-8 space-y-4 py-20">
+                <Brain className="h-12 w-12 text-primary/40 animate-drift" />
+                <h3 className="text-base font-bold text-foreground">Launch Cognitive Conversation</h3>
+                <p className="text-xs text-muted-foreground max-w-xs">Upload study notes on the Ingestion screen to align the AI tutor context.</p>
+              </div>
+            ) : (
+              activeThread.map((msg) => (
+                <div 
+                  key={msg.id}
+                  className={`flex flex-col gap-1 max-w-[80%] ${
+                    msg.sender === "user" ? "ml-auto items-end" : "mr-auto items-start"
+                  }`}
+                >
+                  <div className={`rounded-2xl p-4 text-sm leading-relaxed ${
+                    msg.sender === "user" 
+                      ? "bg-primary text-white font-medium" 
+                      : "bg-card/90 border border-border text-foreground glass-card shadow-sm"
+                  }`}>
+                    {msg.text}
+                  </div>
+                  <span className="text-[9px] text-zinc-500 px-1">{msg.timestamp}</span>
                 </div>
-                <span className="text-[10px] text-zinc-500 px-1">{msg.timestamp}</span>
-              </div>
-            ))
-          )}
+              ))
+            )}
 
-          {/* AI Loader */}
-          {isAiReplying && (
-            <div className="mr-auto items-start max-w-[80%] flex items-center gap-2">
-              <div className="bg-card border border-border rounded-2xl px-4 py-3 text-sm text-muted-foreground glass-card flex items-center gap-2">
-                <div className="h-2 w-2 rounded-full bg-primary animate-bounce [animation-delay:-0.3s]" />
-                <div className="h-2 w-2 rounded-full bg-primary animate-bounce [animation-delay:-0.15s]" />
-                <div className="h-2 w-2 rounded-full bg-primary animate-bounce" />
+            {/* Simulated AI wave thinking loader */}
+            {isAiReplying && (
+              <div className="mr-auto items-start max-w-[70%] w-full animate-float">
+                <div className="bg-card/90 border border-border rounded-2xl p-4 w-full glass-card space-y-2">
+                  <div className="h-1.5 w-full rounded bg-muted/40 overflow-hidden relative border border-border">
+                    <div className="absolute inset-y-0 left-0 w-1/2 bg-gradient-to-r from-transparent via-primary to-transparent animate-pulse wave-thinking" />
+                  </div>
+                  <span className="text-[10px] text-primary dark:text-purple-400 font-bold uppercase tracking-wider block animate-pulse">Stitching memory vectors...</span>
+                </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
+
+          {/* Form and Quick suggestions */}
+          <div className="space-y-4 pt-4 border-t border-border/80">
+            <form onSubmit={handleSend} className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setVoiceActive(!voiceActive)}
+                className={`rounded-xl border p-3.5 transition-all ${
+                  voiceActive 
+                    ? "border-primary bg-primary/10 text-primary animate-pulse" 
+                    : "border-border bg-card hover:bg-muted text-muted-foreground"
+                }`}
+                title="Toggle Mic Input"
+              >
+                <Mic className="h-5 w-5" />
+              </button>
+
+              <input
+                type="text"
+                required
+                value={inputText}
+                onChange={(e) => setInputText(e.target.value)}
+                placeholder={voiceActive ? "Listening..." : "Query the model context..."}
+                className="w-full rounded-xl border border-border bg-card/60 px-4 py-3.5 text-xs text-foreground focus:border-primary focus:outline-none transition-all"
+              />
+              <button
+                type="submit"
+                disabled={isAiReplying}
+                className="rounded-xl bg-primary px-6 text-white hover:bg-primary/95 transition-all shadow-md flex items-center justify-center shrink-0"
+              >
+                <Send className="h-4.5 w-4.5" />
+              </button>
+            </form>
+          </div>
+
         </div>
 
-        {/* Bottom Input Area */}
-        <div className="space-y-3.5">
-          {/* Quick-start options */}
-          <div className="flex flex-wrap gap-2 justify-center">
-            {["Explain formulas", "Summarize keypoints", "Warnings tips"].map((query) => (
-              <button
-                key={query}
-                onClick={() => setInputText(query)}
-                className="rounded-full border border-border bg-card/60 hover:bg-muted text-[10px] font-semibold text-muted-foreground hover:text-foreground px-3.5 py-1.5 transition-all"
-              >
-                {query}
-              </button>
-            ))}
+        {/* RIGHT COLUMN — COGNITIVE CONTEXT PANEL (col-span-4) */}
+        <div className="lg:col-span-4 space-y-6 overflow-y-auto pr-2 max-h-[500px]">
+          <h2 className="text-xs uppercase font-bold tracking-wider text-muted-foreground flex items-center gap-1.5">
+            <Cpu className="h-4.5 w-4.5 text-primary" />
+            Active Cognition HUD
+          </h2>
+
+          {/* Prerequisite Gaps */}
+          <div className="border border-border bg-card/25 p-5 rounded-2xl glass-card space-y-3">
+            <h3 className="text-xs font-bold text-foreground flex items-center gap-2">
+              <Layers className="h-4 w-4 text-primary" />
+              Prerequisite Gaps
+            </h3>
+            <div className="grid grid-cols-1 gap-2">
+              {prereqGaps.map((gap, idx) => (
+                <div key={idx} className="bg-rose-500/5 border border-rose-500/10 rounded-xl p-2.5 text-[10px] text-rose-500 font-semibold flex items-center gap-1.5">
+                  <span className="h-1.5 w-1.5 rounded-full bg-rose-500 animate-ping" />
+                  <span>{gap}</span>
+                </div>
+              ))}
+            </div>
           </div>
 
-          <form onSubmit={handleSend} className="flex gap-2">
-            {/* Voice speech simulator button */}
-            <button
-              type="button"
-              onClick={handleVoiceToggle}
-              className={`rounded-xl border p-3.5 transition-all ${
-                voiceActive 
-                  ? "border-primary bg-primary/10 text-primary dark:text-purple-400" 
-                  : "border-border bg-card hover:bg-muted text-muted-foreground"
-              }`}
-              title="Toggle Simulated Speech Mic"
-            >
-              {voiceActive ? <Mic className="h-5 w-5 animate-pulse" /> : <MicOff className="h-5 w-5" />}
-            </button>
+          {/* Related Concepts */}
+          <div className="border border-border bg-card/25 p-5 rounded-2xl glass-card space-y-3">
+            <h3 className="text-xs font-bold text-foreground flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-primary animate-pulse" />
+              Related Concepts
+            </h3>
+            <div className="grid grid-cols-1 gap-2">
+              {relatedConcepts.map((concept, idx) => (
+                <div key={idx} className="bg-primary/5 border border-primary/10 rounded-xl p-2.5 text-[10px] text-primary dark:text-purple-400 font-semibold">
+                  {concept}
+                </div>
+              ))}
+            </div>
+          </div>
 
-            <input
-              type="text"
-              required
-              value={inputText}
-              onChange={(e) => setInputText(e.target.value)}
-              placeholder={voiceActive ? "Listening for speech doubt input..." : "Type deep conceptual doubt question..."}
-              className="w-full rounded-xl border border-border bg-card/60 px-4 py-3.5 text-sm text-foreground focus:border-primary focus:outline-none transition-all"
-            />
-            <button
-              type="submit"
-              disabled={isAiReplying}
-              className="rounded-xl bg-primary px-6 text-white hover:bg-primary/95 transition-all shadow-md flex items-center justify-center shrink-0"
-            >
-              <Send className="h-4.5 w-4.5" />
-            </button>
-          </form>
+          {/* Memory Strength & Spacing status */}
+          <div className="border border-border bg-card/25 p-5 rounded-2xl glass-card space-y-4">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-xs font-semibold">
+                <span className="text-muted-foreground">Memory Strength:</span>
+                <span className="text-primary dark:text-purple-400 font-extrabold">{memoryStrength}%</span>
+              </div>
+              <div className="w-full bg-muted rounded-full h-1 overflow-hidden">
+                <div 
+                  className="bg-primary h-full transition-all duration-500" 
+                  style={{ width: `${memoryStrength}%` }}
+                />
+              </div>
+            </div>
 
-          {voiceActive && (
-            <p className="text-center text-[10px] text-primary dark:text-purple-400 animate-pulse font-semibold">
-              Simulating Speech Recognition: Speak clearly into your microphone device.
-            </p>
-          )}
+            <div className="h-[1px] bg-border/80" />
+
+            <div className="flex items-center justify-between text-xs font-semibold">
+              <span className="text-muted-foreground flex items-center gap-1">
+                <Calendar className="h-3.5 w-3.5 text-zinc-500" />
+                Revision Urgency:
+              </span>
+              <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded-full border ${
+                revisionUrgency.includes("High") 
+                  ? "border-rose-500/20 bg-rose-500/5 text-rose-500" 
+                  : "border-emerald-500/20 bg-emerald-500/5 text-emerald-500"
+              }`}>
+                {revisionUrgency}
+              </span>
+            </div>
+          </div>
+
+          <div className="bg-card/60 border border-border p-4 rounded-xl flex items-start gap-2.5 text-[10px] text-muted-foreground leading-normal">
+            <Info className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+            <span>The AI dynamically parses context chunks matching your input keywords to calibrate the related concepts panel coordinates.</span>
+          </div>
+
         </div>
 
       </main>

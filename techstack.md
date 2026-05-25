@@ -28,8 +28,8 @@ Do not split effort across mobile apps, teacher dashboards, parent dashboards, v
 | File Storage | Supabase Storage | Store uploaded PDFs and extracted text metadata beside user data |
 | Vector Search | Supabase pgvector | Keeps RAG inside Postgres and avoids a separate vector database |
 | AI SDK | Vercel AI SDK | Streaming chat UI and model calls fit naturally with Next.js |
-| LLM | OpenAI GPT-4o mini for normal tasks, GPT-4o for demo-critical reasoning | Good speed/cost balance while keeping quality available for important flows |
-| Embeddings | OpenAI text-embedding-3-small | Cost-effective embeddings for document search |
+| LLM | Gemini API free tier first; OpenAI only if credits/budget are available | Keeps the MVP buildable without depending on paid OpenAI API usage |
+| Embeddings | Gemini embeddings or Supabase-compatible local/simple embeddings first; OpenAI embeddings only if budget exists | Avoids paying for embeddings during MVP testing |
 | PDF Parsing | pdf-parse or unstructured text extraction in Node | Simple PDF text extraction without a Python service |
 | Charts | Recharts | Simple dashboard charts for quiz scores and weak topics |
 | State/Data Fetching | TanStack Query only if needed | Add only when server state becomes messy; otherwise use simple React state |
@@ -75,6 +75,42 @@ askme-ai/
 ```
 
 ## MVP Features To Build
+
+## Free API Key Reality
+
+ChatGPT and the OpenAI API are not the same thing.
+
+- ChatGPT free plan is for using ChatGPT in the browser/app.
+- OpenAI API is for developers building apps and is normally usage-based paid.
+- OpenAI may sometimes offer trial credits or student/startup credits, but you should not depend on that for a one-week hackathon MVP.
+
+For this project, build the AI layer so the model provider can be swapped through environment variables.
+
+```env
+AI_PROVIDER=gemini
+GEMINI_API_KEY=...
+OPENAI_API_KEY=...
+GROQ_API_KEY=...
+OPENROUTER_API_KEY=...
+```
+
+Use this provider priority:
+
+| Priority | Provider | Use For | Notes |
+|---|---|---|---|
+| 1 | Google Gemini API | Main free MVP provider | Has a free tier with rate limits; best first choice for a student hackathon MVP |
+| 2 | Groq API | Fast free/low-cost chat fallback | Good for quick chat and quiz generation; model availability/rate limits can change |
+| 3 | OpenRouter free models | Backup free model access | Useful fallback, but free models can be inconsistent |
+| 4 | Ollama local models | Offline fallback | Free, but needs a decent laptop and quality may be weaker |
+| 5 | OpenAI API | Best quality paid fallback | Use only if you have credits or can spend a small amount |
+
+Recommended MVP setup:
+
+- Primary chat/summary/quiz model: Gemini Flash model available in the free tier
+- Backup model: Groq-hosted Llama model
+- Paid-quality fallback: OpenAI only for final demo if free providers fail
+
+Important security rule: never put API keys in frontend code. Store them only in `.env.local` and call them from server routes.
 
 ### 1. Upload Study Material
 

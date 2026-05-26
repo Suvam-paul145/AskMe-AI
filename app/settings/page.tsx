@@ -7,10 +7,10 @@ import { useStore } from "@/lib/store";
 import { Settings, ShieldAlert, Sparkles, User, RefreshCw, Sun, Moon, Cpu, Sliders } from "lucide-react";
 
 export default function SettingsPage() {
-  const { theme, toggleTheme, updateProfile, profile } = useStore();
+  const { theme, toggleTheme, updateProfile, profile, signOut } = useStore();
 
   // Settings states
-  const [name, setName] = useState("Suvam Paul");
+  const [name, setName] = useState("Student");
   const [pace, setPace] = useState("calibrated");
   const [resetting, setResetting] = useState(false);
   const [personality, setPersonality] = useState("socratic"); // socratic | direct | holographic
@@ -24,13 +24,12 @@ export default function SettingsPage() {
   };
 
   const handleResetData = () => {
-    if (confirm("Are you sure you want to delete all cached vectors, documents, attempts, and streaks? This will reset the CLOS simulator state.")) {
+    if (confirm("Are you sure you want to sign out and reset your local state? Your data is safely stored in the cloud.")) {
       setResetting(true);
-      setTimeout(() => {
-        localStorage.clear();
+      setTimeout(async () => {
+        await signOut();
         setResetting(false);
-        alert("State database cleared! Redirecting to setup...");
-        window.location.href = "/upload";
+        window.location.href = "/login";
       }, 1000);
     }
   };

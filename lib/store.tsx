@@ -1,6 +1,7 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
+import { createClient } from "@/lib/supabase/client";
 
 // --- TYPES ---
 
@@ -84,286 +85,77 @@ export interface CognitiveProfile {
 }
 
 export interface StoreContextType {
+  // Auth
+  user: any | null;
+  isAuthenticated: boolean;
+  isLoading: boolean;
+  signIn: (email: string, password: string) => Promise<{ error?: string }>;
+  signUp: (email: string, password: string, fullName: string) => Promise<{ error?: string }>;
+  signOut: () => Promise<void>;
+
+  // Theme
   theme: "dark" | "light";
   toggleTheme: () => void;
+
+  // Documents
   documents: DocumentNode[];
   selectedDocId: string | null;
   setSelectedDocId: (id: string | null) => void;
-  addDocument: (title: string, size: string, text: string) => DocumentNode;
+  refreshDocuments: () => Promise<void>;
+
+  // Chat
   chatThreads: Record<string, ChatMessage[]>;
-  addMessage: (docId: string, message: string, sender: "user" | "ai", sources?: string[]) => void;
+  sendMessage: (docId: string, message: string, mode?: string) => Promise<string>;
+  loadChatHistory: (docId: string) => Promise<void>;
+
+  // Quiz
   quizzes: Record<string, QuizQuestion[]>;
+  loadQuiz: (docId: string) => Promise<void>;
   attempts: QuizAttempt[];
-  addAttempt: (attempt: Omit<QuizAttempt, "id" | "date">) => void;
+  submitQuizAttempt: (quizId: string, answers: { questionIndex: number; selectedOption: number }[]) => Promise<any>;
+
+  // Weak topics
   weakTopics: string[];
+
+  // Stats
   xp: number;
   streak: number;
-  dailyGoalProgress: number; // percentage
+  dailyGoalProgress: number;
+
+  // Profile
   profile: CognitiveProfile;
   updateProfile: (updates: Partial<CognitiveProfile>) => void;
+  refreshProfile: () => Promise<void>;
+
+  // Graph
   nodes: GraphNode[];
   links: GraphLink[];
+  refreshGraph: () => Promise<void>;
   updateNodeStrength: (nodeId: string, delta: number) => void;
+
+  // Planner
   planner: PlannerItem[];
   togglePlannerItem: (id: string) => void;
   addPlannerItem: (item: Omit<PlannerItem, "id" | "completed">) => void;
+  refreshPlanner: () => Promise<void>;
+
+  // Upload
+  uploadDocument: (file: File, onProgress?: (stage: string, progress: number) => void) => Promise<DocumentNode | null>;
 }
 
-// --- INITIAL MOCK DATA ---
+// --- DEFAULTS ---
 
-const initialDocuments: DocumentNode[] = [
-  {
-    id: "doc-1",
-    title: "Electrostatics & Coulomb's Law Notes.pdf",
-    date: "2026-05-20",
-    size: "1.2 MB",
-    extractedText: "Electrostatics is the branch of physics that deals with the phenomena and properties of stationary or slow-moving electric charges. Coulomb's Law states that the electrical force between two charged objects is directly proportional to the product of the quantity of charge on the objects and inversely proportional to the square of the separation distance between the two objects. Formula: F = k * (q1 * q2) / r^2. Superposition Principle: The total force on a given charge due to a number of other charges is the vector sum of all the individual forces.",
-    summary: {
-      overview: "Introduction to stationary electric charges, field theories, and Coulomb's mechanical electrical interaction model.",
-      keyPoints: [
-        "Like charges repel; unlike charges attract.",
-        "Electric charge is quantized (q = ne) and conserved.",
-        "The electric field E = F / q points away from positive charges and towards negative charges."
-      ],
-      formulas: [
-        "Coulomb's Law: F = k * (q1 * q2) / r^2",
-        "Electric Field: E = k * q / r^2",
-        "Electrostatic Potential: V = k * q / r"
-      ],
-      examTips: [
-        "Remember that Coulomb's Law is vector-based; calculate magnitudes first, then apply directional geometry.",
-        "Expect direct conceptual questions on the shell theorem."
-      ],
-      confusedTopics: [
-        "Confusing Electric Potential (scalar) with Electric Field (vector).",
-        "Forgetting the permittivity of free space constant (epsilon_0)."
-      ]
-    }
-  },
-  {
-    id: "doc-2",
-    title: "Intro to Molecular Biology Chapter 3.pdf",
-    date: "2026-05-24",
-    size: "2.4 MB",
-    extractedText: "Molecular biology concerns the molecular basis of biological activity. DNA replication is the biological process of producing two identical replicas of DNA from one original DNA molecule. Central Dogma of Molecular Biology: DNA is transcribed into RNA, which is then translated into proteins. Transcription is the first step of gene expression, where a segment of DNA is copied into RNA by the enzyme RNA polymerase. Translation occurs in the ribosome, where genetic codes are read to form polypeptide chains.",
-    summary: {
-      overview: "Deep dive into DNA replication mechanics, gene expression pipelines, and structural macromolecule translations.",
-      keyPoints: [
-        "DNA is double-stranded helix; RNA is single-stranded.",
-        "Transcription uses RNA Polymerase reading the template strand 3' to 5'.",
-        "Ribosomes read codons (triplets of nucleotides) to align amino acids via tRNA."
-      ],
-      formulas: [
-        "Central Dogma: DNA -> RNA -> Protein",
-        "Codon match combinations: 4^3 = 64 options for 20 amino acids"
-      ],
-      examTips: [
-        "Focus on the differences between replication in prokaryotes vs. eukaryotes.",
-        "Pay special attention to translation initiation factors."
-      ],
-      confusedTopics: [
-        "Confusing replication direction (always builds 5' to 3') with template reading direction.",
-        "Confusing transcription promoters with start codons."
-      ]
-    }
-  }
-];
-
-const initialQuizzes: Record<string, QuizQuestion[]> = {
-  "doc-1": [
-    {
-      id: "q1-1",
-      question: "What happens to the electrostatic force between two charges if the distance between them is doubled?",
-      options: [
-        "It is doubled.",
-        "It is halved.",
-        "It becomes four times larger.",
-        "It becomes four times smaller."
-      ],
-      correctAnswer: 3,
-      explanation: "By Coulomb's Law, force is inversely proportional to the square of the distance (1/r^2). Doubling the distance (2r)^2 results in 4r^2, making the force 1/4 of its original value.",
-      topic: "Coulomb's Law"
-    },
-    {
-      id: "q1-2",
-      question: "Is electric potential a scalar or vector quantity?",
-      options: [
-        "Vector, pointing from positive to negative.",
-        "Scalar, having only magnitude.",
-        "Vector, pointing from negative to positive.",
-        "It depends on the medium."
-      ],
-      correctAnswer: 1,
-      explanation: "Electric potential is work done per unit charge, which does not have a directional vector component. Hence, it is a scalar quantity.",
-      topic: "Electric Potential"
-    },
-    {
-      id: "q1-3",
-      question: "Which of the following is the correct formula for the electric field of a point charge?",
-      options: [
-        "E = k * q / r",
-        "E = k * q / r^2",
-        "E = k * q^2 / r^2",
-        "E = k * (q1 * q2) / r^2"
-      ],
-      correctAnswer: 1,
-      explanation: "Electric field strength (E) is force per unit charge (F/q), which yields E = k * q / r^2.",
-      topic: "Electric Field"
-    }
-  ],
-  "doc-2": [
-    {
-      id: "q2-1",
-      question: "Which enzyme is primarily responsible for synthesizing RNA from a DNA template?",
-      options: [
-        "DNA Polymerase",
-        "Ligase",
-        "RNA Polymerase",
-        "Helicase"
-      ],
-      correctAnswer: 2,
-      explanation: "RNA Polymerase binds to DNA templates and transcribes genetic sequences into messenger RNA (mRNA).",
-      topic: "Transcription"
-    },
-    {
-      id: "q2-2",
-      question: "Where in eukaryotic cells does translation take place?",
-      options: [
-        "In the nucleus",
-        "In the ribosome / cytoplasm",
-        "In the lysosome",
-        "In the cell membrane"
-      ],
-      correctAnswer: 1,
-      explanation: "Translation happens on ribosomes, which are located in the cytoplasm or bound to the endoplasmic reticulum in eukaryotic cells.",
-      topic: "Translation"
-    }
-  ]
-};
-
-const initialChatThreads: Record<string, ChatMessage[]> = {
-  "doc-1": [
-    {
-      id: "m-1",
-      sender: "ai",
-      text: "Hello! I am your AskMe AI tutor for 'Electrostatics & Coulomb's Law Notes.pdf'. Ask me any doubt about this material, or select a question to begin!",
-      timestamp: "22:15"
-    }
-  ],
-  "doc-2": [
-    {
-      id: "m-2",
-      sender: "ai",
-      text: "Welcome to your study assistant for 'Intro to Molecular Biology Chapter 3.pdf'. You can ask questions about DNA replication, transcription, and translation.",
-      timestamp: "22:18"
-    }
-  ]
-};
-
-const initialAttempts: QuizAttempt[] = [
-  {
-    id: "att-1",
-    documentId: "doc-1",
-    documentTitle: "Electrostatics & Coulomb's Law Notes.pdf",
-    score: 66,
-    totalQuestions: 3,
-    correctAnswersCount: 2,
-    date: "2026-05-22",
-    weakTopics: ["Electric Potential"]
-  }
-];
-
-const initialNodes: GraphNode[] = [
-  { id: "n-1", label: "Coulomb's Law", strength: 88, status: "mastered", x: 250, y: 150 },
-  { id: "n-2", label: "Electric Field", strength: 75, status: "learning", x: 380, y: 220 },
-  { id: "n-3", label: "Electric Potential", strength: 40, status: "weak", x: 180, y: 280 },
-  { id: "n-4", label: "Superposition", strength: 92, status: "mastered", x: 420, y: 100 },
-  { id: "n-5", label: "Gauss's Law", strength: 25, status: "forgotten", x: 500, y: 300 },
-  { id: "n-6", label: "DNA Replication", strength: 80, status: "learning", x: 600, y: 120 },
-  { id: "n-7", label: "Transcription", strength: 70, status: "learning", x: 720, y: 200 },
-  { id: "n-8", label: "Translation", strength: 35, status: "weak", x: 680, y: 320 }
-];
-
-const initialLinks: GraphLink[] = [
-  { source: "n-1", target: "n-2" },
-  { source: "n-1", target: "n-3" },
-  { source: "n-2", target: "n-5" },
-  { source: "n-6", target: "n-7" },
-  { source: "n-7", target: "n-8" }
-];
-
-const initialPlanner: PlannerItem[] = [
-  { id: "pl-1", date: "2026-05-26", title: "Review Electric Potential formulas", duration: 15, completed: false, isUrgent: true },
-  { id: "pl-2", date: "2026-05-26", title: "Translation RTM active recall session", duration: 25, completed: false },
-  { id: "pl-3", date: "2026-05-27", title: "Electrostatics full revision simulator", duration: 45, completed: false },
-  { id: "pl-4", date: "2026-05-25", title: "Central Dogma summary check", duration: 10, completed: true }
-];
-
-const initialProfile: CognitiveProfile = {
-  conceptual: 82,
-  retention: 54,
-  analytical: 73,
-  discipline: 60,
-  consistency: 65,
-  adaptability: 80,
-  calibration: 68,
-  efficiency: 72,
-  archetype: "The Intuitive Analyst",
-  description: "You have strong pattern recognition and abstract reasoning speeds, but tend to struggle with consistent spacing and schedule adherence. We recommend structural revision reminders."
-};
-
-// --- RAG & MISTAKE PROCESSING LOGIC MOCKS ---
-
-const generateMockSummary = (title: string, text: string) => {
-  const words = text.split(" ");
-  const overview = `Detailed cognitive synthesis of the study materials regarding ${title.replace(/\.[^/.]+$/, "")}. Analyze core thematic links and key concepts.`;
-  const keyPoints = [
-    `Foundational mechanics of ${words[0] || "Concept"} are thoroughly mapped.`,
-    "High structural consistency is validated in active schemas.",
-    "Revision priority indicates moderate decay speed."
-  ];
-  const formulas = [
-    `Rate of mastery = f(${words[2] || "Topic"} * retention)`,
-    "Cognitive load <= 1.0"
-  ];
-  return {
-    overview,
-    keyPoints,
-    formulas,
-    examTips: ["Review the definitions of keywords.", "Practice MCQ representations."],
-    confusedTopics: ["Mistaking intermediate links for root causes."]
-  };
-};
-
-const generateMockQuiz = (title: string, text: string): QuizQuestion[] => {
-  return [
-    {
-      id: `q-mock-${Date.now()}-1`,
-      question: `What is the primary core concept introduced in this document about '${title}'?`,
-      options: [
-        "A highly general biological process",
-        "The conceptual framework of study",
-        "A specific calculation parameter",
-        "An introductory definition layout"
-      ],
-      correctAnswer: 1,
-      explanation: `The material details foundational principles regarding the subject '${title}' directly.`,
-      topic: "Introduction"
-    },
-    {
-      id: `q-mock-${Date.now()}-2`,
-      question: `Why is the mathematical / physical formulation of this topic significant?`,
-      options: [
-        "It provides quantitative validation",
-        "It helps make guess decisions",
-        "It replaces qualitative diagrams",
-        "It reduces focus times"
-      ],
-      correctAnswer: 0,
-      explanation: "Formulations allow calculations and structural predictive calibrations in experimental environments.",
-      topic: "Formulation"
-    }
-  ];
+const defaultProfile: CognitiveProfile = {
+  conceptual: 50,
+  retention: 50,
+  analytical: 50,
+  discipline: 50,
+  consistency: 50,
+  adaptability: 50,
+  calibration: 50,
+  efficiency: 50,
+  archetype: "New Learner",
+  description: "Your cognitive profile will evolve as you study, take quizzes, and interact with the AI tutor.",
 };
 
 // --- STORE CONTEXT ---
@@ -371,22 +163,47 @@ const generateMockQuiz = (title: string, text: string): QuizQuestion[] => {
 const StoreContext = createContext<StoreContextType | undefined>(undefined);
 
 export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [theme, setTheme] = useState<"dark" | "light">("dark");
-  const [documents, setDocuments] = useState<DocumentNode[]>(initialDocuments);
-  const [selectedDocId, setSelectedDocId] = useState<string | null>("doc-1");
-  const [chatThreads, setChatThreads] = useState<Record<string, ChatMessage[]>>(initialChatThreads);
-  const [quizzes, setQuizzes] = useState<Record<string, QuizQuestion[]>>(initialQuizzes);
-  const [attempts, setAttempts] = useState<QuizAttempt[]>(initialAttempts);
-  const [weakTopics, setWeakTopics] = useState<string[]>(["Electric Potential"]);
-  const [xp, setXp] = useState<number>(340);
-  const [streak, setStreak] = useState<number>(5);
-  const [dailyGoalProgress, setDailyGoalProgress] = useState<number>(40);
-  const [profile, setProfile] = useState<CognitiveProfile>(initialProfile);
-  const [nodes, setNodes] = useState<GraphNode[]>(initialNodes);
-  const [links, setLinks] = useState<GraphLink[]>(initialLinks);
-  const [planner, setPlanner] = useState<PlannerItem[]>(initialPlanner);
+  const [supabase] = useState(() => createClient());
 
-  // Load from LocalStorage
+  // Auth
+  const [user, setUser] = useState<any | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Theme
+  const [theme, setTheme] = useState<"dark" | "light">("dark");
+
+  // Data
+  const [documents, setDocuments] = useState<DocumentNode[]>([]);
+  const [selectedDocId, setSelectedDocId] = useState<string | null>(null);
+  const [chatThreads, setChatThreads] = useState<Record<string, ChatMessage[]>>({});
+  const [quizzes, setQuizzes] = useState<Record<string, QuizQuestion[]>>({});
+  const [attempts, setAttempts] = useState<QuizAttempt[]>([]);
+  const [weakTopics, setWeakTopics] = useState<string[]>([]);
+  const [xp, setXp] = useState<number>(0);
+  const [streak, setStreak] = useState<number>(0);
+  const [dailyGoalProgress, setDailyGoalProgress] = useState<number>(0);
+  const [profile, setProfile] = useState<CognitiveProfile>(defaultProfile);
+  const [nodes, setNodes] = useState<GraphNode[]>([]);
+  const [links, setLinks] = useState<GraphLink[]>([]);
+  const [planner, setPlanner] = useState<PlannerItem[]>([]);
+
+  // --- AUTH ---
+  useEffect(() => {
+    // Check initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+      setIsLoading(false);
+    });
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, [supabase]);
+
+  // Load theme from localStorage
   useEffect(() => {
     if (typeof window !== "undefined") {
       const storedTheme = localStorage.getItem("askme-theme");
@@ -396,282 +213,463 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       } else {
         document.documentElement.className = "dark";
       }
-
-      const storedDocs = localStorage.getItem("askme-docs");
-      if (storedDocs) setDocuments(JSON.parse(storedDocs));
-
-      const storedChat = localStorage.getItem("askme-chat");
-      if (storedChat) setChatThreads(JSON.parse(storedChat));
-
-      const storedQuizzes = localStorage.getItem("askme-quizzes");
-      if (storedQuizzes) setQuizzes(JSON.parse(storedQuizzes));
-
-      const storedAttempts = localStorage.getItem("askme-attempts");
-      if (storedAttempts) setAttempts(JSON.parse(storedAttempts));
-
-      const storedWeak = localStorage.getItem("askme-weak");
-      if (storedWeak) setWeakTopics(JSON.parse(storedWeak));
-
-      const storedXp = localStorage.getItem("askme-xp");
-      if (storedXp) setXp(parseInt(storedXp, 10));
-
-      const storedStreak = localStorage.getItem("askme-streak");
-      if (storedStreak) setStreak(parseInt(storedStreak, 10));
-
-      const storedProfile = localStorage.getItem("askme-profile");
-      if (storedProfile) setProfile(JSON.parse(storedProfile));
-
-      const storedNodes = localStorage.getItem("askme-nodes");
-      if (storedNodes) setNodes(JSON.parse(storedNodes));
-
-      const storedLinks = localStorage.getItem("askme-links");
-      if (storedLinks) setLinks(JSON.parse(storedLinks));
-
-      const storedPlanner = localStorage.getItem("askme-planner");
-      if (storedPlanner) setPlanner(JSON.parse(storedPlanner));
     }
   }, []);
 
-  // Save on modification
-  const saveAndSetTheme = (newTheme: "dark" | "light") => {
+  // Load data when user signs in
+  useEffect(() => {
+    if (user) {
+      refreshDocuments();
+      refreshProfile();
+      refreshGraph();
+      refreshPlanner();
+    } else {
+      // Reset state on sign out
+      setDocuments([]);
+      setSelectedDocId(null);
+      setChatThreads({});
+      setQuizzes({});
+      setAttempts([]);
+      setWeakTopics([]);
+      setXp(0);
+      setStreak(0);
+      setProfile(defaultProfile);
+      setNodes([]);
+      setLinks([]);
+      setPlanner([]);
+    }
+  }, [user]);
+
+  // --- AUTH FUNCTIONS ---
+  const signIn = async (email: string, password: string): Promise<{ error?: string }> => {
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) return { error: error.message };
+    return {};
+  };
+
+  const signUp = async (email: string, password: string, fullName: string): Promise<{ error?: string }> => {
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { data: { full_name: fullName } },
+    });
+    if (error) return { error: error.message };
+    return {};
+  };
+
+  const signOut = async () => {
+    await supabase.auth.signOut();
+  };
+
+  // --- THEME ---
+  const toggleTheme = () => {
+    const newTheme = theme === "dark" ? "light" : "dark";
     setTheme(newTheme);
     localStorage.setItem("askme-theme", newTheme);
     document.documentElement.className = newTheme;
   };
 
-  const toggleTheme = () => {
-    saveAndSetTheme(theme === "dark" ? "light" : "dark");
-  };
-
-  const addDocument = (title: string, size: string, text: string) => {
-    const newDocId = `doc-${Date.now()}`;
-    const newDoc: DocumentNode = {
-      id: newDocId,
-      title,
-      date: new Date().toISOString().split("T")[0],
-      size,
-      extractedText: text,
-      summary: generateMockSummary(title, text)
-    };
-
-    const updatedDocs = [...documents, newDoc];
-    setDocuments(updatedDocs);
-    localStorage.setItem("askme-docs", JSON.stringify(updatedDocs));
-
-    const newThread: ChatMessage[] = [
-      {
-        id: `m-init-${Date.now()}`,
-        sender: "ai",
-        text: `Hello! I have fully ingested '${title}' into your vector model. Ask me any conceptual question or double tap terms to explain them.`,
-        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
-      }
-    ];
-
-    const updatedChats = { ...chatThreads, [newDocId]: newThread };
-    setChatThreads(updatedChats);
-    localStorage.setItem("askme-chat", JSON.stringify(updatedChats));
-
-    const generatedQuiz = generateMockQuiz(title, text);
-    const updatedQuizzes = { ...quizzes, [newDocId]: generatedQuiz };
-    setQuizzes(updatedQuizzes);
-    localStorage.setItem("askme-quizzes", JSON.stringify(updatedQuizzes));
-
-    // Update Nodes and Links
-    const cleanTitle = title.replace(/\.[^/.]+$/, "");
-    const newNodeId = `n-${newDocId}`;
-    const newNode: GraphNode = {
-      id: newNodeId,
-      label: cleanTitle,
-      strength: 45,
-      status: "learning",
-      x: 300 + Math.random() * 200,
-      y: 200 + Math.random() * 150
-    };
-    const updatedNodes = [...nodes, newNode];
-    setNodes(updatedNodes);
-    localStorage.setItem("askme-nodes", JSON.stringify(updatedNodes));
-
-    // Link new node to a random existing node
-    if (nodes.length > 0) {
-      const randomNode = nodes[Math.floor(Math.random() * nodes.length)];
-      const updatedLinks = [...links, { source: randomNode.id, target: newNodeId }];
-      setLinks(updatedLinks);
-      localStorage.setItem("askme-links", JSON.stringify(updatedLinks));
-    }
-
-    // Grant XP
-    const newXp = xp + 50;
-    setXp(newXp);
-    localStorage.setItem("askme-xp", newXp.toString());
-
-    setSelectedDocId(newDocId);
-    return newDoc;
-  };
-
-  const addMessage = (docId: string, text: string, sender: "user" | "ai", sources?: string[]) => {
-    const thread = chatThreads[docId] || [];
-    const newMessage: ChatMessage = {
-      id: `msg-${Date.now()}-${Math.random()}`,
-      sender,
-      text,
-      timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-      sources
-    };
-
-    const updatedThread = [...thread, newMessage];
-    const updatedChats = { ...chatThreads, [docId]: updatedThread };
-    setChatThreads(updatedChats);
-    localStorage.setItem("askme-chat", JSON.stringify(updatedChats));
-
-    // Grant XP for asking questions
-    if (sender === "user") {
-      const newXp = xp + 5;
-      setXp(newXp);
-      localStorage.setItem("askme-xp", newXp.toString());
-      setDailyGoalProgress(Math.min(100, dailyGoalProgress + 10));
-    }
-  };
-
-  const addAttempt = (attemptData: Omit<QuizAttempt, "id" | "date">) => {
-    const newAttempt: QuizAttempt = {
-      ...attemptData,
-      id: `attempt-${Date.now()}`,
-      date: new Date().toISOString().split("T")[0]
-    };
-
-    const updatedAttempts = [newAttempt, ...attempts];
-    setAttempts(updatedAttempts);
-    localStorage.setItem("askme-attempts", JSON.stringify(updatedAttempts));
-
-    // Process weak topics
-    const uniqueWeak = Array.from(new Set([...weakTopics, ...attemptData.weakTopics]));
-    setWeakTopics(uniqueWeak);
-    localStorage.setItem("askme-weak", JSON.stringify(uniqueWeak));
-
-    // Adjust memory graph node strengths based on performance
-    const cleanDocTitle = attemptData.documentTitle.replace(/\.[^/.]+$/, "");
-    const matchingNode = nodes.find(n => n.label.toLowerCase() === cleanDocTitle.toLowerCase() || n.id === `n-${attemptData.documentId}`);
-    if (matchingNode) {
-      updateNodeStrength(matchingNode.id, attemptData.score >= 80 ? 15 : -10);
-    }
-
-    // Adjust profile variables
-    const newAdaptability = Math.min(100, profile.adaptability + 3);
-    const newCalibration = Math.min(100, Math.round(profile.calibration + (attemptData.score / 10)));
-    const updatedProfile = {
-      ...profile,
-      adaptability: newAdaptability,
-      calibration: newCalibration,
-      consistency: Math.min(100, profile.consistency + 5)
-    };
-    setProfile(updatedProfile);
-    localStorage.setItem("askme-profile", JSON.stringify(updatedProfile));
-
-    // Create a revision planner item if score is low
-    if (attemptData.score < 70) {
-      attemptData.weakTopics.forEach(topic => {
-        const newItem: PlannerItem = {
-          id: `pl-new-${Date.now()}-${Math.random()}`,
-          date: new Date().toISOString().split("T")[0],
-          title: `Practice weak topic: ${topic}`,
-          duration: 20,
-          completed: false,
-          isUrgent: true
-        };
-        const updatedPlanner = [...planner, newItem];
-        setPlanner(updatedPlanner);
-        localStorage.setItem("askme-planner", JSON.stringify(updatedPlanner));
-      });
-    }
-
-    // Grant XP based on score
-    const scoreBonus = Math.round(attemptData.score / 2);
-    const newXp = xp + 30 + scoreBonus;
-    setXp(newXp);
-    localStorage.setItem("askme-xp", newXp.toString());
-    setDailyGoalProgress(Math.min(100, dailyGoalProgress + 30));
-  };
-
-  const updateNodeStrength = (nodeId: string, delta: number) => {
-    const updatedNodes = nodes.map(node => {
-      if (node.id === nodeId) {
-        const newStrength = Math.max(0, Math.min(100, node.strength + delta));
-        let status: GraphNode["status"] = "unknown";
-        if (newStrength >= 85) status = "mastered";
-        else if (newStrength >= 60) status = "learning";
-        else if (newStrength >= 35) status = "weak";
-        else status = "forgotten";
-
-        return { ...node, strength: newStrength, status };
-      }
-      return node;
-    });
-    setNodes(updatedNodes);
-    localStorage.setItem("askme-nodes", JSON.stringify(updatedNodes));
-  };
-
-  const updateProfile = (updates: Partial<CognitiveProfile>) => {
-    const updatedProfile = { ...profile, ...updates };
-    setProfile(updatedProfile);
-    localStorage.setItem("askme-profile", JSON.stringify(updatedProfile));
-  };
-
-  const togglePlannerItem = (id: string) => {
-    const updatedPlanner = planner.map(item => {
-      if (item.id === id) {
-        const nextState = !item.completed;
-        if (nextState) {
-          // Grant XP for completing tasks
-          const newXp = xp + 15;
-          setXp(newXp);
-          localStorage.setItem("askme-xp", newXp.toString());
-          setDailyGoalProgress(Math.min(100, dailyGoalProgress + 20));
+  // --- DOCUMENTS ---
+  const refreshDocuments = useCallback(async () => {
+    try {
+      const res = await fetch("/api/documents");
+      if (res.ok) {
+        const data = await res.json();
+        const docs: DocumentNode[] = (data.documents || []).map((d: any) => ({
+          id: d.id,
+          title: d.title,
+          date: d.created_at?.split("T")[0] || "",
+          size: d.file_size || "—",
+          extractedText: d.extracted_text || "",
+          summary: d.summary || {
+            overview: "",
+            keyPoints: [],
+            formulas: [],
+            examTips: [],
+            confusedTopics: [],
+          },
+        }));
+        setDocuments(docs);
+        if (docs.length > 0 && !selectedDocId) {
+          setSelectedDocId(docs[0].id);
         }
-        return { ...item, completed: nextState };
       }
-      return item;
-    });
-    setPlanner(updatedPlanner);
-    localStorage.setItem("askme-planner", JSON.stringify(updatedPlanner));
-  };
+    } catch (err) {
+      console.error("Failed to fetch documents:", err);
+    }
+  }, [selectedDocId]);
 
-  const addPlannerItem = (itemData: Omit<PlannerItem, "id" | "completed">) => {
-    const newItem: PlannerItem = {
-      ...itemData,
-      id: `pl-${Date.now()}`,
-      completed: false
+  // --- CHAT ---
+  const loadChatHistory = useCallback(async (docId: string) => {
+    try {
+      const res = await fetch(`/api/chat?documentId=${docId}`);
+      if (res.ok) {
+        const data = await res.json();
+        const messages: ChatMessage[] = (data.messages || []).map((m: any) => ({
+          id: m.id,
+          sender: m.sender,
+          text: m.content,
+          timestamp: new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+          sources: m.sources,
+        }));
+        setChatThreads((prev) => ({ ...prev, [docId]: messages }));
+      }
+    } catch (err) {
+      console.error("Failed to load chat:", err);
+    }
+  }, []);
+
+  const sendMessage = useCallback(async (docId: string, message: string, mode?: string): Promise<string> => {
+    // Optimistically add user message
+    const userMsg: ChatMessage = {
+      id: `temp-${Date.now()}`,
+      sender: "user",
+      text: message,
+      timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
     };
-    const updatedPlanner = [...planner, newItem];
-    setPlanner(updatedPlanner);
-    localStorage.setItem("askme-planner", JSON.stringify(updatedPlanner));
-  };
+    setChatThreads((prev) => ({
+      ...prev,
+      [docId]: [...(prev[docId] || []), userMsg],
+    }));
+
+    try {
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message, documentId: docId, mode }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        const aiMsg: ChatMessage = {
+          id: `ai-${Date.now()}`,
+          sender: "ai",
+          text: data.response,
+          timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+          sources: data.sources,
+        };
+        setChatThreads((prev) => ({
+          ...prev,
+          [docId]: [...(prev[docId] || []), aiMsg],
+        }));
+        setXp((prev) => prev + 5);
+        setDailyGoalProgress((prev) => Math.min(100, prev + 10));
+        return data.response;
+      }
+      return "Sorry, I couldn't process your request. Please try again.";
+    } catch (err) {
+      console.error("Chat error:", err);
+      return "An error occurred. Please try again.";
+    }
+  }, []);
+
+  // --- QUIZ ---
+  const loadQuiz = useCallback(async (docId: string) => {
+    try {
+      const res = await fetch(`/api/quiz?documentId=${docId}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.quizzes && data.quizzes.length > 0) {
+          const latestQuiz = data.quizzes[0];
+          const questions: QuizQuestion[] = (latestQuiz.questions || []).map((q: any, idx: number) => ({
+            id: `${latestQuiz.id}-q${idx}`,
+            question: q.question,
+            options: q.options,
+            correctAnswer: q.correctAnswer,
+            explanation: q.explanation,
+            topic: q.topic,
+          }));
+          setQuizzes((prev) => ({ ...prev, [docId]: questions }));
+        }
+      }
+    } catch (err) {
+      console.error("Failed to load quiz:", err);
+    }
+  }, []);
+
+  const submitQuizAttempt = useCallback(async (quizId: string, answers: { questionIndex: number; selectedOption: number }[]) => {
+    try {
+      const res = await fetch("/api/quiz/submit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ quizId, answers }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        if (data.attempt) {
+          const newAttempt: QuizAttempt = {
+            id: data.attempt.id,
+            documentId: "",
+            documentTitle: "",
+            score: data.attempt.score,
+            totalQuestions: data.attempt.totalQuestions,
+            correctAnswersCount: data.attempt.correctCount,
+            date: new Date().toISOString().split("T")[0],
+            weakTopics: data.attempt.weakTopics || [],
+          };
+          setAttempts((prev) => [newAttempt, ...prev]);
+          setXp((prev) => prev + (data.attempt.xpGain || 30));
+          setDailyGoalProgress((prev) => Math.min(100, prev + 30));
+          if (data.attempt.weakTopics) {
+            setWeakTopics((prev) => [...new Set([...prev, ...data.attempt.weakTopics])]);
+          }
+        }
+        return data;
+      }
+      return null;
+    } catch (err) {
+      console.error("Submit quiz error:", err);
+      return null;
+    }
+  }, []);
+
+  // --- PROFILE ---
+  const refreshProfile = useCallback(async () => {
+    try {
+      const res = await fetch("/api/profile");
+      if (res.ok) {
+        const data = await res.json();
+        if (data.profile) {
+          const cogProfile = data.profile.cognitive_profile || {};
+          setProfile({
+            conceptual: cogProfile.conceptual ?? 50,
+            retention: cogProfile.retention ?? 50,
+            analytical: cogProfile.analytical ?? 50,
+            discipline: cogProfile.discipline ?? 50,
+            consistency: cogProfile.consistency ?? 50,
+            adaptability: cogProfile.adaptability ?? 50,
+            calibration: cogProfile.calibration ?? 50,
+            efficiency: cogProfile.efficiency ?? 50,
+            archetype: cogProfile.archetype || "New Learner",
+            description: cogProfile.description || "Your profile will evolve with study activity.",
+          });
+          setXp(data.profile.xp || 0);
+          setStreak(data.profile.streak || 0);
+        }
+        if (data.weakTopics) {
+          setWeakTopics(data.weakTopics);
+        }
+      }
+    } catch (err) {
+      console.error("Failed to fetch profile:", err);
+    }
+  }, []);
+
+  const updateProfile = useCallback((updates: Partial<CognitiveProfile>) => {
+    setProfile((prev) => ({ ...prev, ...updates }));
+    // Persist to server
+    fetch("/api/profile", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ cognitive_profile: { ...profile, ...updates } }),
+    }).catch(console.error);
+  }, [profile]);
+
+  // --- GRAPH ---
+  const refreshGraph = useCallback(async () => {
+    try {
+      const res = await fetch("/api/graph");
+      if (res.ok) {
+        const data = await res.json();
+        setNodes(data.nodes || []);
+        setLinks(data.links || []);
+      }
+    } catch (err) {
+      console.error("Failed to fetch graph:", err);
+    }
+  }, []);
+
+  const updateNodeStrength = useCallback((nodeId: string, delta: number) => {
+    setNodes((prev) =>
+      prev.map((node) => {
+        if (node.id === nodeId) {
+          const newStrength = Math.max(0, Math.min(100, node.strength + delta));
+          let status: GraphNode["status"] = "unknown";
+          if (newStrength >= 85) status = "mastered";
+          else if (newStrength >= 60) status = "learning";
+          else if (newStrength >= 35) status = "weak";
+          else status = "forgotten";
+          return { ...node, strength: newStrength, status };
+        }
+        return node;
+      })
+    );
+
+    // Persist to server
+    fetch("/api/graph", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ nodeId, delta }),
+    }).catch(console.error);
+  }, []);
+
+  // --- PLANNER ---
+  const refreshPlanner = useCallback(async () => {
+    try {
+      const res = await fetch("/api/planner");
+      if (res.ok) {
+        const data = await res.json();
+        setPlanner(
+          (data.items || []).map((item: any) => ({
+            id: item.id,
+            date: item.date || "",
+            title: item.title,
+            duration: item.duration,
+            completed: item.completed,
+            isUrgent: item.is_urgent,
+          }))
+        );
+      }
+    } catch (err) {
+      console.error("Failed to fetch planner:", err);
+    }
+  }, []);
+
+  const togglePlannerItem = useCallback((id: string) => {
+    setPlanner((prev) =>
+      prev.map((item) => {
+        if (item.id === id) {
+          const nextState = !item.completed;
+          if (nextState) {
+            setXp((x) => x + 15);
+            setDailyGoalProgress((p) => Math.min(100, p + 20));
+          }
+          // Persist to server
+          fetch("/api/planner", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id, completed: nextState }),
+          }).catch(console.error);
+          return { ...item, completed: nextState };
+        }
+        return item;
+      })
+    );
+  }, []);
+
+  const addPlannerItem = useCallback((itemData: Omit<PlannerItem, "id" | "completed">) => {
+    const tempId = `temp-${Date.now()}`;
+    const newItem: PlannerItem = { ...itemData, id: tempId, completed: false };
+    setPlanner((prev) => [...prev, newItem]);
+
+    // Persist to server
+    fetch("/api/planner", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        title: itemData.title,
+        date: itemData.date,
+        duration: itemData.duration,
+        isUrgent: itemData.isUrgent,
+      }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.item) {
+          setPlanner((prev) =>
+            prev.map((p) =>
+              p.id === tempId
+                ? { ...p, id: data.item.id }
+                : p
+            )
+          );
+        }
+      })
+      .catch(console.error);
+  }, []);
+
+  // --- UPLOAD ---
+  const uploadDocument = useCallback(async (
+    file: File,
+    onProgress?: (stage: string, progress: number) => void
+  ): Promise<DocumentNode | null> => {
+    try {
+      onProgress?.("Uploading file to secure storage...", 10);
+
+      const formData = new FormData();
+      formData.append("file", file);
+
+      onProgress?.("Extracting text and generating AI analysis...", 30);
+
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      onProgress?.("Processing vector embeddings...", 70);
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || "Upload failed");
+      }
+
+      const data = await res.json();
+      onProgress?.("Syncing cognitive profile...", 90);
+
+      // Refresh data
+      await refreshDocuments();
+      await refreshGraph();
+      setXp((prev) => prev + 50);
+
+      onProgress?.("Ingestion complete!", 100);
+
+      if (data.document) {
+        setSelectedDocId(data.document.id);
+        return {
+          id: data.document.id,
+          title: data.document.title,
+          date: new Date().toISOString().split("T")[0],
+          size: data.document.fileSize,
+          extractedText: "",
+          summary: data.document.summary,
+        };
+      }
+      return null;
+    } catch (err: any) {
+      console.error("Upload error:", err);
+      throw err;
+    }
+  }, [refreshDocuments, refreshGraph]);
 
   return (
     <StoreContext.Provider
       value={{
+        user,
+        isAuthenticated: !!user,
+        isLoading,
+        signIn,
+        signUp,
+        signOut,
         theme,
         toggleTheme,
         documents,
         selectedDocId,
         setSelectedDocId,
-        addDocument,
+        refreshDocuments,
         chatThreads,
-        addMessage,
+        sendMessage,
+        loadChatHistory,
         quizzes,
+        loadQuiz,
         attempts,
-        addAttempt,
+        submitQuizAttempt,
         weakTopics,
         xp,
         streak,
         dailyGoalProgress,
         profile,
         updateProfile,
+        refreshProfile,
         nodes,
         links,
+        refreshGraph,
         updateNodeStrength,
         planner,
         togglePlannerItem,
-        addPlannerItem
+        addPlannerItem,
+        refreshPlanner,
+        uploadDocument,
       }}
     >
       {children}

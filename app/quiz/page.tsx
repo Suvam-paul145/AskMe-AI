@@ -5,11 +5,11 @@ import { useSearchParams, useRouter } from "next/navigation";
 import Navbar from "@/components/navbar";
 import Footer from "@/components/footer";
 import { useStore, QuizQuestion } from "@/lib/store";
-import { Timer, Cpu, Award, RefreshCw, ArrowRight, HelpCircle, CheckCircle, XCircle, Activity, Sparkles } from "lucide-react";
+import { Timer, Cpu, Award, RefreshCw, ArrowRight, HelpCircle, CheckCircle, XCircle } from "lucide-react";
 import confetti from "canvas-confetti";
 
 function QuizContent() {
-  const { quizzes, addAttempt, documents } = useStore();
+  const { quizzes, submitQuizAttempt, documents, loadQuiz } = useStore();
   const searchParams = useSearchParams();
   const router = useRouter();
   const docId = searchParams.get("docId") || "doc-1";
@@ -24,7 +24,16 @@ function QuizContent() {
   const [score, setScore] = useState(0);
   const [incorrectList, setIncorrectList] = useState<QuizQuestion[]>([]);
   const [quizComplete, setQuizComplete] = useState(false);
+  const [serverResult, setServerResult] = useState<any>(null);
+  const [answersHistory, setAnswersHistory] = useState<{ questionIndex: number; selectedOption: number }[]>([]);
   const [timerSeconds, setTimerSeconds] = useState(0);
+
+  // Load quiz from API on mount
+  useEffect(() => {
+    if (docId) {
+      loadQuiz(docId);
+    }
+  }, [docId, loadQuiz]);
 
   // Timer Effect
   useEffect(() => {
@@ -64,6 +73,9 @@ function QuizContent() {
     setIsAnswerSubmitted(true);
     const isCorrect = selectedOption === currentQuestion.correctAnswer;
 
+    // Track answer for server submission
+    setAnswersHistory(prev => [...prev, { questionIndex: currentQuestionIdx, selectedOption }]);
+
     if (isCorrect) {
       setScore(s => s + 1);
     } else {
@@ -80,23 +92,17 @@ function QuizContent() {
     } else {
       // Quiz finished!
       setQuizComplete(true);
-      const percentage = Math.round(((score + (selectedOption === currentQuestion.correctAnswer ? 1 : 0)) / docQuestions.length) * 100);
-      
-      // Calculate weak topics from incorrect attempts
-      const finalIncorrectList = [...incorrectList];
-      if (selectedOption !== currentQuestion.correctAnswer) {
-        finalIncorrectList.push(currentQuestion);
-      }
-      const weakTopics = Array.from(new Set(finalIncorrectList.map(q => q.topic)));
 
-      // Add attempt data to store
-      addAttempt({
-        documentId: docId,
-        documentTitle: activeDoc?.title || "Custom Notes Syllabus",
-        score: percentage,
-        totalQuestions: docQuestions.length,
-        correctAnswersCount: score + (selectedOption === currentQuestion.correctAnswer ? 1 : 0),
-        weakTopics
+      // Submit the full quiz attempt to the server for AI analysis
+      const allAnswers = [...answersHistory, { questionIndex: currentQuestionIdx, selectedOption: selectedOption! }];
+
+      // Get the quiz ID from the store for API call (quiz ID is the prefix of question IDs)
+      const quizId = docQuestions[0]?.id?.split("-q")[0] || docId;
+
+      submitQuizAttempt(quizId, allAnswers).then((result: any) => {
+        if (result?.attempt) {
+          setServerResult(result.attempt);
+        }
       });
 
       // Trigger Confetti Celebration!
@@ -267,6 +273,8 @@ function QuizContent() {
                 setIsAnswerSubmitted(false);
                 setQuizComplete(false);
                 setIncorrectList([]);
+                setAnswersHistory([]);
+                setServerResult(null);
                 setTimerSeconds(0);
               }}
               className="rounded-xl border border-white/5 bg-[#0d0d11]/80 hover:bg-[#121217] px-5 py-3 text-xs font-bold text-zinc-300 transition-all duration-300 flex items-center justify-center gap-1.5"

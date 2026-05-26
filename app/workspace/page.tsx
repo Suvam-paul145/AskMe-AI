@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Navbar from "@/components/navbar";
 import { useStore } from "@/lib/store";
 import { 
@@ -20,7 +20,6 @@ import {
   Brain,
   Sparkles,
   ChevronRight,
-  CornerDownRight
 } from "lucide-react";
 import Link from "next/link";
 
@@ -30,8 +29,10 @@ export default function WorkspacePage() {
     selectedDocId, 
     setSelectedDocId, 
     chatThreads, 
-    addMessage,
+    sendMessage,
+    loadChatHistory,
     quizzes,
+    loadQuiz,
     updateNodeStrength,
     updateProfile,
     profile
@@ -40,6 +41,7 @@ export default function WorkspacePage() {
   const [activeTab, setActiveTab] = useState<"chat" | "flashcards" | "rtm">("chat");
   const [chatInput, setChatInput] = useState("");
   const [isAiReplying, setIsAiReplying] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Flashcards state
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
@@ -54,79 +56,95 @@ export default function WorkspacePage() {
   const activeDoc = documents.find(d => d.id === selectedDocId) || documents[0];
   const activeThread = activeDoc ? (chatThreads[activeDoc.id] || []) : [];
 
-  const handleSendMessage = (e: React.FormEvent) => {
+  // Load chat history and quiz when document changes
+  useEffect(() => {
+    if (activeDoc?.id) {
+      loadChatHistory(activeDoc.id);
+      loadQuiz(activeDoc.id);
+    }
+  }, [activeDoc?.id, loadChatHistory, loadQuiz]);
+
+  // Auto-scroll chat to bottom
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [activeThread]);
+
+  const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!chatInput.trim() || !activeDoc) return;
+    if (!chatInput.trim() || !activeDoc || isAiReplying) return;
 
     const userText = chatInput;
     setChatInput("");
-    addMessage(activeDoc.id, userText, "user");
     setIsAiReplying(true);
 
-    // Simulate RAG reply logic
-    setTimeout(() => {
-      let aiResponse = "";
-      const lower = userText.toLowerCase();
-
-      if (lower.includes("formula") || lower.includes("equation")) {
-        aiResponse = `Regarding formulas in '${activeDoc.title}': The primary equation is: ${activeDoc.summary.formulas[0] || "F = k * q1 * q2 / r^2"}. Let me know if you want a sample problem calculation solved step-by-step!`;
-      } else if (lower.includes("exam") || lower.includes("tip")) {
-        aiResponse = `For exams, pay close attention to: "${activeDoc.summary.examTips[0]}". Teachers frequently test this concept directly in MCQs.`;
-      } else if (lower.includes("mistake") || lower.includes("confus")) {
-        aiResponse = `A major confusion point is: "${activeDoc.summary.confusedTopics[0]}". Students often mix these vectors up.`;
-      } else {
-        aiResponse = `Ingesting contextual query. Based on vector chunks in '${activeDoc.title}': ${activeDoc.extractedText.slice(0, 180)}... Let me know if you would like me to generate a custom quiz question or expand on this topic!`;
-      }
-
-      addMessage(activeDoc.id, aiResponse, "ai", [activeDoc.title]);
+    try {
+      await sendMessage(activeDoc.id, userText);
+    } catch (err) {
+      console.error("Chat error:", err);
+    } finally {
       setIsAiReplying(false);
-    }, 1500);
+    }
   };
 
-  // Mock Flashcards
-  const flashcards = [
-    { q: "What is Coulomb's Law formula?", a: "F = k * (q1 * q2) / r^2" },
-    { q: "Is electric potential scalar or vector?", a: "Scalar (only magnitude)" },
-    { q: "Where does translation happen in a cell?", a: "In the ribosome/cytoplasm" },
-    { q: "What is transcription?", a: "Synthesizing RNA from a DNA template" }
-  ];
+  // Build flashcards from quiz questions
+  const docQuizQuestions = activeDoc ? (quizzes[activeDoc.id] || []) : [];
+  const flashcards = docQuizQuestions.length > 0 
+    ? docQuizQuestions.map(q => ({
+        q: q.question,
+        a: q.options[q.correctAnswer]?.replace(/^[A-D]\)\s*/, "") || q.explanation
+      }))
+    : [
+        { q: "Upload study material to generate flashcards", a: "Your AI-generated flashcards will appear here after uploading notes." }
+      ];
 
   const handleFlashcardRating = (mastered: boolean) => {
     setIsFlipped(false);
-    // Adjust nodes strength slightly
-    updateNodeStrength(mastered ? "n-1" : "n-3", mastered ? 10 : -8);
-    // Go to next card
+    // Adjust nodes strength slightly based on document
+    if (activeDoc) {
+      updateNodeStrength(activeDoc.id, mastered ? 10 : -8);
+    }
     setTimeout(() => {
       setCurrentCardIndex((currentCardIndex + 1) % flashcards.length);
     }, 200);
   };
 
   // Socratic RTM Question
-  const rtmQuestion = activeDoc?.id === "doc-1" 
-    ? "Explain in your own words what Coulomb's Law is and why it is an inverse-square law."
-    : "Explain the Central Dogma of Molecular Biology and how RNA polymerase participates in it.";
+  const rtmQuestion = activeDoc?.summary?.keyPoints?.[0]
+    ? `Explain in your own words: ${activeDoc.summary.keyPoints[0]}. Include related concepts, formulas, and practical applications.`
+    : "Explain the main concept from your study material in your own words.";
 
-  const handleRtmSubmit = (e: React.FormEvent) => {
+  const handleRtmSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!rtmAnswer.trim()) return;
+    if (!rtmAnswer.trim() || !activeDoc) return;
 
     setRtmLoading(true);
     setRtmEvaluation("");
 
-    setTimeout(() => {
-      const score = Math.floor(Math.random() * 20) + 75; // 75 to 95
-      setRtmEvaluation(`### Cognitive Evaluation Output
-* **Conceptual Accuracy:** ${score}%
-* **Semantic Gaps Detected:** You correctly identified the inverse mathematical proportional components, but omitted mentioning the electrostatic permittivity constants (Epsilon_0).
-* **Cognitive archetypes update:** Retention rates increased by +5%. XP Granted: +25 XP.`);
+    try {
+      const response = await sendMessage(activeDoc.id, rtmAnswer, "rtm");
+      
+      // Parse RTM evaluation from AI response
+      try {
+        const evaluation = JSON.parse(response);
+        setRtmEvaluation(`### Cognitive Evaluation Output
+* **Conceptual Accuracy:** ${evaluation.score}%
+* **Strengths:** ${evaluation.strengths?.join(", ") || "Good overall attempt"}
+* **Semantic Gaps Detected:** ${evaluation.gaps?.join(". ") || "No major gaps detected."}
+* **Feedback:** ${evaluation.feedback || "Keep studying!"}
+* **Cognitive archetypes update:** Retention rates increased. XP Granted.`);
 
-      // Update actual DNA profile
-      updateProfile({
-        retention: Math.min(100, profile.retention + 4),
-        conceptual: Math.min(100, profile.conceptual + 3)
-      });
+        updateProfile({
+          retention: Math.min(100, profile.retention + 4),
+          conceptual: Math.min(100, profile.conceptual + 3)
+        });
+      } catch {
+        setRtmEvaluation(`### Cognitive Evaluation Output\n${response}`);
+      }
+    } catch (err) {
+      setRtmEvaluation("Failed to evaluate. Please try again.");
+    } finally {
       setRtmLoading(false);
-    }, 1500);
+    }
   };
 
   return (
@@ -178,69 +196,77 @@ export default function WorkspacePage() {
             </div>
 
             {/* Document Summary display */}
-            <div className="space-y-4">
-              <h2 className="text-[10px] uppercase font-bold tracking-[0.25em] text-zinc-500 flex items-center gap-2">
-                <BookOpen className="h-4 w-4 text-primary" />
-                Auto-Synthesis Summaries
-              </h2>
+            {activeDoc.summary && (
+              <div className="space-y-4">
+                <h2 className="text-[10px] uppercase font-bold tracking-[0.25em] text-zinc-500 flex items-center gap-2">
+                  <BookOpen className="h-4 w-4 text-primary" />
+                  Auto-Synthesis Summaries
+                </h2>
 
-              <div className="bg-[#0b0b0e]/90 border border-white/5 rounded-2xl p-6 space-y-6 glass-card matte-layer spatial-shadow-lg">
-                {/* Overview */}
-                <div className="space-y-2">
-                  <h4 className="text-[10px] uppercase tracking-wider font-bold text-zinc-400">Synthesis Overview</h4>
-                  <p className="text-xs text-zinc-300 leading-relaxed font-light">{activeDoc.summary.overview}</p>
-                </div>
+                <div className="bg-[#0b0b0e]/90 border border-white/5 rounded-2xl p-6 space-y-6 glass-card matte-layer spatial-shadow-lg">
+                  {/* Overview */}
+                  <div className="space-y-2">
+                    <h4 className="text-[10px] uppercase tracking-wider font-bold text-zinc-400">Synthesis Overview</h4>
+                    <p className="text-xs text-zinc-300 leading-relaxed font-light">{activeDoc.summary.overview}</p>
+                  </div>
 
-                {/* Keypoints */}
-                <div className="space-y-3">
-                  <h4 className="text-[10px] uppercase tracking-wider font-bold text-zinc-400">Active Memory Points</h4>
-                  <ul className="space-y-2.5 text-xs text-zinc-300">
-                    {activeDoc.summary.keyPoints.map((kp, idx) => (
-                      <li key={idx} className="flex items-start gap-2">
-                        <ChevronRight className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" />
-                        <span className="font-light">{kp}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+                  {/* Keypoints */}
+                  {activeDoc.summary.keyPoints?.length > 0 && (
+                    <div className="space-y-3">
+                      <h4 className="text-[10px] uppercase tracking-wider font-bold text-zinc-400">Active Memory Points</h4>
+                      <ul className="space-y-2.5 text-xs text-zinc-300">
+                        {activeDoc.summary.keyPoints.map((kp, idx) => (
+                          <li key={idx} className="flex items-start gap-2">
+                            <ChevronRight className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" />
+                            <span className="font-light">{kp}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
 
-                {/* Formulas */}
-                <div className="space-y-3">
-                  <h4 className="text-[10px] uppercase tracking-wider font-bold text-zinc-400">Key Mathematical Models</h4>
-                  <div className="grid grid-cols-1 gap-2">
-                    {activeDoc.summary.formulas.map((frm, idx) => (
-                      <div key={idx} className="bg-primary/5 border border-primary/10 p-3 rounded-xl flex items-center justify-between group">
-                        <code className="text-primary dark:text-purple-400 text-[10px] font-mono tracking-wide">
-                          {frm}
-                        </code>
-                        <Sparkles className="h-3.5 w-3.5 text-primary/45 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  {/* Formulas */}
+                  {activeDoc.summary.formulas?.length > 0 && (
+                    <div className="space-y-3">
+                      <h4 className="text-[10px] uppercase tracking-wider font-bold text-zinc-400">Key Mathematical Models</h4>
+                      <div className="grid grid-cols-1 gap-2">
+                        {activeDoc.summary.formulas.map((frm, idx) => (
+                          <div key={idx} className="bg-primary/5 border border-primary/10 p-3 rounded-xl flex items-center justify-between group">
+                            <code className="text-primary dark:text-purple-400 text-[10px] font-mono tracking-wide">
+                              {frm}
+                            </code>
+                            <Sparkles className="h-3.5 w-3.5 text-primary/45 opacity-0 group-hover:opacity-100 transition-opacity" />
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
-                </div>
+                    </div>
+                  )}
 
-                {/* Warnings Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-                  {/* Confusions */}
-                  <div className="bg-rose-500/5 border border-rose-500/10 rounded-xl p-4 space-y-1.5">
-                    <h5 className="text-[10px] font-bold text-rose-400 flex items-center gap-1.5 uppercase tracking-wider">
-                      <AlertTriangle className="h-3.5 w-3.5 text-rose-500" />
-                      Confusion Warning
-                    </h5>
-                    <p className="text-[10px] text-zinc-400 leading-normal font-light">{activeDoc.summary.confusedTopics[0]}</p>
+                  {/* Warnings Grid */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                    {activeDoc.summary.confusedTopics?.[0] && (
+                      <div className="bg-rose-500/5 border border-rose-500/10 rounded-xl p-4 space-y-1.5">
+                        <h5 className="text-[10px] font-bold text-rose-400 flex items-center gap-1.5 uppercase tracking-wider">
+                          <AlertTriangle className="h-3.5 w-3.5 text-rose-500" />
+                          Confusion Warning
+                        </h5>
+                        <p className="text-[10px] text-zinc-400 leading-normal font-light">{activeDoc.summary.confusedTopics[0]}</p>
+                      </div>
+                    )}
+                    {activeDoc.summary.examTips?.[0] && (
+                      <div className="bg-amber-500/5 border border-amber-500/10 rounded-xl p-4 space-y-1.5">
+                        <h5 className="text-[10px] font-bold text-amber-400 flex items-center gap-1.5 uppercase tracking-wider">
+                          <TrendingUp className="h-3.5 w-3.5 text-amber-500" />
+                          Exam Warnings
+                        </h5>
+                        <p className="text-[10px] text-zinc-400 leading-normal font-light">{activeDoc.summary.examTips[0]}</p>
+                      </div>
+                    )}
                   </div>
-                  {/* Tips */}
-                  <div className="bg-amber-500/5 border border-amber-500/10 rounded-xl p-4 space-y-1.5">
-                    <h5 className="text-[10px] font-bold text-amber-400 flex items-center gap-1.5 uppercase tracking-wider">
-                      <TrendingUp className="h-3.5 w-3.5 text-amber-500" />
-                      Exam Warnings
-                    </h5>
-                    <p className="text-[10px] text-zinc-400 leading-normal font-light">{activeDoc.summary.examTips[0]}</p>
-                  </div>
-                </div>
 
+                </div>
               </div>
-            </div>
+            )}
 
           </div>
 
@@ -275,7 +301,7 @@ export default function WorkspacePage() {
               </div>
 
               {/* Launcher for Quiz */}
-              {quizzes[activeDoc.id] && (
+              {docQuizQuestions.length > 0 && (
                 <Link
                   href={`/quiz?docId=${activeDoc.id}`}
                   className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary dark:text-purple-400 px-4 py-1.5 text-xs font-bold hover:bg-primary/20 transition-all shadow-[0_0_10px_rgba(139,92,246,0.1)]"
@@ -308,21 +334,27 @@ export default function WorkspacePage() {
                         }`}>
                           {msg.text}
                         </div>
-                        <span className="text-[9px] text-zinc-500 px-2 font-mono">{msg.timestamp}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[9px] text-zinc-500 px-2 font-mono">{msg.timestamp}</span>
+                          {msg.sources && msg.sources.length > 0 && (
+                            <span className="text-[8px] text-primary/60 font-bold uppercase">📎 {msg.sources.length} sources</span>
+                          )}
+                        </div>
                       </div>
                     ))}
 
-                    {/* Simulated AI wave thinking loader */}
+                    {/* AI wave thinking loader */}
                     {isAiReplying && (
                       <div className="mr-auto items-start max-w-[80%] w-full animate-float">
                         <div className="bg-[#0b0b0e]/90 border border-white/5 rounded-2xl p-4 w-full glass-card space-y-2 matte-layer">
                           <div className="h-1.5 w-full rounded bg-white/5 overflow-hidden relative border border-white/10">
                             <div className="absolute inset-y-0 left-0 w-1/2 bg-gradient-to-r from-transparent via-primary to-transparent animate-pulse wave-thinking" />
                           </div>
-                          <span className="text-[10px] text-primary dark:text-purple-400 font-bold uppercase tracking-wider block animate-pulse">Stitching memory vectors...</span>
+                          <span className="text-[10px] text-primary dark:text-purple-400 font-bold uppercase tracking-wider block animate-pulse">Searching vector embeddings...</span>
                         </div>
                       </div>
                     )}
+                    <div ref={messagesEndRef} />
                   </div>
 
                   {/* Message Form */}
@@ -332,7 +364,7 @@ export default function WorkspacePage() {
                       required
                       value={chatInput}
                       onChange={(e) => setChatInput(e.target.value)}
-                      placeholder="Ask AI Doubt (e.g. 'explain formula', 'give exam tip'...)"
+                      placeholder="Ask any question about your study material..."
                       className="w-full rounded-xl border border-white/5 bg-[#09090b]/60 px-4 py-3.5 text-xs text-zinc-200 focus:border-primary focus:outline-none transition-all placeholder-zinc-600 font-light"
                     />
                     <button
@@ -351,7 +383,11 @@ export default function WorkspacePage() {
                 <div className="flex flex-col items-center justify-center h-full max-w-md mx-auto space-y-8 py-4">
                   <div className="text-center space-y-1.5">
                     <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest">Holographic Deck Review</h3>
-                    <p className="text-[10px] text-zinc-500 font-light">Toggle details to review memory anchors. Tap to flip.</p>
+                    <p className="text-[10px] text-zinc-500 font-light">
+                      {docQuizQuestions.length > 0 
+                        ? `${flashcards.length} cards from your AI-generated quiz. Tap to flip.` 
+                        : "Upload study material to generate AI flashcards."}
+                    </p>
                   </div>
 
                   {/* Card Flip Container */}
@@ -374,7 +410,7 @@ export default function WorkspacePage() {
                         style={{ backfaceVisibility: "hidden" }}
                       >
                         <HelpCircle className="h-6 w-6 text-primary mb-3.5 animate-pulse" />
-                        <h4 className="text-sm font-bold text-white leading-relaxed px-4">{flashcards[currentCardIndex].q}</h4>
+                        <h4 className="text-sm font-bold text-white leading-relaxed px-4">{flashcards[currentCardIndex]?.q}</h4>
                         <span className="text-[9px] text-zinc-600 uppercase font-semibold tracking-wider absolute bottom-4">Tap to flip card</span>
                       </div>
 
@@ -387,7 +423,7 @@ export default function WorkspacePage() {
                         }}
                       >
                         <CheckCircle className="h-6 w-6 text-primary dark:text-purple-400 mb-3.5" />
-                        <h4 className="text-sm font-mono font-semibold text-white leading-relaxed px-4">{flashcards[currentCardIndex].a}</h4>
+                        <h4 className="text-sm font-mono font-semibold text-white leading-relaxed px-4">{flashcards[currentCardIndex]?.a}</h4>
                         <span className="text-[9px] text-zinc-500 uppercase font-semibold tracking-wider absolute bottom-4">Tap to reverse</span>
                       </div>
                     </div>
@@ -477,14 +513,14 @@ export default function WorkspacePage() {
                                   </div>
                                 );
                               }
-                              if (line.startsWith("* **Semantic Gaps Detected:**")) {
+                              if (line.startsWith("* **Semantic Gaps Detected:**") || line.startsWith("* **Gaps:**")) {
                                 return (
                                   <div key={idx} className="space-y-1.5 bg-rose-500/5 p-4 rounded-xl border border-rose-500/10">
                                     <span className="font-semibold text-rose-400 flex items-center gap-1.5">
                                       <AlertTriangle className="h-4 w-4 shrink-0" />
                                       Detected Semantic Gaps
                                     </span>
-                                    <p className="text-[11px] text-zinc-400 leading-relaxed font-light">{line.split(":")[1]}</p>
+                                    <p className="text-[11px] text-zinc-400 leading-relaxed font-light">{line.split(":").slice(1).join(":")}</p>
                                   </div>
                                 );
                               }
@@ -496,9 +532,12 @@ export default function WorkspacePage() {
                                   </div>
                                 );
                               }
-                              return (
-                                <p key={idx} className="leading-relaxed">{line}</p>
-                              );
+                              if (line.trim().length > 0 && !line.startsWith("###")) {
+                                return (
+                                  <p key={idx} className="leading-relaxed">{line.replace(/^\*\s*\*\*.*?\*\*\s*/, "")}</p>
+                                );
+                              }
+                              return null;
                             })}
                           </div>
                         </div>

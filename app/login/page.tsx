@@ -4,24 +4,59 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import Navbar from "@/components/navbar";
 import Footer from "@/components/footer";
-import { Brain, Lock, Mail, ArrowRight, ShieldCheck, Sparkles } from "lucide-react";
+import { useStore } from "@/lib/store";
+import { Brain, Lock, Mail, ArrowRight, ShieldCheck, Sparkles, User } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
+  const { signIn, signUp } = useStore();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [fullName, setFullName] = useState("");
   const [loading, setLoading] = useState(false);
+  const [isRegister, setIsRegister] = useState(false);
+  const [error, setError] = useState("");
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password) return;
 
     setLoading(true);
-    setTimeout(() => {
-      // Simulate authenticating and save auth token mock
-      localStorage.setItem("askme-auth", "true");
+    setError("");
+
+    try {
+      if (isRegister) {
+        if (!fullName) {
+          setError("Please enter your name.");
+          setLoading(false);
+          return;
+        }
+        const result = await signUp(email, password, fullName);
+        if (result.error) {
+          setError(result.error);
+          setLoading(false);
+          return;
+        }
+        // After signup, try to sign in
+        const signInResult = await signIn(email, password);
+        if (signInResult.error) {
+          setError("Account created! Please check your email to verify, then log in.");
+          setLoading(false);
+          return;
+        }
+      } else {
+        const result = await signIn(email, password);
+        if (result.error) {
+          setError(result.error);
+          setLoading(false);
+          return;
+        }
+      }
       router.push("/dashboard");
-    }, 1200);
+    } catch (err: any) {
+      setError(err.message || "Authentication failed");
+      setLoading(false);
+    }
   };
 
   return (
@@ -42,10 +77,13 @@ export default function LoginPage() {
           </div>
 
           <h2 className="text-3xl font-extrabold text-white cinematic-title leading-snug">
-            Authenticate <br />
-            Cognitive Signature
+            {isRegister ? "Create Cognitive\nProfile" : "Authenticate\nCognitive Signature"}
           </h2>
-          <p className="text-xs text-zinc-500 font-light">Synchronize your cognitive models across all devices.</p>
+          <p className="text-xs text-zinc-500 font-light">
+            {isRegister
+              ? "Initialize your learning DNA and cognitive model."
+              : "Synchronize your cognitive models across all devices."}
+          </p>
         </div>
 
         {/* Credentials Form Card */}
@@ -53,8 +91,27 @@ export default function LoginPage() {
           <div className="absolute inset-x-0 h-1/2 w-full scanner-sweep pointer-events-none opacity-20" />
           <div className="absolute top-0 right-0 w-[150px] h-[150px] radial-glow opacity-25 pointer-events-none" />
 
-          <form onSubmit={handleLogin} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
             
+            {/* Name input (register only) */}
+            {isRegister && (
+              <div className="space-y-2">
+                <label htmlFor="fullName" className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider flex items-center gap-1.5">
+                  <User className="h-3.5 w-3.5 text-primary" />
+                  <span>Full Name</span>
+                </label>
+                <input
+                  type="text"
+                  id="fullName"
+                  required
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  placeholder="Your full name"
+                  className="w-full rounded-xl border border-white/5 bg-[#09090b]/60 px-4 py-3.5 text-xs text-white focus:border-primary focus:outline-none transition-all placeholder-zinc-700 font-light"
+                />
+              </div>
+            )}
+
             {/* Email input */}
             <div className="space-y-2">
               <label htmlFor="email" className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider flex items-center gap-1.5">
@@ -82,6 +139,7 @@ export default function LoginPage() {
                 type="password"
                 id="password"
                 required
+                minLength={6}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
@@ -89,12 +147,25 @@ export default function LoginPage() {
               />
             </div>
 
+            {/* Error message */}
+            {error && (
+              <div className="bg-rose-500/10 border border-rose-500/20 text-rose-400 rounded-xl p-3 text-[10px] font-semibold">
+                {error}
+              </div>
+            )}
+
             <button
               type="submit"
               disabled={loading}
-              className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-primary py-3.5 text-xs font-bold text-white shadow-md hover:bg-primary/95 transition-all glowing-border duration-300"
+              className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-primary py-3.5 text-xs font-bold text-white shadow-md hover:bg-primary/95 transition-all glowing-border duration-300 disabled:opacity-50"
             >
-              <span>{loading ? "Authenticating model..." : "Launch Dashboard"}</span>
+              <span>
+                {loading
+                  ? "Authenticating model..."
+                  : isRegister
+                    ? "Initialize Profile"
+                    : "Launch Dashboard"}
+              </span>
               <ArrowRight className="h-4 w-4" />
             </button>
 
@@ -102,15 +173,25 @@ export default function LoginPage() {
 
           {/* Switch options */}
           <div className="border-t border-white/5 pt-4 mt-6 text-center text-xs text-zinc-500 space-y-2 font-light">
-            <p>Don't have an account? <span className="text-primary hover:underline cursor-pointer font-medium">Register Profile</span></p>
-            <p className="hover:underline cursor-pointer">Forgot cognitive signature key?</p>
+            <p>
+              {isRegister ? "Already have an account? " : "Don't have an account? "}
+              <span
+                onClick={() => {
+                  setIsRegister(!isRegister);
+                  setError("");
+                }}
+                className="text-primary hover:underline cursor-pointer font-medium"
+              >
+                {isRegister ? "Sign In" : "Register Profile"}
+              </span>
+            </p>
           </div>
         </div>
 
         {/* Security badge banner */}
         <div className="mt-6 flex items-center justify-center gap-2 text-[9px] text-zinc-500 font-light">
           <ShieldCheck className="h-4 w-4 text-emerald-400 biometric-glow" />
-          <span>Local storage cookies data is encrypted locally.</span>
+          <span>Secured with Supabase Auth — data encrypted end-to-end.</span>
         </div>
 
       </main>

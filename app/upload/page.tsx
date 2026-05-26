@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import Navbar from "@/components/navbar";
 import Footer from "@/components/footer";
@@ -8,7 +8,7 @@ import { useStore } from "@/lib/store";
 import { Upload, FileText, CheckCircle2, AlertCircle, RefreshCw, Cpu, Database } from "lucide-react";
 
 export default function UploadPage() {
-  const { addDocument } = useStore();
+  const { uploadDocument } = useStore();
   const router = useRouter();
   const [dragActive, setDragActive] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -28,37 +28,41 @@ export default function UploadPage() {
     }
   };
 
-  const simulateIngestion = (name: string, size: string, text: string) => {
+  const processFile = async (file: File) => {
+    // Validate file type
+    const allowedTypes = ["application/pdf", "text/plain"];
+    if (!allowedTypes.includes(file.type) && !file.name.endsWith(".pdf") && !file.name.endsWith(".txt")) {
+      setError("Only PDF and TXT text files are supported for vector indexing.");
+      return;
+    }
+
     setUploading(true);
-    setFileName(name);
+    setFileName(file.name);
     setError("");
     setProgress(0);
     setLogHistory([]);
 
-    const stages = [
-      { prg: 20, msg: "Initializing local OCR scanner...", log: "[SYSTEM] Ingestion channel secure. Starting visual scanner." },
-      { prg: 45, msg: "Cleaning layout noise and mapping math definitions...", log: "[PARSER] Cleaned layout noise. Detected formulas: F = k*q1*q2/r^2." },
-      { prg: 70, msg: "Generating 768-dimensional semantic embeddings vectors...", log: "[VECTOR] Computed 768-dimensional semantic embeddings matrix weights." },
-      { prg: 90, msg: "Ingesting embeddings into local vector store...", log: "[DB] Embeddings indexed into local Vector Weight DB successfully." },
-      { prg: 100, msg: "Ingestion complete! Syncing cognitive profile graph nodes...", log: "[SYNC] Memory graph synced! XP rewarded: +50 XP." }
-    ];
+    try {
+      await uploadDocument(file, (stageMsg: string, prog: number) => {
+        setStage(stageMsg);
+        setProgress(prog);
+        setLogHistory((prev) => [...prev, `[${new Date().toLocaleTimeString()}] ${stageMsg}`]);
+      });
 
-    let currentIdx = 0;
-    const interval = setInterval(() => {
-      if (currentIdx < stages.length) {
-        setProgress(stages[currentIdx].prg);
-        setStage(stages[currentIdx].msg);
-        setLogHistory(prev => [...prev, stages[currentIdx].log]);
-        currentIdx++;
-      } else {
-        clearInterval(interval);
-        // Complete the ingestion in store
-        addDocument(name, size, text);
-        setTimeout(() => {
-          router.push("/workspace");
-        }, 1500);
-      }
-    }, 1000);
+      // Add final log entries
+      setLogHistory((prev) => [
+        ...prev,
+        `[SYSTEM] All vector embeddings stored in Supabase pgvector.`,
+        `[SYNC] Memory graph node created. XP rewarded: +50 XP.`,
+      ]);
+
+      setTimeout(() => {
+        router.push("/workspace");
+      }, 1500);
+    } catch (err: any) {
+      setError(err.message || "Upload failed. Please try again.");
+      setUploading(false);
+    }
   };
 
   const handleDrop = (e: React.DragEvent) => {
@@ -67,27 +71,14 @@ export default function UploadPage() {
     setDragActive(false);
 
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      const file = e.dataTransfer.files[0];
-      if (file.type === "application/pdf" || file.name.endsWith(".pdf") || file.type === "text/plain") {
-        const sizeStr = (file.size / (1024 * 1024)).toFixed(1) + " MB";
-        simulateIngestion(file.name, sizeStr, "Sample extracted syllabus text from " + file.name + ". Physics formulas: F = m*a, E = h*nu. DNA replication starts at origins of replication.");
-      } else {
-        setError("Only PDF and TXT text files are supported for vector indexing.");
-      }
+      processFile(e.dataTransfer.files[0]);
     }
   };
 
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      const sizeStr = (file.size / (1024 * 1024)).toFixed(1) + " MB";
-      simulateIngestion(file.name, sizeStr, "Sample parsed contents. Coulomb's Law dictates electrical forces. Translation happens in the ribosome where peptide bonds bond amino acids.");
+      processFile(e.target.files[0]);
     }
-  };
-
-  // Trigger quick load demo file
-  const handleLoadDemo = () => {
-    simulateIngestion("Genetics and Chromosomal Crossing Over.pdf", "1.8 MB", "Genetics is the study of genes and heredity. Chromosomal crossover is the exchange of genetic material between homologous chromosomes that results in recombinant chromosomes during sexual reproduction. It occurs in prophase I of meiosis. Recombination frequency maps relative distances on chromosomes.");
   };
 
   return (
@@ -110,7 +101,7 @@ export default function UploadPage() {
             Knowledge Ingestion Chamber
           </h1>
           <p className="text-zinc-400 text-xs font-light max-w-lg mx-auto leading-relaxed">
-            Feed textbooks or notes slides to the compiler. Our parsing engine indexes context vectors and calibrates memory networks instantly.
+            Feed textbooks or notes slides to the compiler. Our AI engine extracts text, generates summaries, creates embeddings, and builds your knowledge graph.
           </p>
         </div>
 
@@ -139,7 +130,7 @@ export default function UploadPage() {
                   type="file"
                   id="file-upload"
                   className="hidden"
-                  accept=".pdf,text/plain"
+                  accept=".pdf,.txt,application/pdf,text/plain"
                   onChange={handleFileInput}
                 />
                 
@@ -160,18 +151,6 @@ export default function UploadPage() {
                   <span>{error}</span>
                 </div>
               )}
-
-              {/* Demo button */}
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-white/5">
-                <span className="text-[9px] text-zinc-500 font-bold uppercase tracking-wider">No study files ready?</span>
-                <button
-                  onClick={handleLoadDemo}
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl border border-white/5 bg-[#09090b]/80 hover:bg-[#121217] px-4.5 py-2.5 text-xs font-bold text-zinc-200 transition-all duration-300"
-                >
-                  <FileText className="h-4 w-4 text-primary" />
-                  Load Genetics Demo Chapter
-                </button>
-              </div>
             </div>
           ) : (
             // Processing scanner state
@@ -184,7 +163,7 @@ export default function UploadPage() {
               </div>
 
               <div className="space-y-2">
-                <h3 className="text-sm font-bold text-white tracking-wide">Parsing "{fileName}"</h3>
+                <h3 className="text-sm font-bold text-white tracking-wide">Processing &quot;{fileName}&quot;</h3>
                 <p className="text-[10px] text-primary dark:text-purple-400 font-bold uppercase tracking-wider animate-pulse">{stage}</p>
               </div>
 
@@ -200,7 +179,7 @@ export default function UploadPage() {
               <div className="w-full max-w-md mx-auto bg-[#070709] border border-white/5 rounded-xl p-4 text-left font-mono text-[9px] text-zinc-400 space-y-2.5 max-h-[140px] overflow-y-auto">
                 <div className="flex items-center justify-between border-b border-white/5 pb-2 text-[8px] uppercase tracking-wider text-zinc-500">
                   <span className="flex items-center gap-1"><Cpu className="h-3 w-3" /> Console Log output</span>
-                  <span className="animate-pulse">● Recv</span>
+                  <span className="animate-pulse">● Live</span>
                 </div>
                 {logHistory.map((log, idx) => (
                   <div key={idx} className="animate-drift leading-relaxed">
@@ -211,7 +190,7 @@ export default function UploadPage() {
 
               <div className="flex items-center justify-center gap-2 text-xs font-semibold text-zinc-400 font-light">
                 <CheckCircle2 className={`h-4.5 w-4.5 ${progress === 100 ? "text-emerald-400 animate-pulse" : "text-zinc-600"}`} />
-                <span>{progress}% Vectorized</span>
+                <span>{progress}% Complete</span>
               </div>
             </div>
           )}

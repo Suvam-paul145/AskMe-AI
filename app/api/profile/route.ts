@@ -13,13 +13,29 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { data: profile, error } = await supabase
+    let { data: profile, error } = await supabase
       .from("profiles")
       .select("*")
       .eq("id", user.id)
       .single();
 
-    if (error) {
+    if (error && error.code === "PGRST116") {
+      // Profile doesn't exist, create it!
+      const { data: newProfile, error: insertError } = await supabase
+        .from("profiles")
+        .insert({
+          id: user.id,
+          full_name: user.user_metadata?.full_name || user.email?.split("@")[0] || "Student",
+        })
+        .select()
+        .single();
+      
+      if (insertError) {
+        return NextResponse.json({ error: insertError.message }, { status: 500 });
+      }
+      profile = newProfile;
+      error = null;
+    } else if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 

@@ -12,35 +12,15 @@ export async function extractTextFromPDF(buffer: Buffer): Promise<string> {
   
   // pdf-parse v2 requires Uint8Array, not Buffer
   const uint8 = new Uint8Array(buffer);
-  const pdfParser = new PDFParse(uint8) as any;
-  await pdfParser.load();
+  const pdfParser = new PDFParse({ data: uint8 });
   
-  // Get total pages from info
-  const info = pdfParser.getInfo();
-  const totalPages = info?.numPages || info?.Pages || 1;
-  
-  // Collect text from all pages
-  const textParts: string[] = [];
-  for (let i = 1; i <= totalPages; i++) {
-    try {
-      const pageText = pdfParser.getPageText(i);
-      if (pageText) textParts.push(pageText);
-    } catch {
-      // Skip pages that fail to parse
-    }
+  try {
+    const textResult = await pdfParser.getText();
+    return textResult.text || "";
+  } catch (error) {
+    console.error("Error parsing PDF text:", error);
+    return "";
   }
-  
-  // Fallback: try getText() if page-by-page didn't work
-  if (textParts.length === 0) {
-    try {
-      const allText = pdfParser.getText();
-      if (allText) return allText;
-    } catch {
-      // Fall through
-    }
-  }
-  
-  return textParts.join("\n\n") || "";
 }
 
 /**

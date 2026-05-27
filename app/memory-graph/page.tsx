@@ -26,7 +26,7 @@ function Custom3DCanvasFullscreen({
   onSelectNode: (node: GraphNode) => void;
 }) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const { nodes, links } = useStore();
+  const { nodes, links, theme } = useStore();
 
   const originalCoords = useRef<Record<string, { x: number; y: number }>>({});
   const projectedNodesRef = useRef<any[]>([]);
@@ -218,7 +218,9 @@ function Custom3DCanvasFullscreen({
 
         // Label
         if (node.scale > 0.75) {
-          ctx.fillStyle = isSelected ? "#ffffff" : "rgba(255, 255, 255, 0.55)";
+          ctx.fillStyle = isSelected 
+            ? (theme === "light" ? "#000000" : "#ffffff") 
+            : (theme === "light" ? "rgba(0, 0, 0, 0.55)" : "rgba(255, 255, 255, 0.55)");
           ctx.font = `${isSelected ? "bold" : "normal"} ${Math.round((isSelected ? 10 : 8) * node.scale)}px sans-serif`;
           ctx.textAlign = "center";
           ctx.fillText(node.label, node.px, node.py + radius + (isSelected ? 14 : 11));

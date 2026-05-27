@@ -9,7 +9,7 @@ import { Brain, Activity, Target, ShieldCheck, Cpu } from "lucide-react";
 // --- FUTURISTIC 8D RADAR CHART CANVAS COMPONENT ---
 function CognitiveRadarChart() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const { profile } = useStore();
+  const { profile, theme } = useStore();
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -68,12 +68,12 @@ function CognitiveRadarChart() {
           else ctx.lineTo(x, y);
         }
         ctx.closePath();
-        ctx.strokeStyle = i === gridCount ? "rgba(139, 92, 246, 0.25)" : "rgba(255, 255, 255, 0.04)";
+        ctx.strokeStyle = i === gridCount ? "rgba(139, 92, 246, 0.25)" : (theme === "light" ? "rgba(0, 0, 0, 0.04)" : "rgba(255, 255, 255, 0.04)");
         ctx.lineWidth = 1;
         ctx.stroke();
 
         // Print Grid Percentage values
-        ctx.fillStyle = "rgba(255, 255, 255, 0.15)";
+        ctx.fillStyle = theme === "light" ? "rgba(0, 0, 0, 0.25)" : "rgba(255, 255, 255, 0.15)";
         ctx.font = "8px monospace";
         ctx.fillText(`${i * 20}%`, cx - 10, cy - r + 3);
       }
@@ -87,7 +87,7 @@ function CognitiveRadarChart() {
         ctx.beginPath();
         ctx.moveTo(cx, cy);
         ctx.lineTo(x, y);
-        ctx.strokeStyle = "rgba(255, 255, 255, 0.03)";
+        ctx.strokeStyle = theme === "light" ? "rgba(0, 0, 0, 0.03)" : "rgba(255, 255, 255, 0.03)";
         ctx.stroke();
       }
 
@@ -160,7 +160,7 @@ function CognitiveRadarChart() {
         const y = cy + labelRadius * Math.sin(angle);
         const val = (profile as any)[t.key] || 50;
 
-        ctx.fillStyle = "rgba(255, 255, 255, 0.65)";
+        ctx.fillStyle = theme === "light" ? "rgba(0, 0, 0, 0.65)" : "rgba(255, 255, 255, 0.65)";
         ctx.font = "bold 8px monospace";
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";

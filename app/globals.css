@@ -237,3 +237,39 @@ body {
   background-image: radial-gradient(rgba(139, 92, 246, 0.08) 1px, transparent 1px);
   background-size: 16px 16px;
 }
+
+/* Premium Light Mode Overrides */
+.light .bg-\[\#040406\] {
+  background-color: hsl(var(--background)) !important;
+}
+
+.light .text-white:not(button):not(a):not(.bg-primary):not(.bg-primary *):not([class*="bg-"]):not([class*="hover:bg-"]) {
+  color: hsl(var(--foreground)) !important;
+}
+
+.light .bg-\[\#0d0d11\]\/80,
+.light .bg-\[\#0d0d11\]\/50,
+.light .bg-\[\#0d0d11\]\/40,
+.light .bg-\[\#0d0d11\]\/60,
+.light .bg-\[\#09090b\]\/80,
+.light .bg-\[\#0b0b0e\]\/90,
+.light .bg-\[\#040406\]\/60 {
+  background-color: rgba(255, 255, 255, 0.75) !important;
+  border-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+.light .border-white\/5 {
+  border-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+.light .text-zinc-400 {
+  color: hsl(var(--muted-foreground)) !important;
+}
+
+.light .text-zinc-300 {
+  color: hsl(var(--foreground)) !important;
+}
+
+.light .text-zinc-500 {
+  color: hsl(var(--muted-foreground)) !important;
+}

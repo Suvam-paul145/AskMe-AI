@@ -24,7 +24,7 @@ import Link from "next/link";
 // --- CUSTOM 3D CANVASES FOR DASHBOARD CORE ---
 function Custom3DCanvasDashboard({ onSelectNode }: { onSelectNode: (node: GraphNode) => void }) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const { nodes, links } = useStore();
+  const { nodes, links, theme } = useStore();
 
   const originalCoords = useRef<Record<string, { x: number; y: number }>>({});
   const projectedNodesRef = useRef<any[]>([]);
@@ -205,7 +205,7 @@ function Custom3DCanvasDashboard({ onSelectNode }: { onSelectNode: (node: GraphN
 
         // Label
         if (node.scale > 0.8) {
-          ctx.fillStyle = "rgba(255, 255, 255, 0.45)";
+          ctx.fillStyle = theme === "light" ? "rgba(0, 0, 0, 0.55)" : "rgba(255, 255, 255, 0.45)";
           ctx.font = `${Math.round(8 * node.scale)}px sans-serif`;
           ctx.textAlign = "center";
           ctx.fillText(node.label, node.px, node.py + radius + 10);

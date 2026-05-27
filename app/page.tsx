@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Navbar from "@/components/navbar";
 import Footer from "@/components/footer";
+import { useStore } from "@/lib/store";
 import { 
   Sparkles, 
   ArrowRight, 
@@ -19,6 +20,7 @@ import {
 function Custom3DGraph({ scene }: { scene: number }) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [hoveredNode, setHoveredNode] = useState<string | null>(null);
+  const { theme } = useStore();
 
   // 3D Nodes Definition
   const nodes = useRef([
@@ -201,8 +203,8 @@ function Custom3DGraph({ scene }: { scene: number }) {
         ctx.arc(node.px, node.py, radius, 0, Math.PI * 2);
 
         // Color maps
-        let strokeColor = "rgba(255, 255, 255, 0.95)";
-        let fillStyle = "rgba(255, 255, 255, 0.3)";
+        let strokeColor = theme === "light" ? "rgba(0, 0, 0, 0.85)" : "rgba(255, 255, 255, 0.95)";
+        let fillStyle = theme === "light" ? "rgba(0, 0, 0, 0.15)" : "rgba(255, 255, 255, 0.3)";
         
         if (scene === 2) {
           strokeColor = "rgba(168, 85, 247, 0.95)";
@@ -247,7 +249,7 @@ function Custom3DGraph({ scene }: { scene: number }) {
 
         // Node Label (only if closer or hovered)
         if (scene >= 3 && node.scale > 0.75) {
-          ctx.fillStyle = "rgba(255, 255, 255, 0.45)";
+          ctx.fillStyle = theme === "light" ? "rgba(0, 0, 0, 0.55)" : "rgba(255, 255, 255, 0.45)";
           ctx.font = `${Math.round(9 * node.scale)}px sans-serif`;
           ctx.textAlign = "center";
           ctx.fillText(node.label, node.px, node.py + radius + 12);

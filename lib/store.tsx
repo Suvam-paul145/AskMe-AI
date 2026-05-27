@@ -339,8 +339,9 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         body: JSON.stringify({ message, documentId: docId, mode }),
       });
 
+      const data = await res.json().catch(() => ({}));
+
       if (res.ok) {
-        const data = await res.json();
         const aiMsg: ChatMessage = {
           id: `ai-${Date.now()}`,
           sender: "ai",
@@ -356,10 +357,32 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         setDailyGoalProgress((prev) => Math.min(100, prev + 10));
         return data.response;
       }
-      return "Sorry, I couldn't process your request. Please try again.";
+      const errorText = data.error || "Sorry, I couldn't process your request. Please try again.";
+      const aiMsg: ChatMessage = {
+        id: `ai-error-${Date.now()}`,
+        sender: "ai",
+        text: errorText,
+        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      };
+      setChatThreads((prev) => ({
+        ...prev,
+        [docId]: [...(prev[docId] || []), aiMsg],
+      }));
+      return errorText;
     } catch (err) {
       console.error("Chat error:", err);
-      return "An error occurred. Please try again.";
+      const errorText = "Network or server error. Please try again.";
+      const aiMsg: ChatMessage = {
+        id: `ai-error-${Date.now()}`,
+        sender: "ai",
+        text: errorText,
+        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      };
+      setChatThreads((prev) => ({
+        ...prev,
+        [docId]: [...(prev[docId] || []), aiMsg],
+      }));
+      return errorText;
     }
   }, []);
 

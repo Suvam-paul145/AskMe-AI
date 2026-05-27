@@ -36,6 +36,11 @@ export default function UploadPage() {
       return;
     }
 
+    if (file.size > 10 * 1024 * 1024) {
+      setError("This file is too large. Upload a PDF or TXT file under 10 MB.");
+      return;
+    }
+
     setUploading(true);
     setFileName(file.name);
     setError("");
@@ -59,8 +64,8 @@ export default function UploadPage() {
       setTimeout(() => {
         router.push("/workspace");
       }, 1500);
-    } catch (err: any) {
-      setError(err.message || "Upload failed. Please try again.");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Upload failed. Please try again.");
       setUploading(false);
     }
   };
@@ -95,13 +100,13 @@ export default function UploadPage() {
         <div className="text-center space-y-4 mb-10 max-w-2xl mx-auto">
           <div className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/10 px-3.5 py-1 text-[10px] font-bold text-primary dark:text-purple-400 uppercase tracking-widest biometric-glow mb-2">
             <Database className="h-3.5 w-3.5 animate-pulse" />
-            <span>Chamber Access Enabled</span>
+            <span>Upload and learn</span>
           </div>
           <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl text-white cinematic-title">
-            Knowledge Ingestion Chamber
+            Upload Study Material
           </h1>
           <p className="text-zinc-400 text-xs font-light max-w-lg mx-auto leading-relaxed">
-            Feed textbooks or notes slides to the compiler. Our AI engine extracts text, generates summaries, creates embeddings, and builds your knowledge graph.
+            Add a PDF or TXT notes file. AskMe AI will extract the text, summarize it, index it for grounded chat, and create a starter quiz.
           </p>
         </div>
 
@@ -140,7 +145,7 @@ export default function UploadPage() {
                   </div>
                   <div>
                     <p className="text-xs font-bold text-white tracking-wide">Drag and drop document here</p>
-                    <p className="text-[10px] text-zinc-500 mt-1 font-light">or click to browse local files (PDF, TXT)</p>
+                    <p className="text-[10px] text-zinc-500 mt-1 font-light">or click to browse local files (PDF or TXT, under 10 MB)</p>
                   </div>
                 </label>
               </div>

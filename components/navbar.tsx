@@ -124,7 +124,7 @@ export default function Navbar() {
                 href="/upload"
                 className="rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-white shadow-md hover:bg-primary/90 transition-all dark:bg-purple-600 dark:hover:bg-purple-500"
               >
-                Launch CLOS
+                Start Studying
               </Link>
             )}
           </div>
@@ -206,7 +206,7 @@ export default function Navbar() {
                 onClick={() => setMobileMenuOpen(false)}
                 className="block text-center rounded-lg bg-primary py-2.5 text-base font-semibold text-white shadow-md hover:bg-primary/90 dark:bg-purple-600 dark:hover:bg-purple-500"
               >
-                Launch CLOS
+                Start Studying
               </Link>
             )}
           </div>

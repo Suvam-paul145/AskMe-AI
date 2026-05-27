@@ -564,13 +564,13 @@ export default function WorkspacePage() {
       ) : (
         <div className="flex-1 flex flex-col items-center justify-center text-center p-8 space-y-4">
           <HelpCircle className="h-16 w-16 text-primary dark:text-purple-400" />
-          <h2 className="text-xl font-bold text-foreground">No documents vectorized yet</h2>
-          <p className="text-sm text-muted-foreground max-w-sm">Please upload a lecture notes file on the Ingestion screen first to build RAG contexts.</p>
+          <h2 className="text-xl font-bold text-foreground">No study material uploaded yet</h2>
+          <p className="text-sm text-muted-foreground max-w-sm">Upload a PDF or TXT notes file first. AskMe AI will build the summary, quiz, flashcards, and grounded chat context from that material.</p>
           <Link
             href="/upload"
             className="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-bold text-white shadow-md hover:bg-primary/95"
           >
-            Launch Ingestor
+            Upload Notes
           </Link>
         </div>
       )}

@@ -7,6 +7,12 @@ import { chunkText, storeEmbeddings } from "@/lib/ai/rag";
 
 export const maxDuration = 60; // Allow up to 60s for processing
 
+const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
+
+function getErrorMessage(error: unknown) {
+  return error instanceof Error ? error.message : "Upload processing failed";
+}
+
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
@@ -28,12 +34,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate file type
+    // Validate file type and size before doing AI work.
     const allowedTypes = ["application/pdf", "text/plain"];
-    if (!allowedTypes.includes(file.type)) {
+    const hasAllowedExtension = /\.(pdf|txt)$/i.test(file.name);
+    if (!allowedTypes.includes(file.type) && !hasAllowedExtension) {
       return NextResponse.json(
         { error: "Only PDF and TXT files are supported" },
         { status: 400 }
+      );
+    }
+
+    if (file.size > MAX_UPLOAD_BYTES) {
+      return NextResponse.json(
+        { error: "File is too large. Upload a PDF or TXT file under 10 MB." },
+        { status: 413 }
       );
     }
 
@@ -63,7 +77,12 @@ export async function POST(request: NextRequest) {
     }
 
     // Step 2: Extract text
-    const extractedText = await extractText(fileBuffer, file.type);
+    const normalizedType =
+      file.type ||
+      (file.name.toLowerCase().endsWith(".pdf")
+        ? "application/pdf"
+        : "text/plain");
+    const extractedText = await extractText(fileBuffer, normalizedType);
 
     if (!extractedText || extractedText.trim().length < 50) {
       return NextResponse.json(
@@ -161,10 +180,10 @@ export async function POST(request: NextRequest) {
       },
       quizId: quiz?.id,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Upload pipeline error:", error);
     return NextResponse.json(
-      { error: error.message || "Upload processing failed" },
+      { error: getErrorMessage(error) },
       { status: 500 }
     );
   }

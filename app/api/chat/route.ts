@@ -4,6 +4,10 @@ import { createAdminClient } from "@/lib/supabase/server";
 import { generateChatResponse, evaluateRTM } from "@/lib/ai/gemini";
 import { retrieveRelevantChunks } from "@/lib/ai/rag";
 
+function getErrorMessage(error: unknown, fallback: string) {
+  return error instanceof Error ? error.message : fallback;
+}
+
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
@@ -26,6 +30,20 @@ export async function POST(request: NextRequest) {
     }
 
     const admin = createAdminClient();
+
+    const { data: document, error: documentError } = await supabase
+      .from("documents")
+      .select("id")
+      .eq("id", documentId)
+      .eq("user_id", user.id)
+      .single();
+
+    if (documentError || !document) {
+      return NextResponse.json(
+        { error: "Document not found" },
+        { status: 404 }
+      );
+    }
 
     // Store user message
     await admin.from("chat_messages").insert({
@@ -55,13 +73,17 @@ export async function POST(request: NextRequest) {
       aiResponse = JSON.stringify(evaluation);
     } else {
       // Regular doubt solver — RAG-powered response
-      aiResponse = await generateChatResponse(
-        message,
-        relevantChunks.map((c) => ({
-          content: c.content,
-          similarity: c.similarity,
-        }))
-      );
+      if (relevantChunks.length === 0) {
+        aiResponse = "I could not find enough matching material in this document to answer precisely. Try asking a narrower question or upload more related notes.";
+      } else {
+        aiResponse = await generateChatResponse(
+          message,
+          relevantChunks.map((c) => ({
+            content: c.content,
+            similarity: c.similarity,
+          }))
+        );
+      }
       sources = relevantChunks
         .filter((c) => c.similarity > 0.3)
         .map((c) => c.content.slice(0, 100) + "...");
@@ -96,10 +118,10 @@ export async function POST(request: NextRequest) {
       sources,
       mode: mode || "chat",
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Chat error:", error);
     return NextResponse.json(
-      { error: error.message || "Failed to generate response" },
+      { error: getErrorMessage(error, "Failed to generate response") },
       { status: 500 }
     );
   }
@@ -139,9 +161,9 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json({ messages: messages || [] });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json(
-      { error: error.message || "Failed to fetch messages" },
+      { error: getErrorMessage(error, "Failed to fetch messages") },
       { status: 500 }
     );
   }

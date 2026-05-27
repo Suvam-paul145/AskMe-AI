@@ -8,6 +8,12 @@ import { useStore, QuizQuestion } from "@/lib/store";
 import { Timer, Cpu, Award, RefreshCw, ArrowRight, HelpCircle, CheckCircle, XCircle } from "lucide-react";
 import confetti from "canvas-confetti";
 
+type QuizServerResult = {
+  weakTopics?: string[];
+  revisionPlan?: { topic: string; action: string; duration: number }[];
+  analysis?: string;
+};
+
 function QuizContent() {
   const { quizzes, submitQuizAttempt, documents, loadQuiz } = useStore();
   const searchParams = useSearchParams();
@@ -24,7 +30,7 @@ function QuizContent() {
   const [score, setScore] = useState(0);
   const [incorrectList, setIncorrectList] = useState<QuizQuestion[]>([]);
   const [quizComplete, setQuizComplete] = useState(false);
-  const [serverResult, setServerResult] = useState<any>(null);
+  const [serverResult, setServerResult] = useState<QuizServerResult | null>(null);
   const [answersHistory, setAnswersHistory] = useState<{ questionIndex: number; selectedOption: number }[]>([]);
   const [timerSeconds, setTimerSeconds] = useState(0);
 
@@ -128,6 +134,9 @@ function QuizContent() {
   };
 
   const stressInfo = getStressLevel();
+  const weakTopics = serverResult?.weakTopics ?? [];
+  const revisionPlan = serverResult?.revisionPlan ?? [];
+  const resultAnalysis = serverResult?.analysis;
 
   return (
     <div className="max-w-2xl mx-auto w-full py-8 space-y-6">
@@ -263,6 +272,39 @@ function QuizContent() {
             </div>
           </div>
 
+          {weakTopics.length > 0 && (
+            <div className="max-w-lg mx-auto text-left bg-rose-500/5 border border-rose-500/10 rounded-2xl p-5 space-y-3">
+              <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-rose-400">Weak topics detected</h3>
+              <div className="flex flex-wrap gap-2">
+                {weakTopics.map((topic) => (
+                  <span key={topic} className="rounded-full border border-rose-500/20 bg-rose-500/10 px-3 py-1 text-[10px] font-bold text-rose-300">
+                    {topic}
+                  </span>
+                ))}
+              </div>
+              {resultAnalysis && (
+                <p className="text-[11px] leading-relaxed text-zinc-400">{resultAnalysis}</p>
+              )}
+            </div>
+          )}
+
+          {revisionPlan.length > 0 && (
+            <div className="max-w-lg mx-auto text-left bg-primary/5 border border-primary/10 rounded-2xl p-5 space-y-3">
+              <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-primary dark:text-purple-400">Focused revision plan</h3>
+              <div className="space-y-2">
+                {revisionPlan.map((item, idx) => (
+                  <div key={`${item.topic}-${idx}`} className="rounded-xl border border-white/5 bg-[#0d0d11]/60 p-3">
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-xs font-bold text-white">{item.topic}</span>
+                      <span className="text-[9px] font-mono text-zinc-500">{item.duration || 15} min</span>
+                    </div>
+                    <p className="mt-1 text-[10px] leading-relaxed text-zinc-400">{item.action}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Navigation Action buttons */}
           <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
             <button
@@ -288,6 +330,14 @@ function QuizContent() {
             >
               Open Study Workspace
             </button>
+            {revisionPlan.length > 0 && (
+              <button
+                onClick={() => router.push("/planner")}
+                className="rounded-xl border border-primary/20 bg-primary/10 px-6 py-3 text-xs font-bold text-primary dark:text-purple-400 hover:bg-primary/15 transition-all duration-300"
+              >
+                Review Planner Tasks
+              </button>
+            )}
           </div>
         </div>
       )}

@@ -7,6 +7,22 @@
  * Uses pdf-parse v2 for reliable text extraction
  */
 export async function extractTextFromPDF(buffer: Buffer): Promise<string> {
+  try {
+    // Import the worker first to set up the necessary DOMMatrix polyfills
+    await import("pdf-parse/worker");
+  } catch (err) {
+    console.warn("Failed to load pdf-parse/worker, falling back to manual DOMMatrix polyfill:", err);
+  }
+
+  // Double check and manually polyfill DOMMatrix if still not defined
+  if (typeof global !== "undefined" && !("DOMMatrix" in global)) {
+    (global as any).DOMMatrix = class DOMMatrix {
+      a = 1; b = 0; c = 0; d = 1; e = 0; f = 0;
+      constructor() {}
+      toString() { return "matrix(1, 0, 0, 1, 0, 0)"; }
+    };
+  }
+
   // Dynamic import to handle pdf-parse v2 ESM module
   const { PDFParse } = await import("pdf-parse");
   

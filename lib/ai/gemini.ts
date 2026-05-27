@@ -12,8 +12,11 @@ import {
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
-// Use Gemini Flash for fast, cost-effective responses
-const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+// Use Gemini 3.5 Flash for high-quality reasoning tasks (chat, quizzes, evaluations, diagnostics)
+const model = genAI.getGenerativeModel({ model: "gemini-3.5-flash" });
+
+// Use Gemini 3.1 Flash Lite for fast and routine tasks (document summaries)
+const liteModel = genAI.getGenerativeModel({ model: "gemini-3.1-flash-lite" });
 
 // Use the embedding model for vector search
 const embeddingModel = genAI.getGenerativeModel({
@@ -33,7 +36,7 @@ export async function generateSummary(
   confusedTopics: string[];
 }> {
   const prompt = SUMMARY_PROMPT + text.slice(0, 15000); // Limit input to avoid token limits
-  const result = await model.generateContent(prompt);
+  const result = await liteModel.generateContent(prompt);
   const response = result.response.text();
 
   // Extract JSON from response (handle potential markdown wrapping)

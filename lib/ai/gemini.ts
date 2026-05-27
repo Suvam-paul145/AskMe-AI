@@ -20,7 +20,7 @@ const liteModel = genAI.getGenerativeModel({ model: "gemini-3.1-flash-lite" });
 
 // Use the embedding model for vector search
 const embeddingModel = genAI.getGenerativeModel({
-  model: "text-embedding-004",
+  model: "gemini-embedding-001",
 });
 
 /**
@@ -227,10 +227,14 @@ export async function evaluateRTM(
 }
 
 /**
- * Generate embedding vector for text using Gemini text-embedding-004
- * Returns a 768-dimensional vector
+ * Generate embedding vector for text using Gemini gemini-embedding-001
+ * Truncated to 768 dimensions using Matryoshka Representation Learning (MRL)
+ * to match database pgvector constraints.
  */
 export async function generateEmbedding(text: string): Promise<number[]> {
-  const result = await embeddingModel.embedContent(text);
+  const result = await embeddingModel.embedContent({
+    content: { parts: [{ text }] },
+    outputDimensionality: 768,
+  } as any);
   return result.embedding.values;
 }

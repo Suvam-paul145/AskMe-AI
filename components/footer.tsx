@@ -110,11 +110,13 @@ export default function Footer() {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="Enter your email"
                 className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-3.5 py-2 text-sm text-white placeholder-zinc-600 focus:border-primary focus:outline-none transition-all"
+                suppressHydrationWarning
               />
               <button
                 type="submit"
                 className="flex items-center justify-center rounded-xl bg-primary px-3 text-white hover:bg-primary/95 transition-all"
                 aria-label="Subscribe"
+                suppressHydrationWarning
               >
                 <Send className="h-4 w-4" />
               </button>

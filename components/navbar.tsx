@@ -101,6 +101,7 @@ export default function Navbar() {
               onClick={toggleTheme}
               className="rounded-xl border border-border bg-card p-2 text-muted-foreground hover:bg-muted hover:text-foreground transition-all duration-200"
               aria-label="Toggle theme"
+              suppressHydrationWarning
             >
               {!mounted || theme === "dark" ? (
                 <Sun className="h-4.5 w-4.5 text-yellow-400" />
@@ -136,6 +137,7 @@ export default function Navbar() {
               onClick={toggleTheme}
               className="rounded-xl border border-border bg-card p-2 text-muted-foreground hover:bg-muted transition-all"
               aria-label="Toggle theme"
+              suppressHydrationWarning
             >
               {!mounted || theme === "dark" ? (
                 <Sun className="h-4 w-4 text-yellow-400" />

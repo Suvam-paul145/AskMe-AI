@@ -22,6 +22,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import Link from "next/link";
+import { MarkdownRenderer } from "@/components/markdown-renderer";
 
 export default function WorkspacePage() {
   const { 
@@ -332,7 +333,11 @@ export default function WorkspacePage() {
                             ? "bg-primary text-white font-medium" 
                             : "bg-[#0c0c0f]/90 border border-white/5 text-zinc-200 glass-card shadow-sm matte-layer"
                         }`}>
-                          {msg.text}
+                          {msg.sender === "user" ? (
+                            msg.text
+                          ) : (
+                            <MarkdownRenderer content={msg.text} />
+                          )}
                         </div>
                         <div className="flex items-center gap-2">
                           <span className="text-[9px] text-zinc-500 px-2 font-mono">{msg.timestamp}</span>

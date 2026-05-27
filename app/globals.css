@@ -239,37 +239,108 @@ body {
 }
 
 /* Premium Light Mode Overrides */
-.light .bg-\[\#040406\] {
+.light .bg-\[\#040406\],
+.light .bg-\[\#050507\],
+.light .bg-\[\#070709\],
+.light .bg-\[\#08080a\],
+.light .bg-\[\#09090b\],
+.light .bg-\[\#0b0b0e\],
+.light .bg-\[\#0c0c0f\],
+.light .bg-\[\#0d0d11\],
+.light .bg-zinc-950,
+.light .bg-black {
   background-color: hsl(var(--background)) !important;
+}
+
+.light .bg-\[\#040406\]\/60,
+.light .bg-\[\#050507\]\/90,
+.light .bg-\[\#070709\]\/80,
+.light .bg-\[\#070709\]\/60,
+.light .bg-\[\#09090b\]\/80,
+.light .bg-\[\#09090b\]\/60,
+.light .bg-\[\#09090b\]\/40,
+.light .bg-\[\#0b0b0e\]\/95,
+.light .bg-\[\#0b0b0e\]\/90,
+.light .bg-\[\#0c0c0f\]\/90,
+.light .bg-\[\#0d0d11\]\/95,
+.light .bg-\[\#0d0d11\]\/85,
+.light .bg-\[\#0d0d11\]\/80,
+.light .bg-\[\#0d0d11\]\/60,
+.light .bg-\[\#0d0d11\]\/50,
+.light .bg-\[\#0d0d11\]\/40,
+.light .bg-black\/60,
+.light .bg-zinc-950\/80 {
+  background-color: var(--matte-surface) !important;
+  border-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+.light .border-white\/5,
+.light .border-white\/10,
+.light .border-border {
+  border-color: rgba(0, 0, 0, 0.08) !important;
 }
 
 .light .text-white:not(button):not(a):not(.bg-primary):not(.bg-primary *):not([class*="bg-"]):not([class*="hover:bg-"]) {
   color: hsl(var(--foreground)) !important;
 }
 
-.light .bg-\[\#0d0d11\]\/80,
-.light .bg-\[\#0d0d11\]\/50,
-.light .bg-\[\#0d0d11\]\/40,
-.light .bg-\[\#0d0d11\]\/60,
-.light .bg-\[\#09090b\]\/80,
-.light .bg-\[\#0b0b0e\]\/90,
-.light .bg-\[\#040406\]\/60 {
-  background-color: rgba(255, 255, 255, 0.75) !important;
-  border-color: rgba(0, 0, 0, 0.08) !important;
-}
-
-.light .border-white\/5 {
-  border-color: rgba(0, 0, 0, 0.08) !important;
-}
-
-.light .text-zinc-400 {
-  color: hsl(var(--muted-foreground)) !important;
-}
-
+.light .text-zinc-100,
+.light .text-zinc-200,
 .light .text-zinc-300 {
   color: hsl(var(--foreground)) !important;
 }
 
+.light .text-zinc-400,
 .light .text-zinc-500 {
   color: hsl(var(--muted-foreground)) !important;
+}
+
+/* Inputs and Forms */
+.light input,
+.light select,
+.light textarea {
+  background-color: rgba(0, 0, 0, 0.02) !important;
+  color: hsl(var(--foreground)) !important;
+  border-color: rgba(0, 0, 0, 0.1) !important;
+}
+
+.light input::placeholder,
+.light textarea::placeholder {
+  color: rgba(0, 0, 0, 0.4) !important;
+}
+
+/* Hover overrides to prevent dark backgrounds in light mode */
+.light .hover\:bg-\[\#121217\]:hover,
+.light .hover\:bg-\[\#0d0d11\]\/85:hover,
+.light .hover\:bg-\[\#0d0d11\]\/80:hover,
+.light .hover\:bg-muted\/50:hover {
+  background-color: rgba(0, 0, 0, 0.04) !important;
+  color: hsl(var(--foreground)) !important;
+}
+
+.light .hover\:text-white:hover,
+.light .hover\:text-zinc-300:hover,
+.light .hover\:text-zinc-100:hover {
+  color: hsl(var(--foreground)) !important;
+}
+
+/* Scrollbar overrides */
+.light ::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+/* Radial glows in light mode */
+.light .radial-glow {
+  background: radial-gradient(circle at 50% 50%, rgba(139, 92, 246, 0.04) 0%, transparent 70%) !important;
+}
+
+/* Chat text inside user bubble should remain white */
+.light .bg-primary {
+  color: #ffffff !important;
+}
+
+/* Ensure text is clearly visible on primary-tinted backgrounds in light mode */
+.light [class*="bg-primary/10"],
+.light [class*="bg-primary/10"] * {
+  color: hsl(var(--primary)) !important;
 }

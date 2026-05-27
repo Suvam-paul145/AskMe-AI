@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Navbar from "@/components/navbar";
 import Footer from "@/components/footer";
 import { useStore } from "@/lib/store";
@@ -8,6 +8,11 @@ import { Settings, ShieldAlert, Sparkles, User, RefreshCw, Sun, Moon, Cpu, Slide
 
 export default function SettingsPage() {
   const { theme, toggleTheme, updateProfile, profile, signOut } = useStore();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Settings states
   const [name, setName] = useState("Student");
@@ -133,7 +138,7 @@ export default function SettingsPage() {
                   type="button"
                   onClick={toggleTheme}
                   className={`w-full rounded-xl border p-3 text-xs font-semibold flex items-center justify-center gap-2 transition-all duration-300 ${
-                    theme === "light"
+                    mounted && theme === "light"
                       ? "border-primary bg-primary/10 text-primary shadow-[0_0_10px_rgba(139,92,246,0.1)]"
                       : "border-white/5 bg-[#09090b]/60 text-zinc-500 hover:text-zinc-300"
                   }`}
@@ -145,7 +150,7 @@ export default function SettingsPage() {
                   type="button"
                   onClick={toggleTheme}
                   className={`w-full rounded-xl border p-3 text-xs font-semibold flex items-center justify-center gap-2 transition-all duration-300 ${
-                    theme === "dark"
+                    !mounted || theme === "dark"
                       ? "border-primary bg-primary/10 text-white shadow-[0_0_10px_rgba(139,92,246,0.1)] animate-pulse"
                       : "border-white/5 bg-[#09090b]/60 text-zinc-500 hover:text-zinc-300"
                   }`}

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useStore } from "@/lib/store";
@@ -10,6 +10,11 @@ export default function Navbar() {
   const { theme, toggleTheme, streak, xp } = useStore();
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const navItems = [
     { name: "Workspace", path: "/workspace" },
@@ -82,12 +87,12 @@ export default function Navbar() {
             <div className="flex items-center gap-3 rounded-full border border-border bg-card px-4 py-1.5 text-xs font-semibold shadow-sm">
               <div className="flex items-center gap-1 text-orange-500" title="Daily Study Streak">
                 <Flame className="h-4 w-4 fill-current animate-pulse" />
-                <span>{streak}d</span>
+                <span>{!mounted ? "0" : streak}d</span>
               </div>
               <div className="h-3 w-[1px] bg-border" />
               <div className="flex items-center gap-1 text-primary dark:text-purple-400" title="Cognitive XP Accumulated">
                 <Zap className="h-4 w-4 fill-current" />
-                <span>{xp} XP</span>
+                <span>{!mounted ? "0" : xp} XP</span>
               </div>
             </div>
 
@@ -97,7 +102,7 @@ export default function Navbar() {
               className="rounded-xl border border-border bg-card p-2 text-muted-foreground hover:bg-muted hover:text-foreground transition-all duration-200"
               aria-label="Toggle theme"
             >
-              {theme === "dark" ? (
+              {!mounted || theme === "dark" ? (
                 <Sun className="h-4.5 w-4.5 text-yellow-400" />
               ) : (
                 <Moon className="h-4.5 w-4.5 text-violet-600" />
@@ -132,7 +137,7 @@ export default function Navbar() {
               className="rounded-xl border border-border bg-card p-2 text-muted-foreground hover:bg-muted transition-all"
               aria-label="Toggle theme"
             >
-              {theme === "dark" ? (
+              {!mounted || theme === "dark" ? (
                 <Sun className="h-4 w-4 text-yellow-400" />
               ) : (
                 <Moon className="h-4 w-4 text-violet-600" />
@@ -157,11 +162,11 @@ export default function Navbar() {
           <div className="flex items-center justify-around rounded-xl border border-border bg-card p-2.5 text-xs font-semibold shadow-sm mb-3">
             <div className="flex items-center gap-1.5 text-orange-500">
               <Flame className="h-4.5 w-4.5 fill-current" />
-              <span>Streak: {streak} days</span>
+              <span>Streak: {!mounted ? "0" : streak} days</span>
             </div>
             <div className="flex items-center gap-1.5 text-primary dark:text-purple-400">
               <Zap className="h-4.5 w-4.5 fill-current" />
-              <span>XP: {xp} points</span>
+              <span>XP: {!mounted ? "0" : xp} points</span>
             </div>
           </div>
 

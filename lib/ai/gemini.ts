@@ -20,7 +20,7 @@ const liteModel = genAI.getGenerativeModel({ model: "gemini-3.1-flash-lite" });
 
 // Use the embedding model for vector search
 const embeddingModel = genAI.getGenerativeModel({
-  model: "gemini-embedding-001",
+  model: "text-embedding-004",
 });
 
 /**
@@ -227,14 +227,66 @@ export async function evaluateRTM(
 }
 
 /**
- * Generate embedding vector for text using Gemini gemini-embedding-001
+ * Helper to retry API requests that fail due to rate limits or transient errors
+ */
+async function retryWithBackoff<T>(
+  fn: () => Promise<T>,
+  retries = 5,
+  delay = 1000
+): Promise<T> {
+  try {
+    return await fn();
+  } catch (error: any) {
+    const errorMessage = error?.message || "";
+    const isRateLimit =
+      error?.status === 429 ||
+      errorMessage.includes("429") ||
+      errorMessage.includes("Quota exceeded") ||
+      errorMessage.includes("Too Many Requests");
+
+    if (retries > 0 && isRateLimit) {
+      console.warn(`[Gemini API] Rate limit hit. Retrying in ${delay}ms... (${retries} retries left)`);
+      await new Promise((resolve) => setTimeout(resolve, delay));
+      return retryWithBackoff(fn, retries - 1, delay * 2);
+    }
+    throw error;
+  }
+}
+
+/**
+ * Generate embedding vector for text using Gemini text-embedding-004
  * Truncated to 768 dimensions using Matryoshka Representation Learning (MRL)
  * to match database pgvector constraints.
  */
 export async function generateEmbedding(text: string): Promise<number[]> {
-  const result = await embeddingModel.embedContent({
-    content: { parts: [{ text }] },
-    outputDimensionality: 768,
-  } as any);
-  return result.embedding.values;
+  return retryWithBackoff(async () => {
+    const result = await embeddingModel.embedContent({
+      content: { parts: [{ text }] },
+      outputDimensionality: 768,
+    } as any);
+    return result.embedding.values;
+  });
+}
+
+/**
+ * Generate embedding vectors for multiple texts in a batch using text-embedding-004
+ * Truncated to 768 dimensions to match database pgvector constraints.
+ */
+export async function generateEmbeddingsBatch(chunks: string[]): Promise<number[][]> {
+  if (chunks.length === 0) return [];
+
+  return retryWithBackoff(async () => {
+    const result = await embeddingModel.batchEmbedContents({
+      requests: chunks.map((text) => ({
+        content: { parts: [{ text }] },
+        outputDimensionality: 768,
+      })),
+    } as any);
+
+    if (!result.embeddings) {
+      throw new Error("Failed to generate batch embeddings: response did not contain embeddings.");
+    }
+
+    return result.embeddings.map((e) => e.values);
+  });
 }

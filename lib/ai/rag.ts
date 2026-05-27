@@ -1,7 +1,7 @@
 // ===========================================
 // AskMe AI — RAG Pipeline
 // ===========================================
-import { generateEmbedding } from "./gemini";
+import { generateEmbedding, generateEmbeddingsBatch } from "./gemini";
 import { createAdminClient } from "@/lib/supabase/server";
 
 /**
@@ -59,13 +59,13 @@ export async function storeEmbeddings(
   const supabase = createAdminClient();
 
   // Process chunks in batches to avoid rate limits
-  const batchSize = 5;
+  // batchSize of 30 allows embedding 30 chunks in a single API call
+  const batchSize = 30;
   for (let i = 0; i < chunks.length; i += batchSize) {
     const batch = chunks.slice(i, i + batchSize);
 
-    const embeddings = await Promise.all(
-      batch.map((chunk) => generateEmbedding(chunk))
-    );
+    // Call Gemini batch embedding API
+    const embeddings = await generateEmbeddingsBatch(batch);
 
     const rows = batch.map((chunk, idx) => ({
       document_id: documentId,
@@ -88,7 +88,7 @@ export async function storeEmbeddings(
 
     // Small delay between batches to respect rate limits
     if (i + batchSize < chunks.length) {
-      await new Promise((resolve) => setTimeout(resolve, 200));
+      await new Promise((resolve) => setTimeout(resolve, 500));
     }
   }
 }

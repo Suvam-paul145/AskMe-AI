@@ -13,6 +13,7 @@ create extension if not exists vector;
 create table if not exists profiles (
   id uuid primary key references auth.users(id) on delete cascade,
   full_name text,
+  avatar_url text,
   grade text,
   exam_goal text,
   study_pace text default 'calibrated',

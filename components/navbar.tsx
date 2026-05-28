@@ -5,9 +5,10 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useStore } from "@/lib/store";
 import { Sun, Moon, Menu, X, Flame, Zap, Brain, Settings } from "lucide-react";
+import AvatarDisplay from "@/components/avatar-display";
 
 export default function Navbar() {
-  const { theme, toggleTheme, streak, xp } = useStore();
+  const { theme, toggleTheme, streak, xp, profile } = useStore();
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -122,6 +123,17 @@ export default function Navbar() {
               <Settings className="h-4.5 w-4.5" />
             </Link>
 
+            {/* Dynamic Profile Avatar */}
+            {mounted && (
+              <Link href="/settings" title="Profile Settings" className="flex items-center shrink-0">
+                <AvatarDisplay 
+                  avatarUrl={profile.avatar_url} 
+                  name={profile.full_name} 
+                  className="h-8.5 w-8.5 text-[10px] border border-border hover:border-primary/50 transition-colors" 
+                />
+              </Link>
+            )}
+
             {/* CTA */}
             {!isWorkspacePath && (
               <Link
@@ -200,10 +212,14 @@ export default function Navbar() {
             <Link
               href="/settings"
               onClick={() => setMobileMenuOpen(false)}
-              className="flex items-center gap-2 rounded-lg px-3 py-2 text-base font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
+              className="flex items-center gap-3 rounded-lg px-3 py-2 text-base font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
             >
-              <Settings className="h-5 w-5" />
-              Settings
+              <AvatarDisplay 
+                avatarUrl={profile.avatar_url} 
+                name={profile.full_name} 
+                className="h-6 w-6 text-[8px]" 
+              />
+              <span>Settings</span>
             </Link>
             {!isWorkspacePath && (
               <Link

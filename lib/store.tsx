@@ -131,6 +131,11 @@ export interface CognitiveProfile {
   efficiency: number;
   archetype: string;
   description: string;
+  avatar_url?: string;
+  email?: string;
+  full_name?: string;
+  ai_personality?: string;
+  study_pace?: string;
 }
 
 export interface StoreContextType {
@@ -205,6 +210,11 @@ const defaultProfile: CognitiveProfile = {
   efficiency: 50,
   archetype: "New Learner",
   description: "Your cognitive profile will evolve as you study, take quizzes, and interact with the AI tutor.",
+  avatar_url: "",
+  email: "",
+  full_name: "Student",
+  ai_personality: "socratic",
+  study_pace: "calibrated",
 };
 
 // --- STORE CONTEXT ---
@@ -531,6 +541,11 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             efficiency: cogProfile.efficiency ?? 50,
             archetype: cogProfile.archetype || "New Learner",
             description: cogProfile.description || "Your profile will evolve with study activity.",
+            avatar_url: data.profile.avatar_url || cogProfile.avatar_url || "",
+            email: data.profile.email || "",
+            full_name: data.profile.full_name || "",
+            ai_personality: data.profile.ai_personality || "socratic",
+            study_pace: data.profile.study_pace || "calibrated",
           });
           setXp(data.profile.xp || 0);
           setStreak(data.profile.streak || 0);
@@ -546,12 +561,59 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const updateProfile = useCallback((updates: Partial<CognitiveProfile>) => {
     setProfile((prev) => ({ ...prev, ...updates }));
+    
+    // Construct payload for API
+    const payload: Record<string, unknown> = {};
+    if (updates.avatar_url !== undefined) {
+      payload.avatar_url = updates.avatar_url;
+    }
+    if (updates.full_name !== undefined) {
+      payload.full_name = updates.full_name;
+    }
+    if (updates.ai_personality !== undefined) {
+      payload.ai_personality = updates.ai_personality;
+    }
+    if (updates.study_pace !== undefined) {
+      payload.study_pace = updates.study_pace;
+    }
+    
+    const mergedProfile = { ...profile, ...updates };
+    payload.cognitive_profile = {
+      conceptual: mergedProfile.conceptual,
+      retention: mergedProfile.retention,
+      analytical: mergedProfile.analytical,
+      discipline: mergedProfile.discipline,
+      consistency: mergedProfile.consistency,
+      adaptability: mergedProfile.adaptability,
+      calibration: mergedProfile.calibration,
+      efficiency: mergedProfile.efficiency,
+      archetype: mergedProfile.archetype,
+      description: mergedProfile.description,
+    };
+
     // Persist to server
     fetch("/api/profile", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ cognitive_profile: { ...profile, ...updates } }),
-    }).catch(console.error);
+      body: JSON.stringify(payload),
+    })
+      .then(async (res) => {
+        if (res.ok) {
+          const data = await res.json();
+          if (data.profile) {
+            const cogProfile = data.profile.cognitive_profile || {};
+            setProfile((prev) => ({
+              ...prev,
+              ...cogProfile,
+              avatar_url: data.profile.avatar_url || cogProfile.avatar_url || prev.avatar_url || "",
+              full_name: data.profile.full_name || prev.full_name || "",
+              ai_personality: data.profile.ai_personality || prev.ai_personality || "socratic",
+              study_pace: data.profile.study_pace || prev.study_pace || "calibrated",
+            }));
+          }
+        }
+      })
+      .catch(console.error);
   }, [profile]);
 
   // --- GRAPH ---

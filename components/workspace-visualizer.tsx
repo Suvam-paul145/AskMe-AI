@@ -574,7 +574,10 @@ export default function WorkspaceVisualizer({
                     fontFamily="sans-serif"
                     className="pointer-events-none transition-all group-hover:fill-white"
                   >
-                    {node.label.length > 15 ? `${node.label.substring(0, 13)}...` : node.label}
+                    {(() => {
+                      const name = node.label.replace(/\.(pdf|txt)$/i, "").replace(/[_-]/g, " ");
+                      return name.length > 20 ? `${name.substring(0, 18)}...` : name;
+                    })()}
                   </text>
                 )}
               </g>

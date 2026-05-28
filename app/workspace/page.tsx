@@ -20,6 +20,7 @@ import {
   Brain,
   Sparkles,
   ChevronRight,
+  Trash2,
 } from "lucide-react";
 import Link from "next/link";
 import { MarkdownRenderer } from "@/components/markdown-renderer";
@@ -37,7 +38,8 @@ export default function WorkspacePage() {
     loadQuiz,
     updateNodeStrength,
     updateProfile,
-    profile
+    profile,
+    deleteDocument,
   } = useStore();
 
   const [activeTab, setActiveTab] = useState<"chat" | "flashcards" | "rtm" | "visualizer">("chat");
@@ -235,21 +237,36 @@ export default function WorkspacePage() {
                           <span className="text-xs font-semibold truncate max-w-[160px] md:max-w-[200px]">{doc.title}</span>
                         </div>
                       </button>
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleToggleAttach(doc.id);
-                        }}
-                        title={isAttached ? "Attached to chat context" : "Attach to chat context"}
-                        className={`mr-2.5 px-3 py-1 text-[9px] font-bold rounded-lg border transition-all shrink-0 ${
-                          isAttached
-                            ? "bg-primary border-primary text-white shadow-[0_0_8px_rgba(139,92,246,0.3)] animate-pulse"
-                            : "border-white/10 hover:border-white/30 text-zinc-500 hover:text-zinc-300 bg-white/5"
-                        }`}
-                      >
-                        {isAttached ? "Attached" : "Attach"}
-                      </button>
+                      <div className="flex items-center gap-1.5 mr-2 shrink-0">
+                        <button
+                          type="button"
+                          onClick={async (e) => {
+                            e.stopPropagation();
+                            if (confirm(`Are you sure you want to delete "${doc.title}"? This will delete all its chat history, quizzes, and chunks.`)) {
+                              await deleteDocument(doc.id);
+                            }
+                          }}
+                          title="Delete document"
+                          className="p-1 rounded-lg border border-white/5 hover:border-rose-500/30 hover:bg-rose-500/10 text-zinc-500 hover:text-rose-400 bg-white/5 transition-all"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleToggleAttach(doc.id);
+                          }}
+                          title={isAttached ? "Attached to chat context" : "Attach to chat context"}
+                          className={`px-3 py-1 text-[9px] font-bold rounded-lg border transition-all ${
+                            isAttached
+                              ? "bg-primary border-primary text-white shadow-[0_0_8px_rgba(139,92,246,0.3)] animate-pulse"
+                              : "border-white/10 hover:border-white/30 text-zinc-500 hover:text-zinc-300 bg-white/5"
+                          }`}
+                        >
+                          {isAttached ? "Attached" : "Attach"}
+                        </button>
+                      </div>
                     </div>
                   );
                 })}

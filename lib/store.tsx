@@ -195,6 +195,7 @@ export interface StoreContextType {
 
   // Upload
   uploadDocument: (file: File, onProgress?: (stage: string, progress: number) => void) => Promise<DocumentNode | null>;
+  deleteDocument: (id: string) => Promise<boolean>;
 }
 
 // --- DEFAULTS ---
@@ -782,6 +783,26 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   }, [refreshDocuments, refreshGraph]);
 
+  const deleteDocument = useCallback(async (id: string): Promise<boolean> => {
+    try {
+      const res = await fetch(`/api/documents?id=${id}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        setDocuments((prev) => prev.filter((doc) => doc.id !== id));
+        if (selectedDocId === id) {
+          setSelectedDocId(null);
+        }
+        await refreshGraph();
+        return true;
+      }
+      return false;
+    } catch (err) {
+      console.error("Failed to delete document:", err);
+      return false;
+    }
+  }, [selectedDocId, refreshGraph]);
+
   // Load data when user signs in
   useEffect(() => {
     let timer: NodeJS.Timeout;
@@ -848,6 +869,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         addPlannerItem,
         refreshPlanner,
         uploadDocument,
+        deleteDocument,
       }}
     >
       {children}

@@ -461,7 +461,7 @@ export default function WorkspacePage() {
 
               {/* Tab 2: Holographic Flashcards */}
               {activeTab === "flashcards" && (
-                <div className="flex flex-col items-center justify-center h-full max-w-md mx-auto space-y-8 py-4">
+                <div className="flex flex-col items-center justify-center h-full max-w-2xl mx-auto space-y-8 py-4 w-full">
                   <div className="text-center space-y-1.5">
                     <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest">Holographic Deck Review</h3>
                     <p className="text-[10px] text-zinc-500 font-light">
@@ -474,7 +474,7 @@ export default function WorkspacePage() {
                   {/* Card Flip Container */}
                   <div 
                     onClick={() => setIsFlipped(!isFlipped)}
-                    className="relative w-full aspect-[1.6/1] cursor-pointer group"
+                    className="relative w-full aspect-[1.7/1] min-h-[280px] cursor-pointer group"
                     style={{ perspective: "1200px" }}
                   >
                     <div 
@@ -487,24 +487,24 @@ export default function WorkspacePage() {
                     >
                       {/* Front Side */}
                       <div 
-                        className="absolute inset-0 bg-[#0d0d11]/95 glass-card rounded-2xl flex flex-col items-center justify-center p-6 text-center matte-layer shadow-2xl"
+                        className="absolute inset-0 bg-[#0d0d11]/95 glass-card rounded-2xl flex flex-col items-center justify-center p-8 text-center matte-layer shadow-2xl"
                         style={{ backfaceVisibility: "hidden" }}
                       >
-                        <HelpCircle className="h-6 w-6 text-primary mb-3.5 animate-pulse" />
-                        <h4 className="text-sm font-bold text-white leading-relaxed px-4">{flashcards[currentCardIndex]?.q}</h4>
+                        <HelpCircle className="h-7 w-7 text-primary mb-4 animate-pulse" />
+                        <h4 className="text-base sm:text-lg font-bold text-white leading-relaxed px-6">{flashcards[currentCardIndex]?.q}</h4>
                         <span className="text-[9px] text-zinc-600 uppercase font-semibold tracking-wider absolute bottom-4">Tap to flip card</span>
                       </div>
 
                       {/* Back Side */}
                       <div 
-                        className="absolute inset-0 bg-primary/5 border border-primary/20 rounded-2xl flex flex-col items-center justify-center p-6 text-center shadow-2xl"
+                        className="absolute inset-0 bg-primary/5 border border-primary/20 rounded-2xl flex flex-col items-center justify-center p-8 text-center shadow-2xl"
                         style={{ 
                           backfaceVisibility: "hidden", 
                           transform: "rotateY(180deg)" 
                         }}
                       >
-                        <CheckCircle className="h-6 w-6 text-primary dark:text-purple-400 mb-3.5" />
-                        <h4 className="text-sm font-mono font-semibold text-white leading-relaxed px-4">{flashcards[currentCardIndex]?.a}</h4>
+                        <CheckCircle className="h-7 w-7 text-primary dark:text-purple-400 mb-4" />
+                        <h4 className="text-sm sm:text-base font-mono font-semibold text-white leading-relaxed px-6">{flashcards[currentCardIndex]?.a}</h4>
                         <span className="text-[9px] text-zinc-500 uppercase font-semibold tracking-wider absolute bottom-4">Tap to reverse</span>
                       </div>
                     </div>

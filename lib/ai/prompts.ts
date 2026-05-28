@@ -131,3 +131,26 @@ STUDENT'S EXPLANATION:
 {explanation}
 
 Evaluate now:`;
+
+export const SINGLE_QUESTION_PROMPT = `You are an expert quiz generator. Given the following study material segment, extract the most critical concept from this segment and generate exactly one multiple choice question in valid JSON format.
+
+The question must:
+1. Test understanding of a key concept from this segment
+2. Have exactly 4 options
+3. Have exactly one correct answer
+4. Include a brief explanation of why the correct answer is right
+5. Be tagged with a specific topic from this segment
+
+Return ONLY valid JSON with no markdown, no code fences. The format must be:
+{
+  "question": "...",
+  "options": ["A) ...", "B) ...", "C) ...", "D) ..."],
+  "correctAnswer": 0,
+  "explanation": "...",
+  "topic": "..."
+}
+
+STUDY MATERIAL SEGMENT:
+{text}
+
+Generate the JSON now:`;

@@ -8,6 +8,7 @@ import {
   QUIZ_PROMPT,
   WEAK_TOPIC_PROMPT,
   RTM_EVALUATION_PROMPT,
+  SINGLE_QUESTION_PROMPT,
 } from "./prompts";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
@@ -127,49 +128,103 @@ export async function generateQuiz(
     topic: string;
   }[]
 > {
-  const prompt = QUIZ_PROMPT.replace("{numQuestions}", String(numQuestions))
-    .replace("{text}", text.slice(0, 15000));
+  if (text.length <= 15000) {
+    const prompt = QUIZ_PROMPT.replace("{numQuestions}", String(numQuestions))
+      .replace("{text}", text);
 
-  const result = await model.generateContent(prompt);
-  const response = result.response.text();
+    const result = await model.generateContent(prompt);
+    const response = result.response.text();
 
-  const jsonStr = response
-    .replace(/```json\n?/g, "")
-    .replace(/```\n?/g, "")
-    .trim();
+    const jsonStr = response
+      .replace(/```json\n?/g, "")
+      .replace(/```\n?/g, "")
+      .trim();
 
-  try {
-    const questions = JSON.parse(jsonStr);
-    // Validate structure
-    if (Array.isArray(questions) && questions.length > 0) {
-      return questions.map((q: RawQuizQuestion, idx: number) => ({
-        question: q.question || `Question ${idx + 1}`,
-        options: Array.isArray(q.options) ? q.options : ["A", "B", "C", "D"],
-        correctAnswer:
-          typeof q.correctAnswer === "number" ? q.correctAnswer : 0,
-        explanation: q.explanation || "Review the source material.",
-        topic: q.topic || "General",
-      }));
+    try {
+      const questions = JSON.parse(jsonStr);
+      // Validate structure
+      if (Array.isArray(questions) && questions.length > 0) {
+        return questions.map((q: RawQuizQuestion, idx: number) => ({
+          question: q.question || `Question ${idx + 1}`,
+          options: Array.isArray(q.options) ? q.options : ["A", "B", "C", "D"],
+          correctAnswer:
+            typeof q.correctAnswer === "number" ? q.correctAnswer : 0,
+          explanation: q.explanation || "Review the source material.",
+          topic: q.topic || "General",
+        }));
+      }
+      throw new Error("Invalid quiz format");
+    } catch {
+      // Fallback below
     }
-    throw new Error("Invalid quiz format");
-  } catch {
-    // Return a minimal fallback quiz
-    return [
-      {
-        question:
-          "What is the primary topic discussed in this study material?",
-        options: [
-          "A) The main concept",
-          "B) An unrelated topic",
-          "C) A historical event",
-          "D) A mathematical proof",
-        ],
-        correctAnswer: 0,
-        explanation: "The material focuses on the core concept as described.",
-        topic: "General",
-      },
-    ];
+  } else {
+    // Multi-segment scan across the ENTIRE document length (e.g. 70 pages)
+    const segmentLength = Math.floor(text.length / numQuestions);
+    const promises = [];
+
+    for (let i = 0; i < numQuestions; i++) {
+      const start = i * segmentLength;
+      // Extract up to 10,000 characters from each segment to scan all parts of the document
+      const end = start + Math.min(segmentLength, 10000);
+      const segmentText = text.substring(start, end);
+
+      promises.push(
+        (async () => {
+          try {
+            const prompt = SINGLE_QUESTION_PROMPT.replace("{text}", segmentText);
+            const result = await model.generateContent(prompt);
+            const response = result.response.text();
+
+            const jsonStr = response
+              .replace(/```json\n?/g, "")
+              .replace(/```\n?/g, "")
+              .trim();
+
+            const q = JSON.parse(jsonStr);
+            if (q && q.question && Array.isArray(q.options) && q.options.length === 4) {
+              return {
+                question: q.question,
+                options: q.options,
+                correctAnswer: typeof q.correctAnswer === "number" ? q.correctAnswer : 0,
+                explanation: q.explanation || "Review this section of the notes.",
+                topic: q.topic || `Section ${i + 1}`,
+              };
+            }
+          } catch (err) {
+            console.error(`Failed to generate segmented question for chunk ${i}:`, err);
+          }
+          return null;
+        })()
+      );
+    }
+
+    try {
+      const results = await Promise.all(promises);
+      const validQuestions = results.filter((q): q is Exclude<typeof q, null> => q !== null);
+      if (validQuestions.length > 0) {
+        return validQuestions;
+      }
+    } catch (err) {
+      console.error("Error generating segmented quiz:", err);
+    }
   }
+
+  // Return a minimal fallback quiz if all else fails
+  return [
+    {
+      question:
+        "What is the primary topic discussed in this study material?",
+      options: [
+        "A) The main concept",
+        "B) An unrelated topic",
+        "C) A historical event",
+        "D) A mathematical proof",
+      ],
+      correctAnswer: 0,
+      explanation: "The material focuses on the core concept as described.",
+      topic: "General",
+    },
+  ];
 }
 
 /**

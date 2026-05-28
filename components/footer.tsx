@@ -26,7 +26,7 @@ export default function Footer() {
           {/* Brand Info */}
           <div className="space-y-4 md:col-span-1">
             <Link href="/" className="flex items-center gap-2 group">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#09090b]/40 border border-white/5 shadow-[0_0_15px_rgba(139,92,246,0.15)] overflow-hidden">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-zinc-900 border border-white/10 shadow-[0_0_15px_rgba(139,92,246,0.15)] overflow-hidden">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src="/favicon.png" alt="AskMe AI Logo" className="h-5.5 w-5.5 object-contain" />
               </div>

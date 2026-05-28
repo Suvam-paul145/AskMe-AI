@@ -51,11 +51,11 @@ export default function Navbar() {
           {/* Logo */}
           <div className="flex items-center gap-2">
             <Link href="/" className="flex items-center gap-2 group">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#09090b]/40 border border-white/5 shadow-[0_0_15px_rgba(139,92,246,0.15)] transition-transform group-hover:scale-105 overflow-hidden">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-white/10 shadow-[0_0_15px_rgba(139,92,246,0.15)] transition-transform group-hover:scale-105 overflow-hidden">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src="/favicon.png" alt="AskMe AI Logo" className="h-6 w-6 object-contain" />
               </div>
-              <span className="bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-xl font-bold tracking-tight text-transparent dark:from-white dark:to-zinc-300">
+              <span className="text-xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100 transition-colors">
                 AskMe <span className="bg-gradient-to-r from-primary to-purple-400 bg-clip-text text-transparent">AI</span>
               </span>
             </Link>
@@ -89,12 +89,12 @@ export default function Navbar() {
           {/* Action buttons & Stats */}
           <div className="hidden md:flex items-center gap-4">
             {/* User Stats Widget */}
-            <div className="flex items-center gap-3 rounded-full border border-border bg-card px-4 py-1.5 text-xs font-semibold shadow-sm">
+            <div className="flex items-center gap-3 rounded-full border border-zinc-200 dark:border-white/10 bg-zinc-50 dark:bg-[#0d0d11] px-4 py-1.5 text-xs font-semibold shadow-sm">
               <div className="flex items-center gap-1 text-orange-500" title="Daily Study Streak">
                 <Flame className="h-4 w-4 fill-current animate-pulse" />
                 <span>{!mounted ? "0" : streak}d</span>
               </div>
-              <div className="h-3 w-[1px] bg-border" />
+              <div className="h-3 w-[1px] bg-zinc-200 dark:bg-white/10" />
               <div className="flex items-center gap-1 text-primary dark:text-purple-400" title="Cognitive XP Accumulated">
                 <Zap className="h-4 w-4 fill-current" />
                 <span>{!mounted ? "0" : xp} XP</span>
@@ -104,21 +104,21 @@ export default function Navbar() {
             {/* Theme Toggle */}
             <button
               onClick={toggleTheme}
-              className="rounded-xl border border-border bg-card p-2 text-muted-foreground hover:bg-muted hover:text-foreground transition-all duration-200"
+              className="rounded-xl border border-zinc-200 dark:border-white/10 bg-zinc-50 dark:bg-[#0d0d11] p-2 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-[#18181b] hover:text-zinc-900 dark:hover:text-zinc-100 transition-all duration-200"
               aria-label="Toggle theme"
               suppressHydrationWarning
             >
               {!mounted || theme === "dark" ? (
-                <Sun className="h-4.5 w-4.5 text-yellow-400" />
+                <Sun className="h-4.5 w-4.5 text-amber-500 dark:text-yellow-400 fill-amber-500/20" />
               ) : (
-                <Moon className="h-4.5 w-4.5 text-violet-600" />
+                <Moon className="h-4.5 w-4.5 text-indigo-600 dark:text-indigo-400 fill-indigo-600/10" />
               )}
             </button>
 
             {/* Quick Settings Icon */}
             <Link
               href="/settings"
-              className="rounded-xl border border-border bg-card p-2 text-muted-foreground hover:bg-muted hover:text-foreground transition-all duration-200"
+              className="rounded-xl border border-zinc-200 dark:border-white/10 bg-zinc-50 dark:bg-[#0d0d11] p-2 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-[#18181b] hover:text-zinc-900 dark:hover:text-zinc-100 transition-all duration-200"
               aria-label="Settings"
             >
               <Settings className="h-4.5 w-4.5" />
@@ -130,7 +130,7 @@ export default function Navbar() {
                 <AvatarDisplay 
                   avatarUrl={profile.avatar_url} 
                   name={profile.full_name} 
-                  className="h-8.5 w-8.5 text-[10px] border border-border hover:border-primary/50 transition-colors" 
+                  className="h-8.5 w-8.5 text-[10px] border border-zinc-200 dark:border-white/10 hover:border-primary/50 transition-colors" 
                 />
               </Link>
             )}
@@ -151,20 +151,20 @@ export default function Navbar() {
             {/* Theme toggle for mobile */}
             <button
               onClick={toggleTheme}
-              className="rounded-xl border border-border bg-card p-2 text-muted-foreground hover:bg-muted transition-all"
+              className="rounded-xl border border-zinc-200 dark:border-white/10 bg-zinc-50 dark:bg-[#0d0d11] p-2 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-[#18181b] hover:text-zinc-900 dark:hover:text-zinc-100 transition-all"
               aria-label="Toggle theme"
               suppressHydrationWarning
             >
               {!mounted || theme === "dark" ? (
-                <Sun className="h-4 w-4 text-yellow-400" />
+                <Sun className="h-4 w-4 text-amber-500 dark:text-yellow-400 fill-amber-500/20" />
               ) : (
-                <Moon className="h-4 w-4 text-violet-600" />
+                <Moon className="h-4 w-4 text-indigo-600 dark:text-indigo-400 fill-indigo-600/10" />
               )}
             </button>
 
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="rounded-xl border border-border bg-card p-2 text-muted-foreground hover:bg-muted transition-all"
+              className="rounded-xl border border-zinc-200 dark:border-white/10 bg-zinc-50 dark:bg-[#0d0d11] p-2 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-[#18181b] hover:text-zinc-900 dark:hover:text-zinc-100 transition-all"
               aria-label="Open main menu"
             >
               {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -175,9 +175,9 @@ export default function Navbar() {
 
       {/* Mobile Menu Panel */}
       {mobileMenuOpen && (
-        <div className="md:hidden border-t border-border bg-background px-4 py-3 space-y-2 animate-float">
+        <div className="md:hidden border-t border-zinc-200 dark:border-white/10 bg-white dark:bg-[#040406] px-4 py-3 space-y-2 animate-float">
           {/* Stats Bar */}
-          <div className="flex items-center justify-around rounded-xl border border-border bg-card p-2.5 text-xs font-semibold shadow-sm mb-3">
+          <div className="flex items-center justify-around rounded-xl border border-zinc-200 dark:border-white/10 bg-zinc-50 dark:bg-[#0d0d11] p-2.5 text-xs font-semibold shadow-sm mb-3">
             <div className="flex items-center gap-1.5 text-orange-500">
               <Flame className="h-4.5 w-4.5 fill-current" />
               <span>Streak: {!mounted ? "0" : streak} days</span>
@@ -209,11 +209,11 @@ export default function Navbar() {
             })}
           </div>
 
-          <div className="border-t border-border pt-3 mt-3 space-y-2">
+          <div className="border-t border-zinc-200 dark:border-white/10 pt-3 mt-3 space-y-2">
             <Link
               href="/settings"
               onClick={() => setMobileMenuOpen(false)}
-              className="flex items-center gap-3 rounded-lg px-3 py-2 text-base font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
+              className="flex items-center gap-3 rounded-lg px-3 py-2 text-base font-medium text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-[#18181b] hover:text-zinc-900 dark:hover:text-zinc-100"
             >
               <AvatarDisplay 
                 avatarUrl={profile.avatar_url} 

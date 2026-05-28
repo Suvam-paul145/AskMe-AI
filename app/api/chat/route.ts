@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { message, documentId, mode } = body;
+    const { message, documentId, documentIds, mode } = body;
 
     if (!message || !documentId) {
       return NextResponse.json(
@@ -53,10 +53,15 @@ export async function POST(request: NextRequest) {
       content: message,
     });
 
-    // Retrieve relevant chunks from the document
+    // Query matched chunks from attached documents (or fall back to single active document)
+    const targetDocIds = Array.isArray(documentIds) && documentIds.length > 0
+      ? documentIds
+      : documentId;
+
+    // Retrieve relevant chunks from the document(s)
     const relevantChunks = await retrieveRelevantChunks(
       message,
-      documentId,
+      targetDocIds,
       user.id,
       5
     );

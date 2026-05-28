@@ -94,17 +94,51 @@ export async function storeEmbeddings(
 }
 
 /**
- * Retrieve the most relevant document chunks for a query using vector similarity
+ * Retrieve the most relevant document chunks for a query using vector similarity.
+ * Supports querying across a single document, multiple documents, or all documents.
  */
 export async function retrieveRelevantChunks(
   query: string,
-  documentId: string | null,
+  documentId: string | string[] | null,
   userId: string,
   matchCount: number = 5
 ): Promise<{ id: string; document_id: string; content: string; metadata: Record<string, unknown>; similarity: number }[]> {
   const supabase = createAdminClient();
   const queryEmbedding = await generateEmbedding(query);
 
+  // Case 1: Multiple specific documents are requested
+  if (Array.isArray(documentId)) {
+    if (documentId.length === 0) return [];
+
+    try {
+      const promises = documentId.map(async (docId) => {
+        const { data, error } = await supabase.rpc("match_document_chunks", {
+          query_embedding: JSON.stringify(queryEmbedding),
+          match_count: matchCount,
+          filter_document_id: docId,
+          filter_user_id: userId,
+        });
+
+        if (error) {
+          console.error(`Error retrieving chunks for document ${docId}:`, error);
+          return [];
+        }
+        return data || [];
+      });
+
+      const results = await Promise.all(promises);
+      const allChunks = results.flat();
+      
+      // Sort combined chunks by similarity descending, then take the top matchCount
+      allChunks.sort((a, b) => b.similarity - a.similarity);
+      return allChunks.slice(0, matchCount);
+    } catch (err) {
+      console.error("Error in multi-document chunk retrieval:", err);
+      return [];
+    }
+  }
+
+  // Case 2: Single document (or null for all documents)
   const { data, error } = await supabase.rpc("match_document_chunks", {
     query_embedding: JSON.stringify(queryEmbedding),
     match_count: matchCount,

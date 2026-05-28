@@ -159,7 +159,7 @@ export interface StoreContextType {
 
   // Chat
   chatThreads: Record<string, ChatMessage[]>;
-  sendMessage: (docId: string, message: string, mode?: string) => Promise<string>;
+  sendMessage: (docId: string, message: string, mode?: string, attachedDocIds?: string[]) => Promise<string>;
   loadChatHistory: (docId: string) => Promise<void>;
 
   // Quiz
@@ -354,7 +354,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   }, []);
 
-  const sendMessage = useCallback(async (docId: string, message: string, mode?: string): Promise<string> => {
+  const sendMessage = useCallback(async (docId: string, message: string, mode?: string, attachedDocIds?: string[]): Promise<string> => {
     // Optimistically add user message and a placeholder AI message
     const userMsg: ChatMessage = {
       id: `user-${Date.now()}`,
@@ -381,7 +381,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message, documentId: docId, mode }),
+        body: JSON.stringify({ message, documentId: docId, documentIds: attachedDocIds, mode }),
       });
 
       if (!res.ok) {

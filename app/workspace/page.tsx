@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { MarkdownRenderer } from "@/components/markdown-renderer";
+import WorkspaceVisualizer from "@/components/workspace-visualizer";
 
 export default function WorkspacePage() {
   const { 
@@ -39,10 +40,13 @@ export default function WorkspacePage() {
     profile
   } = useStore();
 
-  const [activeTab, setActiveTab] = useState<"chat" | "flashcards" | "rtm">("chat");
+  const [activeTab, setActiveTab] = useState<"chat" | "flashcards" | "rtm" | "visualizer">("chat");
   const [chatInput, setChatInput] = useState("");
   const [isAiReplying, setIsAiReplying] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Attached documents state
+  const [attachedDocIds, setAttachedDocIds] = useState<string[]>([]);
 
   // Flashcards state
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
@@ -52,6 +56,30 @@ export default function WorkspacePage() {
   const [rtmAnswer, setRtmAnswer] = useState("");
   const [rtmEvaluation, setRtmEvaluation] = useState("");
   const [rtmLoading, setRtmLoading] = useState(false);
+
+  // Initialize attachedDocIds with the selectedDocId on load
+  useEffect(() => {
+    if (selectedDocId && attachedDocIds.length === 0) {
+      const timer = setTimeout(() => {
+        setAttachedDocIds([selectedDocId]);
+      }, 0);
+      return () => clearTimeout(timer);
+    }
+  }, [selectedDocId, attachedDocIds]);
+
+  const handleToggleAttach = (docId: string) => {
+    setAttachedDocIds((prev) => {
+      if (prev.includes(docId)) {
+        if (prev.length === 1 && prev[0] === docId) {
+          alert("At least one document must remain attached to query RAG context.");
+          return prev;
+        }
+        return prev.filter(id => id !== docId);
+      } else {
+        return [...prev, docId];
+      }
+    });
+  };
 
   // Get active document details
   const activeDoc = documents.find(d => d.id === selectedDocId) || documents[0];
@@ -64,6 +92,17 @@ export default function WorkspacePage() {
     if (activeDoc?.id) {
       loadChatHistory(activeDoc.id);
       loadQuiz(activeDoc.id);
+      
+      // Auto-attach active document if it's not already in the list
+      const timer = setTimeout(() => {
+        setAttachedDocIds((prev) => {
+          if (!prev.includes(activeDoc.id)) {
+            return [...prev, activeDoc.id];
+          }
+          return prev;
+        });
+      }, 0);
+      return () => clearTimeout(timer);
     }
   }, [activeDoc?.id, loadChatHistory, loadQuiz]);
 
@@ -81,7 +120,7 @@ export default function WorkspacePage() {
     setIsAiReplying(true);
 
     try {
-      await sendMessage(activeDoc.id, userText);
+      await sendMessage(activeDoc.id, userText, undefined, attachedDocIds);
     } catch (err) {
       console.error("Chat error:", err);
     } finally {
@@ -173,26 +212,45 @@ export default function WorkspacePage() {
               <div className="grid grid-cols-1 gap-2.5">
                 {documents.map((doc) => {
                   const isSelected = doc.id === selectedDocId;
+                  const isAttached = attachedDocIds.includes(doc.id);
                   return (
-                    <button
+                    <div
                       key={doc.id}
-                      onClick={() => {
-                        setSelectedDocId(doc.id);
-                        setRtmEvaluation("");
-                        setRtmAnswer("");
-                      }}
-                      className={`flex items-center justify-between text-left p-3.5 rounded-xl border transition-all duration-300 tactile-card ${
+                      className={`group flex items-center justify-between p-1 rounded-xl border transition-all duration-300 tactile-card ${
                         isSelected 
                           ? "border-primary bg-primary/10 text-white shadow-[0_0_15px_rgba(139,92,246,0.15)]" 
                           : "border-white/5 bg-[#0d0d11]/40 hover:bg-[#0d0d11]/85 text-zinc-400 hover:text-white"
                       }`}
                     >
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        <div className={`h-1.5 w-1.5 rounded-full ${isSelected ? "bg-primary animate-ping" : "bg-zinc-600"}`} />
-                        <span className="text-xs font-semibold truncate max-w-[280px]">{doc.title}</span>
-                      </div>
-                      <span className="text-[9px] text-zinc-500 bg-white/5 px-2 py-0.5 rounded-md font-mono">{doc.size}</span>
-                    </button>
+                      <button
+                        onClick={() => {
+                          setSelectedDocId(doc.id);
+                          setRtmEvaluation("");
+                          setRtmAnswer("");
+                        }}
+                        className="flex-1 flex items-center justify-between text-left p-2.5 min-w-0"
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div className={`h-1.5 w-1.5 rounded-full ${isSelected ? "bg-primary animate-ping" : "bg-zinc-600"}`} />
+                          <span className="text-xs font-semibold truncate max-w-[160px] md:max-w-[200px]">{doc.title}</span>
+                        </div>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleToggleAttach(doc.id);
+                        }}
+                        title={isAttached ? "Attached to chat context" : "Attach to chat context"}
+                        className={`mr-2.5 px-3 py-1 text-[9px] font-bold rounded-lg border transition-all shrink-0 ${
+                          isAttached
+                            ? "bg-primary border-primary text-white shadow-[0_0_8px_rgba(139,92,246,0.3)] animate-pulse"
+                            : "border-white/10 hover:border-white/30 text-zinc-500 hover:text-zinc-300 bg-white/5"
+                        }`}
+                      >
+                        {isAttached ? "Attached" : "Attach"}
+                      </button>
+                    </div>
                   );
                 })}
               </div>
@@ -279,17 +337,20 @@ export default function WorkspacePage() {
             {/* Header Tabs Navigation */}
             <div className="border-b border-white/5 bg-[#09090b]/80 backdrop-blur-md flex items-center justify-between px-6 py-2">
               <div className="flex gap-1">
-                {[
-                  { id: "chat", name: "Doubt Solver", icon: MessageSquare },
-                  { id: "flashcards", name: "Holographic Cards", icon: Lightbulb },
-                  { id: "rtm", name: "Reverse Teacher (RTM)", icon: GraduationCap }
-                ].map((tab) => {
+                {(
+                  [
+                    { id: "chat", name: "Doubt Solver", icon: MessageSquare },
+                    { id: "flashcards", name: "Holographic Cards", icon: Lightbulb },
+                    { id: "rtm", name: "Reverse Teacher (RTM)", icon: GraduationCap },
+                    { id: "visualizer", name: "Concept Map", icon: Brain }
+                  ] as const
+                ).map((tab) => {
                   const Icon = tab.icon;
                   const isActive = activeTab === tab.id;
                   return (
                     <button
                       key={tab.id}
-                      onClick={() => setActiveTab(tab.id as "chat" | "flashcards" | "rtm")}
+                      onClick={() => setActiveTab(tab.id)}
                       className={`flex items-center gap-2 px-4 py-3.5 text-xs font-semibold border-b-2 transition-all duration-300 ${
                         isActive 
                           ? "border-primary text-primary dark:text-purple-400" 
@@ -316,7 +377,20 @@ export default function WorkspacePage() {
             </div>
 
             {/* Dynamic Tab Body Panel */}
-            <div className={`flex-1 p-6 flex flex-col ${activeTab === "chat" ? "overflow-hidden" : "overflow-y-auto"}`}>
+            <div className={`flex-1 p-6 flex flex-col ${activeTab === "chat" || activeTab === "visualizer" ? "overflow-hidden" : "overflow-y-auto"}`}>
+              
+              {/* Tab 4: Interactive Concept Visualizer */}
+              {activeTab === "visualizer" && (
+                <div className="flex-1 h-full flex flex-col min-h-[400px]">
+                  <WorkspaceVisualizer 
+                    documents={documents}
+                    selectedDocId={selectedDocId}
+                    attachedDocIds={attachedDocIds}
+                    onToggleAttach={handleToggleAttach}
+                    lastAiMessage={activeThread.filter(m => m.sender === "ai").pop()}
+                  />
+                </div>
+              )}
               
               {/* Tab 1: AI Chat Doubt Solver */}
               {activeTab === "chat" && (

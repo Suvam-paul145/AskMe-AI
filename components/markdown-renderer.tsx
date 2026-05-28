@@ -541,15 +541,31 @@ function formatMath(text: string): string {
   return formatted;
 }
 
-// Helper to replace inline formatting: **bold**, *italic*, `code`, and $math$
+// Helper to replace inline formatting: **bold**, *italic*, `code`, $math$, and ![image](url)
 function parseInline(text: string): React.ReactNode[] {
   if (!text) return [];
 
-  // Match: Math ($...$), Bold (**...**), Italic (*...*), Inline Code (`...`)
-  const regex = /(\$\$.*?\$\$|\$.*?\$|\*\*.*?\*\*|\*.*?\*|`.*?`)/g;
+  // Match: Image (![alt](url)), Math ($...$), Bold (**...**), Italic (*...*), Inline Code (`...`)
+  const regex = /(!\[.*?\]\(.*?\)|$$\$.*?\$\$|\$.*?\$|\*\*.*?\*\*|\*.*?\*|`.*?`)/g;
   const parts = text.split(regex);
 
   return parts.map((part, idx) => {
+    if (part.startsWith("![") && part.includes("](")) {
+      const match = part.match(/!\[(.*?)\]\((.*?)\)/);
+      if (match) {
+        const alt = match[1];
+        const url = match[2];
+        return (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            key={idx}
+            src={url}
+            alt={alt}
+            className="max-w-md w-full h-auto rounded-2xl border border-white/5 my-3 shadow-md block spatial-shadow"
+          />
+        );
+      }
+    }
     if (part.startsWith("$$") && part.endsWith("$$")) {
       const formula = part.substring(2, part.length - 2).trim();
       return (

@@ -101,7 +101,7 @@ export async function retrieveRelevantChunks(
   documentId: string | null,
   userId: string,
   matchCount: number = 5
-): Promise<{ id: string; document_id: string; content: string; metadata: any; similarity: number }[]> {
+): Promise<{ id: string; document_id: string; content: string; metadata: Record<string, unknown>; similarity: number }[]> {
   const supabase = createAdminClient();
   const queryEmbedding = await generateEmbedding(query);
 

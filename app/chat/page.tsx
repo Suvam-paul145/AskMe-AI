@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import Navbar from "@/components/navbar";
 import { useStore } from "@/lib/store";
 import { 
@@ -24,7 +24,9 @@ export default function ChatPage() {
 
   // Active doc references
   const activeDoc = documents.find(d => d.id === selectedDocId) || documents[0];
-  const activeThread = activeDoc ? (chatThreads[activeDoc.id] || []) : [];
+  const activeThread = useMemo(() => {
+    return activeDoc ? (chatThreads[activeDoc.id] || []) : [];
+  }, [activeDoc, chatThreads]);
 
   // Load chat history when active doc changes
   useEffect(() => {

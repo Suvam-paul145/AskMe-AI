@@ -2,8 +2,57 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { User } from "@supabase/supabase-js";
 
 // --- TYPES ---
+
+interface DBDocument {
+  id: string;
+  title: string;
+  created_at?: string;
+  file_size?: string;
+  extracted_text?: string;
+  summary?: DocumentNode["summary"];
+}
+
+interface DBMessage {
+  id: string;
+  sender: "user" | "ai";
+  content: string;
+  created_at: string;
+  sources?: string[];
+}
+
+interface DBQuestion {
+  question: string;
+  options: string[];
+  correctAnswer: number;
+  explanation: string;
+  topic: string;
+}
+
+interface DBPlannerItem {
+  id: string;
+  date?: string;
+  title: string;
+  duration: number;
+  completed: boolean;
+  is_urgent?: boolean;
+}
+
+export interface QuizAttemptResponse {
+  attempt?: {
+    id: string;
+    score: number;
+    totalQuestions: number;
+    correctCount: number;
+    xpGain?: number;
+    weakTopics?: string[];
+    revisionPlan?: { topic: string; action: string; duration: number }[];
+    analysis?: string;
+  };
+  error?: string;
+}
 
 export interface DocumentNode {
   id: string;
@@ -86,7 +135,7 @@ export interface CognitiveProfile {
 
 export interface StoreContextType {
   // Auth
-  user: any | null;
+  user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   signIn: (email: string, password: string) => Promise<{ error?: string }>;
@@ -112,7 +161,7 @@ export interface StoreContextType {
   quizzes: Record<string, QuizQuestion[]>;
   loadQuiz: (docId: string) => Promise<void>;
   attempts: QuizAttempt[];
-  submitQuizAttempt: (quizId: string, answers: { questionIndex: number; selectedOption: number }[]) => Promise<any>;
+  submitQuizAttempt: (quizId: string, answers: { questionIndex: number; selectedOption: number }[]) => Promise<QuizAttemptResponse | null>;
 
   // Weak topics
   weakTopics: string[];
@@ -166,7 +215,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [supabase] = useState(() => createClient());
 
   // Auth
-  const [user, setUser] = useState<any | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   // Theme
@@ -208,37 +257,13 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     if (typeof window !== "undefined") {
       const storedTheme = localStorage.getItem("askme-theme");
       if (storedTheme === "light" || storedTheme === "dark") {
-        setTheme(storedTheme);
+        setTimeout(() => setTheme(storedTheme), 0);
         document.documentElement.className = storedTheme;
       } else {
         document.documentElement.className = "dark";
       }
     }
   }, []);
-
-  // Load data when user signs in
-  useEffect(() => {
-    if (user) {
-      refreshDocuments();
-      refreshProfile();
-      refreshGraph();
-      refreshPlanner();
-    } else {
-      // Reset state on sign out
-      setDocuments([]);
-      setSelectedDocId(null);
-      setChatThreads({});
-      setQuizzes({});
-      setAttempts([]);
-      setWeakTopics([]);
-      setXp(0);
-      setStreak(0);
-      setProfile(defaultProfile);
-      setNodes([]);
-      setLinks([]);
-      setPlanner([]);
-    }
-  }, [user]);
 
   // --- AUTH FUNCTIONS ---
   const signIn = async (email: string, password: string): Promise<{ error?: string }> => {
@@ -275,7 +300,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       const res = await fetch("/api/documents");
       if (res.ok) {
         const data = await res.json();
-        const docs: DocumentNode[] = (data.documents || []).map((d: any) => ({
+        const docs: DocumentNode[] = (data.documents || []).map((d: DBDocument) => ({
           id: d.id,
           title: d.title,
           date: d.created_at?.split("T")[0] || "",
@@ -305,7 +330,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       const res = await fetch(`/api/chat?documentId=${docId}`);
       if (res.ok) {
         const data = await res.json();
-        const messages: ChatMessage[] = (data.messages || []).map((m: any) => ({
+        const messages: ChatMessage[] = (data.messages || []).map((m: DBMessage) => ({
           id: m.id,
           sender: m.sender,
           text: m.content,
@@ -394,7 +419,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         const data = await res.json();
         if (data.quizzes && data.quizzes.length > 0) {
           const latestQuiz = data.quizzes[0];
-          const questions: QuizQuestion[] = (latestQuiz.questions || []).map((q: any, idx: number) => ({
+          const questions: QuizQuestion[] = (latestQuiz.questions || []).map((q: DBQuestion, idx: number) => ({
             id: `${latestQuiz.id}-q${idx}`,
             question: q.question,
             options: q.options,
@@ -410,7 +435,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   }, []);
 
-  const submitQuizAttempt = useCallback(async (quizId: string, answers: { questionIndex: number; selectedOption: number }[]) => {
+  const submitQuizAttempt = useCallback(async (quizId: string, answers: { questionIndex: number; selectedOption: number }[]): Promise<QuizAttemptResponse | null> => {
     try {
       const res = await fetch("/api/quiz/submit", {
         method: "POST",
@@ -534,7 +559,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       if (res.ok) {
         const data = await res.json();
         setPlanner(
-          (data.items || []).map((item: any) => ({
+          (data.items || []).map((item: DBPlannerItem) => ({
             id: item.id,
             date: item.date || "",
             title: item.title,
@@ -649,11 +674,39 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         };
       }
       return null;
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Upload error:", err);
       throw err;
     }
   }, [refreshDocuments, refreshGraph]);
+
+  // Load data when user signs in
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (user) {
+      timer = setTimeout(() => {
+        refreshDocuments();
+        refreshProfile();
+        refreshGraph();
+        refreshPlanner();
+      }, 0);
+    } else {
+      // Reset state asynchronously to avoid synchronous setState warning inside effect
+      timer = setTimeout(() => {
+        setDocuments([]);
+        setSelectedDocId(null);
+        setChatThreads({});
+        setQuizzes({});
+        setAttempts([]);
+        setWeakTopics([]);
+        setXp(0);
+        setStreak(0);
+        setPlanner([]);
+        setProfile(defaultProfile);
+      }, 0);
+    }
+    return () => clearTimeout(timer);
+  }, [user, refreshDocuments, refreshProfile, refreshGraph, refreshPlanner]);
 
   return (
     <StoreContext.Provider

@@ -11,7 +11,6 @@ import {
   Target, 
   AlertTriangle, 
   CheckCircle2, 
-  Cpu, 
   SlidersHorizontal,
   Zap
 } from "lucide-react";

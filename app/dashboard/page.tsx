@@ -6,35 +6,26 @@ import Footer from "@/components/footer";
 import { useStore, GraphNode } from "@/lib/store";
 import { 
   Flame, 
-  Zap, 
   Target, 
   Brain, 
-  Compass, 
-  TrendingUp, 
-  ShieldCheck, 
   AlertTriangle, 
   Clock, 
-  Heart,
-  Search,
   Activity,
   ArrowRight
 } from "lucide-react";
 import Link from "next/link";
 
+interface ProjectedNode extends GraphNode {
+  px: number;
+  py: number;
+  scale: number;
+  z2: number;
+}
+
 // --- CUSTOM 3D CANVASES FOR DASHBOARD CORE ---
 function Custom3DCanvasDashboard({ onSelectNode }: { onSelectNode: (node: GraphNode) => void }) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const { nodes, links, theme } = useStore();
-
-  const originalCoords = useRef<Record<string, { x: number; y: number }>>({});
-  const projectedNodesRef = useRef<any[]>([]);
-
-  // Initialize original coords once
-  if (Object.keys(originalCoords.current).length === 0 && nodes.length > 0) {
-    nodes.forEach(n => {
-      originalCoords.current[n.id] = { x: n.x ?? 250, y: n.y ?? 200 };
-    });
-  }
 
   // Rotation states
   const rotY = useRef(0);
@@ -49,6 +40,13 @@ function Custom3DCanvasDashboard({ onSelectNode }: { onSelectNode: (node: GraphN
 
     let animId: number;
     const focalLength = 280;
+
+    // Initialize original coords once
+    if (Object.keys(originalCoords.current).length === 0 && nodes.length > 0) {
+      nodes.forEach(n => {
+        originalCoords.current[n.id] = { x: n.x ?? 250, y: n.y ?? 200 };
+      });
+    }
 
     const resize = () => {
       const dpr = window.devicePixelRatio || 1;
@@ -125,12 +123,12 @@ function Custom3DCanvasDashboard({ onSelectNode }: { onSelectNode: (node: GraphN
         const nz = 0; // map 3D Z coordinates
 
         // Rotate Y
-        let x1 = nx * Math.cos(radY) - nz * Math.sin(radY);
-        let z1 = nx * Math.sin(radY) + nz * Math.cos(radY);
+        const x1 = nx * Math.cos(radY) - nz * Math.sin(radY);
+        const z1 = nx * Math.sin(radY) + nz * Math.cos(radY);
 
         // Rotate X
-        let y1 = ny * Math.cos(radX) - z1 * Math.sin(radX);
-        let z2 = ny * Math.sin(radX) + z1 * Math.cos(radX);
+        const y1 = ny * Math.cos(radX) - z1 * Math.sin(radX);
+        const z2 = ny * Math.sin(radX) + z1 * Math.cos(radX);
 
         // Clip if behind camera
         if (focalLength + z2 <= 20) {
@@ -225,22 +223,19 @@ function Custom3DCanvasDashboard({ onSelectNode }: { onSelectNode: (node: GraphN
       canvas.removeEventListener("click", onClick);
       window.removeEventListener("mouseup", onMouseUp);
     };
-  }, [nodes, links, onSelectNode]);
+  }, [nodes, links, onSelectNode, theme]);
+
+  const originalCoords = useRef<Record<string, { x: number; y: number }>>({});
+  const projectedNodesRef = useRef<ProjectedNode[]>([]);
 
   return <canvas ref={canvasRef} className="w-full h-full block touch-none cursor-pointer" />;
 }
 
 // --- CONSCIOUS STUDENT DASHBOARD ---
 export default function DashboardPage() {
-  const { streak, xp, dailyGoalProgress, weakTopics, attempts, nodes } = useStore();
+  const { streak, dailyGoalProgress, weakTopics, nodes } = useStore();
   const [selectedNode, setSelectedNode] = useState<GraphNode | null>(null);
-
-  // Default selection
-  useEffect(() => {
-    if (nodes && nodes.length > 0 && !selectedNode) {
-      setSelectedNode(nodes[0]);
-    }
-  }, [nodes, selectedNode]);
+  const activeNode = selectedNode || nodes[0];
 
   const getStatusColor = (status: GraphNode["status"]) => {
     switch (status) {
@@ -287,7 +282,7 @@ export default function DashboardPage() {
               <div className="space-y-2">
                 <span className="text-[9px] uppercase font-bold text-zinc-500 tracking-[0.2em]">Focus State</span>
                 <p className="text-xs text-zinc-300 leading-relaxed font-light">
-                  "Flow State active. Spaced repetition decay maps indicate review priority is concentrated in Electromagnetics."
+                  &quot;Flow State active. Spaced repetition decay maps indicate review priority is concentrated in Electromagnetics.&quot;
                 </p>
               </div>
 
@@ -343,16 +338,16 @@ export default function DashboardPage() {
             </div>
 
             {/* Node metadata info footer inside canvas card */}
-            {selectedNode && (
+            {activeNode && (
               <div className="border-t border-white/5 pt-4 mt-2 flex items-center justify-between gap-4 animate-drift">
                 <div className="space-y-1">
-                  <h4 className="text-xs font-bold text-white">{selectedNode.label}</h4>
-                  <span className={`inline-block text-[8px] uppercase font-bold tracking-wider px-2.5 py-0.5 rounded-full border ${getStatusColor(selectedNode.status)}`}>
-                    {selectedNode.status}
+                  <h4 className="text-xs font-bold text-white">{activeNode.label}</h4>
+                  <span className={`inline-block text-[8px] uppercase font-bold tracking-wider px-2.5 py-0.5 rounded-full border ${getStatusColor(activeNode.status)}`}>
+                    {activeNode.status}
                   </span>
                 </div>
                 <div className="text-right">
-                  <span className="text-xs text-primary dark:text-purple-400 font-extrabold">{selectedNode.strength}% strength</span>
+                  <span className="text-xs text-primary dark:text-purple-400 font-extrabold">{activeNode.strength}% strength</span>
                   <p className="text-[9px] text-zinc-500 font-medium font-light">Memory decay speed: low</p>
                 </div>
               </div>

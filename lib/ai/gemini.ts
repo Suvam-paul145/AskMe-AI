@@ -23,6 +23,14 @@ const embeddingModel = genAI.getGenerativeModel({
   model: "gemini-embedding-2",
 });
 
+interface RawQuizQuestion {
+  question?: string;
+  options?: string[];
+  correctAnswer?: number;
+  explanation?: string;
+  topic?: string;
+}
+
 /**
  * Generate a structured summary from extracted document text
  */
@@ -112,7 +120,7 @@ export async function generateQuiz(
     const questions = JSON.parse(jsonStr);
     // Validate structure
     if (Array.isArray(questions) && questions.length > 0) {
-      return questions.map((q: any, idx: number) => ({
+      return questions.map((q: RawQuizQuestion, idx: number) => ({
         question: q.question || `Question ${idx + 1}`,
         options: Array.isArray(q.options) ? q.options : ["A", "B", "C", "D"],
         correctAnswer:
@@ -236,10 +244,11 @@ async function retryWithBackoff<T>(
 ): Promise<T> {
   try {
     return await fn();
-  } catch (error: any) {
-    const errorMessage = error?.message || "";
+  } catch (error) {
+    const err = error as { message?: string; status?: number };
+    const errorMessage = err?.message || "";
     const isRateLimit =
-      error?.status === 429 ||
+      err?.status === 429 ||
       errorMessage.includes("429") ||
       errorMessage.includes("Quota exceeded") ||
       errorMessage.includes("Too Many Requests");
@@ -263,7 +272,7 @@ export async function generateEmbedding(text: string): Promise<number[]> {
     const result = await embeddingModel.embedContent({
       content: { parts: [{ text }] },
       outputDimensionality: 768,
-    } as any);
+    } as unknown as Parameters<typeof embeddingModel.embedContent>[0]);
     return result.embedding.values;
   });
 }
@@ -281,7 +290,7 @@ export async function generateEmbeddingsBatch(chunks: string[]): Promise<number[
         content: { parts: [{ text }] },
         outputDimensionality: 768,
       })),
-    } as any);
+    } as unknown as Parameters<typeof embeddingModel.batchEmbedContents>[0]);
 
     if (!result.embeddings) {
       throw new Error("Failed to generate batch embeddings: response did not contain embeddings.");

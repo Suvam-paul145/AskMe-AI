@@ -99,19 +99,18 @@ export async function POST(request: NextRequest) {
     });
 
     // Grant XP for asking questions
-    await admin
+    const { data: profile } = await admin
       .from("profiles")
       .select("xp")
       .eq("id", user.id)
-      .single()
-      .then(({ data }) => {
-        if (data) {
-          admin
-            .from("profiles")
-            .update({ xp: (data.xp || 0) + 5 })
-            .eq("id", user.id);
-        }
-      });
+      .single();
+
+    if (profile) {
+      await admin
+        .from("profiles")
+        .update({ xp: (profile.xp || 0) + 5 })
+        .eq("id", user.id);
+    }
 
     return NextResponse.json({
       response: aiResponse,

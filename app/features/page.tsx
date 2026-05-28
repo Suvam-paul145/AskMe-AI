@@ -14,109 +14,108 @@ import {
   Lightbulb, 
   Zap, 
   CheckCircle,
-  Clock,
   Compass,
   Sparkles,
   Terminal,
   Activity as PulseIcon
 } from "lucide-react";
 
+const engines = [
+  {
+    title: "Active-Recall Summarizer",
+    description: "Auto-extracts formulas, core definitions, and exam warning tips. Instead of passive reading, it forces you to preview active questions first.",
+    icon: BookOpen,
+    metric: "Inference latency: <1.8s",
+    efficiency: "96.4%",
+    entropy: "-42%",
+    highlights: ["Automatic formula extraction", "Mistakes warning registry", "Syllabus mapping links"]
+  },
+  {
+    title: "Interactive Doubt Solver",
+    description: "Ask deep conceptual doubt questions. The AI tutor provides exact reference nodes from your parsed notes with highlight coordinates.",
+    icon: Brain,
+    metric: "RAG citation precision: 99.4%",
+    efficiency: "99.1%",
+    entropy: "-68%",
+    highlights: ["Multi-document context search", "Definitions highlight triggers", "Voice speech output simulation"]
+  },
+  {
+    title: "Calibration Quiz Engine",
+    description: "Adapts quiz complexity dynamically based on prior scores. Features confidence checkboxes to analyze if you are guessing.",
+    icon: Cpu,
+    metric: "Average quiz generation: 2.2s",
+    efficiency: "94.2%",
+    entropy: "-35%",
+    highlights: ["Immediate scoring and graphs", "Wrong answers remediation logging", "Confetti celebrations"]
+  },
+  {
+    title: "Concept Memory Graph",
+    description: "Visualizes chapters and notes in a unified interactive concepts network. Node sizes and colors update dynamically as your recall strengthens.",
+    icon: Activity,
+    metric: "Real-time canvas refresh",
+    efficiency: "98.7%",
+    entropy: "-85%",
+    highlights: ["Green/Yellow/Red strength levels", "Interactive linking details", "Syllabus forecasting tracker"]
+  },
+  {
+    title: "Learning DNA Profile",
+    description: "Maps 8-dimensional cognitive parameters (conceptual, consistency, retention, discipline) to output your unique study archetype.",
+    icon: LineChart,
+    metric: "Updated after every session",
+    efficiency: "95.0%",
+    entropy: "-50%",
+    highlights: ["Archetype mapping grids", "Custom focus recommendations", "Visual radar charts"]
+  },
+  {
+    title: "Autopilot Study Planner",
+    description: "Automatically designs calendars with active spacing recommendations. Recalibrates schedules instantly if tasks are missed.",
+    icon: Calendar,
+    metric: "Spaced-repetition scheduling",
+    efficiency: "92.8%",
+    entropy: "-72%",
+    highlights: ["Gantt timeline tracking", "Streak preservation logs", "XP reward integrations"]
+  },
+  {
+    title: "Reverse Teacher Mode (RTM)",
+    description: "The AI acts as the student. You explain the concept in your own words, and the AI evaluates your conceptual coverage and gaps.",
+    icon: GraduationCap,
+    metric: "Active retrieval mode",
+    efficiency: "97.9%",
+    entropy: "-90%",
+    highlights: ["Semantic gap calculations", "Socratic follow-ups", "Calibration score upgrades"]
+  },
+  {
+    title: "Holographic Flashcards",
+    description: "Auto-generates double-sided QA flashcards. Leverages active recall scores to sort deck priority automatically.",
+    icon: Lightbulb,
+    metric: "Auto-deck clustering",
+    efficiency: "93.6%",
+    entropy: "-55%",
+    highlights: ["Double-tap flip mechanics", "Mastery ratings triggers", "Review decay alerts"]
+  },
+  {
+    title: "Autopilot Syllabus Gantt",
+    description: "Slices massive exam syllabus blueprints into daily bites. Tracks progress lines relative to actual test dates.",
+    icon: Compass,
+    metric: "Autopilot prioritization",
+    efficiency: "91.5%",
+    entropy: "-40%",
+    highlights: ["Syllabus completion percentages", "Urgency flags", "Duration estimations"]
+  },
+  {
+    title: "Active Weak Area Remediator",
+    description: "Sweeps quiz answers and chat questions. Automatically queues failed topics into tomorrow's priority review stack.",
+    icon: Zap,
+    metric: "Zero-friction revision loop",
+    efficiency: "98.2%",
+    entropy: "-88%",
+    highlights: ["Targeted review flashcards", "Confidence recalibrations", "Automatic study scheduling"]
+  }
+];
+
 export default function FeaturesPage() {
   const [selectedEngine, setSelectedEngine] = useState(0);
   const [telemetryLogs, setTelemetryLogs] = useState<string[]>([]);
-
-  const engines = [
-    {
-      title: "Active-Recall Summarizer",
-      description: "Auto-extracts formulas, core definitions, and exam warning tips. Instead of passive reading, it forces you to preview active questions first.",
-      icon: BookOpen,
-      metric: "Inference latency: <1.8s",
-      efficiency: "96.4%",
-      entropy: "-42%",
-      highlights: ["Automatic formula extraction", "Mistakes warning registry", "Syllabus mapping links"]
-    },
-    {
-      title: "Interactive Doubt Solver",
-      description: "Ask deep conceptual doubt questions. The AI tutor provides exact reference nodes from your parsed notes with highlight coordinates.",
-      icon: Brain,
-      metric: "RAG citation precision: 99.4%",
-      efficiency: "99.1%",
-      entropy: "-68%",
-      highlights: ["Multi-document context search", "Definitions highlight triggers", "Voice speech output simulation"]
-    },
-    {
-      title: "Calibration Quiz Engine",
-      description: "Adapts quiz complexity dynamically based on prior scores. Features confidence checkboxes to analyze if you are guessing.",
-      icon: Cpu,
-      metric: "Average quiz generation: 2.2s",
-      efficiency: "94.2%",
-      entropy: "-35%",
-      highlights: ["Immediate scoring and graphs", "Wrong answers remediation logging", "Confetti celebrations"]
-    },
-    {
-      title: "Concept Memory Graph",
-      description: "Visualizes chapters and notes in a unified interactive concepts network. Node sizes and colors update dynamically as your recall strengthens.",
-      icon: Activity,
-      metric: "Real-time canvas refresh",
-      efficiency: "98.7%",
-      entropy: "-85%",
-      highlights: ["Green/Yellow/Red strength levels", "Interactive linking details", "Syllabus forecasting tracker"]
-    },
-    {
-      title: "Learning DNA Profile",
-      description: "Maps 8-dimensional cognitive parameters (conceptual, consistency, retention, discipline) to output your unique study archetype.",
-      icon: LineChart,
-      metric: "Updated after every session",
-      efficiency: "95.0%",
-      entropy: "-50%",
-      highlights: ["Archetype mapping grids", "Custom focus recommendations", "Visual radar charts"]
-    },
-    {
-      title: "Autopilot Study Planner",
-      description: "Automatically designs calendars with active spacing recommendations. Recalibrates schedules instantly if tasks are missed.",
-      icon: Calendar,
-      metric: "Spaced-repetition scheduling",
-      efficiency: "92.8%",
-      entropy: "-72%",
-      highlights: ["Gantt timeline tracking", "Streak preservation logs", "XP reward integrations"]
-    },
-    {
-      title: "Reverse Teacher Mode (RTM)",
-      description: "The AI acts as the student. You explain the concept in your own words, and the AI evaluates your conceptual coverage and gaps.",
-      icon: GraduationCap,
-      metric: "Active retrieval mode",
-      efficiency: "97.9%",
-      entropy: "-90%",
-      highlights: ["Semantic gap calculations", "Socratic follow-ups", "Calibration score upgrades"]
-    },
-    {
-      title: "Holographic Flashcards",
-      description: "Auto-generates double-sided QA flashcards. Leverages active recall scores to sort deck priority automatically.",
-      icon: Lightbulb,
-      metric: "Auto-deck clustering",
-      efficiency: "93.6%",
-      entropy: "-55%",
-      highlights: ["Double-tap flip mechanics", "Mastery ratings triggers", "Review decay alerts"]
-    },
-    {
-      title: "Autopilot Syllabus Gantt",
-      description: "Slices massive exam syllabus blueprints into daily bites. Tracks progress lines relative to actual test dates.",
-      icon: Compass,
-      metric: "Autopilot prioritization",
-      efficiency: "91.5%",
-      entropy: "-40%",
-      highlights: ["Syllabus completion percentages", "Urgency flags", "Duration estimations"]
-    },
-    {
-      title: "Active Weak Area Remediator",
-      description: "Sweeps quiz answers and chat questions. Automatically queues failed topics into tomorrow's priority review stack.",
-      icon: Zap,
-      metric: "Zero-friction revision loop",
-      efficiency: "98.2%",
-      entropy: "-88%",
-      highlights: ["Targeted review flashcards", "Confidence recalibrations", "Automatic study scheduling"]
-    }
-  ];
 
   // Simulating telemetry updates on select
   useEffect(() => {
@@ -129,21 +128,29 @@ export default function FeaturesPage() {
       "Calibration complete."
     ];
     
-    setTelemetryLogs([]);
+    let active = true;
     let timer: NodeJS.Timeout;
     let idx = 0;
     
     const runLogs = () => {
-      if (idx < logPrefixes.length) {
+      if (!active) return;
+      if (idx === 0) {
+        setTelemetryLogs([`[${new Date().toLocaleTimeString()}] ${engine.title}: ${logPrefixes[0]}`]);
+        idx++;
+        timer = setTimeout(runLogs, 400);
+      } else if (idx < logPrefixes.length) {
         setTelemetryLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] ${engine.title}: ${logPrefixes[idx]}`]);
         idx++;
         timer = setTimeout(runLogs, 400);
       }
     };
     
-    runLogs();
+    timer = setTimeout(runLogs, 0);
     
-    return () => clearTimeout(timer);
+    return () => {
+      active = false;
+      clearTimeout(timer);
+    };
   }, [selectedEngine]);
 
   return (

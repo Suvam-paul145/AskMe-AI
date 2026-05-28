@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Navbar from "@/components/navbar";
 import Footer from "@/components/footer";
 import { useStore } from "@/lib/store";
@@ -89,12 +89,12 @@ function FocusWaveCanvas() {
 // --- COGNITIVE VOXEL GRID ---
 function CognitiveVoxelGrid() {
   // Renders a grid of 64 voxel channels pulsing with random intensities
-  const voxelRefs = useRef<number[]>(Array.from({ length: 64 }, () => Math.random()));
+  const [voxels] = useState(() => Array.from({ length: 64 }, () => Math.random()));
 
   return (
     <div className="grid grid-cols-8 gap-1.5 w-full max-w-[240px] mx-auto p-4 border border-white/5 bg-[#09090b]/80 rounded-2xl relative overflow-hidden">
       <div className="absolute inset-x-0 h-full w-full scanner-sweep pointer-events-none opacity-40" />
-      {voxelRefs.current.map((initialIntensity, idx) => {
+      {voxels.map((initialIntensity, idx) => {
         const delay = (idx % 8) * 150 + Math.floor(idx / 8) * 100;
         return (
           <div

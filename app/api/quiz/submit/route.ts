@@ -3,6 +3,37 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/server";
 import { analyzeWeakTopics } from "@/lib/ai/gemini";
 
+interface QuizQuestionDB {
+  question: string;
+  options: string[];
+  correctAnswer: number;
+  explanation: string;
+  topic: string;
+}
+
+interface CognitiveProfileDB {
+  conceptual?: number;
+  retention?: number;
+  analytical?: number;
+  discipline?: number;
+  consistency?: number;
+  adaptability?: number;
+  calibration?: number;
+  efficiency?: number;
+  archetype?: string;
+  description?: string;
+}
+
+interface RevisionPlanItem {
+  topic: string;
+  action: string;
+  duration: number;
+}
+
+interface DocRelation {
+  title: string;
+}
+
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
@@ -40,7 +71,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const questions = quiz.questions as any[];
+    const questions = quiz.questions as unknown as QuizQuestionDB[];
     let correctCount = 0;
     const wrongAnswers: {
       question: string;
@@ -112,7 +143,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (profile) {
-      const cogProfile = (profile.cognitive_profile || {}) as any;
+      const cogProfile = (profile.cognitive_profile || {}) as unknown as CognitiveProfileDB;
       await admin
         .from("profiles")
         .update({
@@ -138,7 +169,7 @@ export async function POST(request: NextRequest) {
 
     // Create revision planner items if score is low
     if (score < 70 && revisionPlan) {
-      const plannerItems = revisionPlan.map((item: any) => ({
+      const plannerItems = revisionPlan.map((item: RevisionPlanItem) => ({
         user_id: user.id,
         title: `Review: ${item.topic} — ${item.action}`,
         date: new Date().toISOString().split("T")[0],
@@ -157,7 +188,8 @@ export async function POST(request: NextRequest) {
       .eq("user_id", user.id);
 
     if (nodes) {
-      const docTitle = (quiz.documents as any)?.title
+      const docRelation = quiz.documents as unknown as DocRelation | null;
+      const docTitle = docRelation?.title
         ?.replace(/\.[^/.]+$/, "")
         ?.toLowerCase();
 
@@ -197,10 +229,11 @@ export async function POST(request: NextRequest) {
           }
         : null,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Quiz submit error:", error);
+    const message = error instanceof Error ? error.message : "Failed to submit quiz";
     return NextResponse.json(
-      { error: error.message || "Failed to submit quiz" },
+      { error: message },
       { status: 500 }
     );
   }

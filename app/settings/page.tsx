@@ -4,14 +4,17 @@ import React, { useState, useEffect } from "react";
 import Navbar from "@/components/navbar";
 import Footer from "@/components/footer";
 import { useStore } from "@/lib/store";
-import { Settings, ShieldAlert, Sparkles, User, RefreshCw, Sun, Moon, Cpu, Sliders } from "lucide-react";
+import { ShieldAlert, Sparkles, User, RefreshCw, Sun, Moon, Cpu, Sliders } from "lucide-react";
 
 export default function SettingsPage() {
-  const { theme, toggleTheme, updateProfile, profile, signOut } = useStore();
+  const { theme, toggleTheme, updateProfile, signOut } = useStore();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
+    const timer = setTimeout(() => {
+      setMounted(true);
+    }, 0);
+    return () => clearTimeout(timer);
   }, []);
 
   // Settings states

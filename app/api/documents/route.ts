@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
 export async function GET() {
@@ -23,9 +23,10 @@ export async function GET() {
     }
 
     return NextResponse.json({ documents: documents || [] });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Failed to fetch documents";
     return NextResponse.json(
-      { error: error.message || "Failed to fetch documents" },
+      { error: message },
       { status: 500 }
     );
   }

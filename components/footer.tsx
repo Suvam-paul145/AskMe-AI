@@ -34,7 +34,7 @@ export default function Footer() {
               </span>
             </Link>
             <p className="text-sm leading-relaxed text-zinc-500">
-              The Tesla of EdTech: a next-generation Cognitive Learning Operating System that aligns with your brain's unique wiring.
+              The Tesla of EdTech: a next-generation Cognitive Learning Operating System that aligns with your brain&apos;s unique wiring.
             </p>
             <div className="flex items-center gap-3">
               <a href="#" className="rounded-lg p-1.5 hover:bg-zinc-900 hover:text-white transition-all" aria-label="GitHub">

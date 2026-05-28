@@ -5,17 +5,20 @@ import Navbar from "@/components/navbar";
 import Footer from "@/components/footer";
 import { useStore, GraphNode } from "@/lib/store";
 import { 
-  Activity, 
   Compass, 
   Info, 
   ShieldAlert, 
-  Sparkles, 
-  Zap, 
   Sliders, 
   Cpu, 
-  TrendingUp, 
   AlertTriangle 
 } from "lucide-react";
+
+interface ProjectedNode extends GraphNode {
+  px: number;
+  py: number;
+  scale: number;
+  z2: number;
+}
 
 // --- FULLSCREEN 3D PROJECTION CANVAS GRAPH ---
 function Custom3DCanvasFullscreen({ 
@@ -27,16 +30,6 @@ function Custom3DCanvasFullscreen({
 }) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const { nodes, links, theme } = useStore();
-
-  const originalCoords = useRef<Record<string, { x: number; y: number }>>({});
-  const projectedNodesRef = useRef<any[]>([]);
-
-  // Cache original node coords on mount
-  if (Object.keys(originalCoords.current).length === 0 && nodes.length > 0) {
-    nodes.forEach(n => {
-      originalCoords.current[n.id] = { x: n.x ?? 250, y: n.y ?? 200 };
-    });
-  }
 
   // Rotation states
   const rotY = useRef(0);
@@ -51,6 +44,13 @@ function Custom3DCanvasFullscreen({
 
     let animId: number;
     const focalLength = 350;
+
+    // Cache original node coords on mount
+    if (Object.keys(originalCoords.current).length === 0 && nodes.length > 0) {
+      nodes.forEach(n => {
+        originalCoords.current[n.id] = { x: n.x ?? 250, y: n.y ?? 200 };
+      });
+    }
 
     const resize = () => {
       const dpr = window.devicePixelRatio || 1;
@@ -128,12 +128,12 @@ function Custom3DCanvasFullscreen({
         const nz = 0;
 
         // Rotate Y
-        let x1 = nx * Math.cos(radY) - nz * Math.sin(radY);
-        let z1 = nx * Math.sin(radY) + nz * Math.cos(radY);
+        const x1 = nx * Math.cos(radY) - nz * Math.sin(radY);
+        const z1 = nx * Math.sin(radY) + nz * Math.cos(radY);
 
         // Rotate X
-        let y1 = ny * Math.cos(radX) - z1 * Math.sin(radX);
-        let z2 = ny * Math.sin(radX) + z1 * Math.cos(radX);
+        const y1 = ny * Math.cos(radX) - z1 * Math.sin(radX);
+        const z2 = ny * Math.sin(radX) + z1 * Math.cos(radX);
 
         // Clip behind camera
         if (focalLength + z2 <= 30) {
@@ -240,13 +240,16 @@ function Custom3DCanvasFullscreen({
       canvas.removeEventListener("click", onClick);
       window.removeEventListener("mouseup", onMouseUp);
     };
-  }, [nodes, links, selectedNodeId, onSelectNode]);
+  }, [nodes, links, selectedNodeId, onSelectNode, theme]);
+
+  const originalCoords = useRef<Record<string, { x: number; y: number }>>({});
+  const projectedNodesRef = useRef<ProjectedNode[]>([]);
 
   return <canvas ref={canvasRef} className="w-full h-full block touch-none cursor-pointer" />;
 }
 
 export default function MemoryGraphPage() {
-  const { nodes, links, updateNodeStrength } = useStore();
+  const { nodes, updateNodeStrength } = useStore();
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>("n-1");
   const [forecastMode, setForecastMode] = useState(false);
 

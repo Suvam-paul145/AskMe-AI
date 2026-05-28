@@ -72,10 +72,11 @@ export async function POST(request: NextRequest) {
         questions: quiz.questions,
       },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Quiz generation error:", error);
+    const message = error instanceof Error ? error.message : "Failed to generate quiz";
     return NextResponse.json(
-      { error: error.message || "Failed to generate quiz" },
+      { error: message },
       { status: 500 }
     );
   }
@@ -114,9 +115,10 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json({ quizzes: quizzes || [] });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Failed to fetch quizzes";
     return NextResponse.json(
-      { error: error.message || "Failed to fetch quizzes" },
+      { error: message },
       { status: 500 }
     );
   }

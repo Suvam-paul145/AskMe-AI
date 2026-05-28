@@ -3,7 +3,7 @@
 import React from "react";
 import Navbar from "@/components/navbar";
 import Footer from "@/components/footer";
-import { Brain, Heart, GraduationCap, Calendar, Compass, Milestone, Sparkles } from "lucide-react";
+import { Brain, Heart, GraduationCap, Calendar, Milestone, Sparkles } from "lucide-react";
 
 export default function AboutPage() {
   const values = [
@@ -84,7 +84,7 @@ export default function AboutPage() {
               <Heart className="h-10 w-10 text-primary mb-4 animate-pulse biometric-glow" />
               <h3 className="text-sm font-bold text-white mb-2 uppercase tracking-wide">Our Mission</h3>
               <p className="text-xs text-zinc-400 leading-relaxed font-light">
-                To maximize human cognitive efficiency and reduce studying stress. We believe studying shouldn't feel like a chore; it should feel like an integrated sync between your brain and a high-performance system.
+                To maximize human cognitive efficiency and reduce studying stress. We believe studying shouldn&apos;t feel like a chore; it should feel like an integrated sync between your brain and a high-performance system.
               </p>
             </div>
           </div>

@@ -4,7 +4,7 @@ import React, { useEffect, useRef } from "react";
 import Navbar from "@/components/navbar";
 import Footer from "@/components/footer";
 import { useStore } from "@/lib/store";
-import { Brain, Activity, Target, ShieldCheck, Cpu } from "lucide-react";
+import { Activity, Target, ShieldCheck, Cpu } from "lucide-react";
 
 // --- FUTURISTIC 8D RADAR CHART CANVAS COMPONENT ---
 function CognitiveRadarChart() {
@@ -113,7 +113,7 @@ function CognitiveRadarChart() {
       // 4. Map & Draw Cognitive Profile Shape
       const coords = traits.map((t, idx) => {
         const angle = (idx * Math.PI) / 4 - Math.PI / 2;
-        const value = (profile as any)[t.key] || 50;
+        const value = (profile as unknown as Record<string, number>)[t.key] || 50;
         const r = (value / 100) * maxRadius;
         return {
           x: cx + r * Math.cos(angle),
@@ -139,7 +139,7 @@ function CognitiveRadarChart() {
       ctx.shadowBlur = 0; // Reset
 
       // Draw Glowing Trait Nodes
-      coords.forEach((coord, idx) => {
+      coords.forEach((coord) => {
         ctx.beginPath();
         ctx.arc(coord.x, coord.y, 4, 0, Math.PI * 2);
         ctx.fillStyle = "#ffffff";
@@ -158,7 +158,7 @@ function CognitiveRadarChart() {
         const labelRadius = maxRadius + 18;
         const x = cx + labelRadius * Math.cos(angle);
         const y = cy + labelRadius * Math.sin(angle);
-        const val = (profile as any)[t.key] || 50;
+        const val = (profile as unknown as Record<string, number>)[t.key] || 50;
 
         ctx.fillStyle = theme === "light" ? "rgba(0, 0, 0, 0.65)" : "rgba(255, 255, 255, 0.65)";
         ctx.font = "bold 8px monospace";
@@ -176,7 +176,7 @@ function CognitiveRadarChart() {
       cancelAnimationFrame(animId);
       window.removeEventListener("resize", resize);
     };
-  }, [profile]);
+  }, [profile, theme]);
 
   return <canvas ref={canvasRef} className="w-full h-full block touch-none" />;
 }

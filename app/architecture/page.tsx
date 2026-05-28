@@ -11,91 +11,81 @@ import {
   ArrowRight, 
   MessageSquare, 
   Bot,
-  Zap,
   Info,
   Sparkles,
   Terminal,
   Activity as PulseIcon
 } from "lucide-react";
 
+const steps = [
+  {
+    id: 1,
+    title: "Document Ingestion",
+    subtitle: "Parsing & Cleansing",
+    description: "Ingests raw text and PDF payloads. Simulates local client OCR models to normalize layouts and clean header/footer noise.",
+    icon: FileText,
+    color: "from-blue-500/20 to-blue-600/20 text-blue-400 border-blue-500/30",
+    details: "Outputs pure unicode string representations optimized for chunk parsing algorithms."
+  },
+  {
+    id: 2,
+    title: "Semantic Chunking",
+    subtitle: "Overlapping Windows",
+    description: "Splits raw document text into semantic windows of 500 characters with 100-character overlaps to maintain context boundaries.",
+    icon: Layers,
+    color: "from-cyan-500/20 to-cyan-600/20 text-cyan-400 border-cyan-500/30",
+    details: "Preserves sentences, markdown lists, and math equations without cutting them in half."
+  },
+  {
+    id: 3,
+    title: "Vector Embeddings",
+    subtitle: "High-Dim Vector Maps",
+    description: "Converts text chunks into 768-dimensional vector math weights representing conceptual semantics using Google Gemini Embeddings API.",
+    icon: Binary,
+    color: "from-purple-500/20 to-purple-600/20 text-purple-400 border-purple-500/30",
+    details: "Maps words with similar meanings to close coordinates in the embedding space."
+  },
+  {
+    id: 4,
+    title: "Vector Database Store",
+    subtitle: "Indexing & Retrieval",
+    description: "Saves high-dimensional arrays in a local vector index model (pgvector in production) to support rapid cosine similarity searches.",
+    icon: Database,
+    color: "from-indigo-500/20 to-indigo-600/20 text-indigo-400 border-indigo-500/30",
+    details: "Allows O(1) query lookups for highly relevant documentation fragments."
+  },
+  {
+    id: 5,
+    title: "RAG Ingestion Query",
+    subtitle: "Cosine Similarity Matching",
+    description: "Takes student queries, creates a temporary embedding, and runs a cosine vector match against the vector db to fetch the top 3 chunks.",
+    icon: MessageSquare,
+    color: "from-pink-500/20 to-pink-600/20 text-pink-400 border-pink-500/30",
+    details: "Filters out irrelevant sections, ensuring the LLM is only loaded with correct context."
+  },
+  {
+    id: 6,
+    title: "AI Response Synthesis",
+    subtitle: "Contextual LLM Output",
+    description: "Merges the original student question with retrieved knowledge chunks. Feeds it to Gemini 3.5 Flash for a precise doubt resolution.",
+    icon: Bot,
+    color: "from-emerald-500/20 to-emerald-600/20 text-emerald-400 border-emerald-500/30",
+    details: "Provides factual answers, cites source text coordinates, and generates mock flashcards."
+  }
+];
+
 export default function ArchitecturePage() {
   const [activeStep, setActiveStep] = useState(0);
-  const [simulationLogs, setSimulationLogs] = useState<string[]>([]);
-  const logsContainerRef = useRef<HTMLDivElement | null>(null);
-
-  const steps = [
-    {
-      id: 1,
-      title: "Document Ingestion",
-      subtitle: "Parsing & Cleansing",
-      description: "Ingests raw text and PDF payloads. Simulates local client OCR models to normalize layouts and clean header/footer noise.",
-      icon: FileText,
-      color: "from-blue-500/20 to-blue-600/20 text-blue-400 border-blue-500/30",
-      details: "Outputs pure unicode string representations optimized for chunk parsing algorithms."
-    },
-    {
-      id: 2,
-      title: "Semantic Chunking",
-      subtitle: "Overlapping Windows",
-      description: "Splits raw document text into semantic windows of 500 characters with 100-character overlaps to maintain context boundaries.",
-      icon: Layers,
-      color: "from-cyan-500/20 to-cyan-600/20 text-cyan-400 border-cyan-500/30",
-      details: "Preserves sentences, markdown lists, and math equations without cutting them in half."
-    },
-    {
-      id: 3,
-      title: "Vector Embeddings",
-      subtitle: "High-Dim Vector Maps",
-      description: "Converts text chunks into 768-dimensional vector math weights representing conceptual semantics using Google Gemini Embeddings API.",
-      icon: Binary,
-      color: "from-purple-500/20 to-purple-600/20 text-purple-400 border-purple-500/30",
-      details: "Maps words with similar meanings to close coordinates in the embedding space."
-    },
-    {
-      id: 4,
-      title: "Vector Database Store",
-      subtitle: "Indexing & Retrieval",
-      description: "Saves high-dimensional arrays in a local vector index model (pgvector in production) to support rapid cosine similarity searches.",
-      icon: Database,
-      color: "from-indigo-500/20 to-indigo-600/20 text-indigo-400 border-indigo-500/30",
-      details: "Allows O(1) query lookups for highly relevant documentation fragments."
-    },
-    {
-      id: 5,
-      title: "RAG Ingestion Query",
-      subtitle: "Cosine Similarity Matching",
-      description: "Takes student queries, creates a temporary embedding, and runs a cosine vector match against the vector db to fetch the top 3 chunks.",
-      icon: MessageSquare,
-      color: "from-pink-500/20 to-pink-600/20 text-pink-400 border-pink-500/30",
-      details: "Filters out irrelevant sections, ensuring the LLM is only loaded with correct context."
-    },
-    {
-      id: 6,
-      title: "AI Response Synthesis",
-      subtitle: "Contextual LLM Output",
-      description: "Merges the original student question with retrieved knowledge chunks. Feeds it to Gemini 3.5 Flash for a precise doubt resolution.",
-      icon: Bot,
-      color: "from-emerald-500/20 to-emerald-600/20 text-emerald-400 border-emerald-500/30",
-      details: "Provides factual answers, cites source text coordinates, and generates mock flashcards."
-    }
-  ];
-
-  // Simulation step tick
-  useEffect(() => {
-    const step = steps[activeStep];
-    const logPool = [
+  const [simulationLogs, setSimulationLogs] = useState<string[]>(() => {
+    const step = steps[0];
+    return [
       `[PIPELINE] Initializing node step 0${step.id}: ${step.title}`,
       `[RESOLVER] Mapping dependencies for ${step.subtitle}`,
       `[DATAFLOW] Executed telemetry diagnostic: ${step.details}`,
       `[STATUS] Step 0${step.id} fully sync'd.`
-    ];
-
-    setSimulationLogs(prev => [
-      ...prev,
-      ...logPool.map(log => `[${new Date().toLocaleTimeString()}] ${log}`)
-    ].slice(-30)); // limit to last 30 logs
-
-  }, [activeStep]);
+    ].map(log => `[${new Date().toLocaleTimeString()}] ${log}`);
+  });
+  const logsContainerRef = useRef<HTMLDivElement | null>(null);
 
   // Scroll logs window to bottom
   useEffect(() => {
@@ -140,12 +130,24 @@ export default function ArchitecturePage() {
             <div className="space-y-3">
               <span className="text-[10px] uppercase font-bold tracking-widest text-zinc-500 font-mono block mb-2">Select Pipeline Node</span>
               {steps.map((step, idx) => {
-                const Icon = step.icon;
                 const isActive = activeStep === idx;
                 return (
                   <button
                     key={step.id}
-                    onClick={() => setActiveStep(idx)}
+                    onClick={() => {
+                      setActiveStep(idx);
+                      const s = steps[idx];
+                      const logPool = [
+                        `[PIPELINE] Initializing node step 0${s.id}: ${s.title}`,
+                        `[RESOLVER] Mapping dependencies for ${s.subtitle}`,
+                        `[DATAFLOW] Executed telemetry diagnostic: ${s.details}`,
+                        `[STATUS] Step 0${s.id} fully sync'd.`
+                      ];
+                      setSimulationLogs(prev => [
+                        ...prev,
+                        ...logPool.map(log => `[${new Date().toLocaleTimeString()}] ${log}`)
+                      ].slice(-30));
+                    }}
                     className={`w-full flex items-center gap-4 text-left p-4 rounded-2xl border transition-all duration-300 tactile-card ${
                       isActive 
                         ? "border-primary/40 bg-primary/5 text-white" 

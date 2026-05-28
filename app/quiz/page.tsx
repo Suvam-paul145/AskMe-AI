@@ -1,10 +1,10 @@
 "use client";
 
-import React, { useState, useEffect, Suspense } from "react";
+import React, { useState, useEffect, useMemo, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Navbar from "@/components/navbar";
 import Footer from "@/components/footer";
-import { useStore, QuizQuestion } from "@/lib/store";
+import { useStore } from "@/lib/store";
 import { Timer, Cpu, Award, RefreshCw, ArrowRight, HelpCircle, CheckCircle, XCircle } from "lucide-react";
 import confetti from "canvas-confetti";
 
@@ -20,7 +20,7 @@ function QuizContent() {
   const router = useRouter();
   const docId = searchParams.get("docId") || "doc-1";
 
-  const docQuestions = quizzes[docId] || [];
+  const docQuestions = useMemo(() => quizzes[docId] || [], [quizzes, docId]);
   const activeDoc = documents.find(d => d.id === docId);
 
   // States
@@ -28,7 +28,7 @@ function QuizContent() {
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [isAnswerSubmitted, setIsAnswerSubmitted] = useState(false);
   const [score, setScore] = useState(0);
-  const [incorrectList, setIncorrectList] = useState<QuizQuestion[]>([]);
+
   const [quizComplete, setQuizComplete] = useState(false);
   const [serverResult, setServerResult] = useState<QuizServerResult | null>(null);
   const [answersHistory, setAnswersHistory] = useState<{ questionIndex: number; selectedOption: number }[]>([]);
@@ -84,8 +84,6 @@ function QuizContent() {
 
     if (isCorrect) {
       setScore(s => s + 1);
-    } else {
-      setIncorrectList(prev => [...prev, currentQuestion]);
     }
   };
 
@@ -105,7 +103,7 @@ function QuizContent() {
       // Get the quiz ID from the store for API call (quiz ID is the prefix of question IDs)
       const quizId = docQuestions[0]?.id?.split("-q")[0] || docId;
 
-      submitQuizAttempt(quizId, allAnswers).then((result: any) => {
+      submitQuizAttempt(quizId, allAnswers).then((result) => {
         if (result?.attempt) {
           setServerResult(result.attempt);
         }
@@ -314,7 +312,7 @@ function QuizContent() {
                 setSelectedOption(null);
                 setIsAnswerSubmitted(false);
                 setQuizComplete(false);
-                setIncorrectList([]);
+
                 setAnswersHistory([]);
                 setServerResult(null);
                 setTimerSeconds(0);

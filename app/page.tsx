@@ -5,16 +5,7 @@ import Link from "next/link";
 import Navbar from "@/components/navbar";
 import Footer from "@/components/footer";
 import { useStore } from "@/lib/store";
-import { 
-  Sparkles, 
-  ArrowRight, 
-  Upload, 
-  Brain, 
-  Compass, 
-  ShieldCheck, 
-  Flame, 
-  Zap 
-} from "lucide-react";
+import { Sparkles, Upload } from "lucide-react";
 
 // --- CUSTOM 3D PROJECTION GRAPH COMPONENT ---
 function Custom3DGraph({ scene }: { scene: number }) {
@@ -143,12 +134,12 @@ function Custom3DGraph({ scene }: { scene: number }) {
         }
 
         // Rotate Y
-        let x1 = x * Math.cos(radY) - z * Math.sin(radY);
-        let z1 = x * Math.sin(radY) + z * Math.cos(radY);
+        const x1 = x * Math.cos(radY) - z * Math.sin(radY);
+        const z1 = x * Math.sin(radY) + z * Math.cos(radY);
 
         // Rotate X
-        let y1 = y * Math.cos(radX) - z1 * Math.sin(radX);
-        let z2 = y * Math.sin(radX) + z1 * Math.cos(radX);
+        const y1 = y * Math.cos(radX) - z1 * Math.sin(radX);
+        const z2 = y * Math.sin(radX) + z1 * Math.cos(radX);
 
         // 3D Perspective Scale
         const scale = focalLength / (focalLength + z2);
@@ -267,7 +258,7 @@ function Custom3DGraph({ scene }: { scene: number }) {
       canvas.removeEventListener("mousedown", onMouseDown);
       canvas.removeEventListener("mousemove", onMouseMove);
     };
-  }, [scene]);
+  }, [scene, theme]);
 
   return (
     <div className="w-full h-full relative select-none">

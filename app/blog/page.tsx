@@ -3,7 +3,7 @@
 import React from "react";
 import Navbar from "@/components/navbar";
 import Footer from "@/components/footer";
-import { BookOpen, Calendar, Clock, ArrowRight, Brain, Sparkles } from "lucide-react";
+import { BookOpen, Clock, ArrowRight, Brain, Sparkles } from "lucide-react";
 
 export default function BlogPage() {
   const posts = [
@@ -71,7 +71,8 @@ export default function BlogPage() {
               >
                 <div className="space-y-4">
                   <div className="flex items-center justify-between font-mono text-[9px]">
-                    <span className="uppercase font-bold tracking-wider text-zinc-500">
+                    <span className="uppercase font-bold tracking-wider text-zinc-500 flex items-center gap-1.5">
+                      <Icon className="h-3.5 w-3.5" />
                       {post.category}
                     </span>
                     <span className="text-zinc-500 font-light">{post.date}</span>

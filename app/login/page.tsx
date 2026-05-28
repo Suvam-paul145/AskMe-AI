@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Navbar from "@/components/navbar";
 import Footer from "@/components/footer";
 import { useStore } from "@/lib/store";
-import { Brain, Lock, Mail, ArrowRight, ShieldCheck, Sparkles, User } from "lucide-react";
+import { Lock, Mail, ArrowRight, ShieldCheck, Sparkles, User } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -53,8 +53,8 @@ export default function LoginPage() {
         }
       }
       router.push("/dashboard");
-    } catch (err: any) {
-      setError(err.message || "Authentication failed");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Authentication failed");
       setLoading(false);
     }
   };

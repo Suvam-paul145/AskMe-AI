@@ -48,9 +48,6 @@ function parseMermaid(code: string): { nodes: FlowNode[]; links: FlowLink[]; dir
       return;
     }
 
-    // Match links: A --> B, A --- B, A -->|text| B, A -- text --> B
-    const linkMatch = trimmed.match(/^([a-zA-Z0-9_-]+)\s*(?:-->|---|--\s*[a-zA-Z0-9\s_-]+\s*-->)\s*([a-zA-Z0-9_-]+)/);
-    
     // Node definition with label: A[Label], A(Label), A((Label))
     const nodeMatch = trimmed.match(/^([a-zA-Z0-9_-]+)\s*(?:\[(.*?)\]|\((.*?)\))/);
 
@@ -59,7 +56,7 @@ function parseMermaid(code: string): { nodes: FlowNode[]; links: FlowLink[]; dir
       const label = nodeMatch[2] || nodeMatch[3] || id;
       const shape = trimmed.includes("[") ? "rect" : "circle";
       const node = getOrCreateNode(id, label);
-      node.shape = shape as any;
+      node.shape = shape as "rect" | "circle";
     } else if (trimmed.includes("-->") || trimmed.includes("---")) {
       // Complex link parsing: support labels on edges
       let sourceId = "";
@@ -347,7 +344,6 @@ function MarkdownTextBlock({ text }: { text: string }) {
   const lines = text.split("\n");
   const elements: React.ReactNode[] = [];
   let listItems: React.ReactNode[] = [];
-  let inList = false;
 
   const pushList = (key: number) => {
     if (listItems.length > 0) {
@@ -366,21 +362,18 @@ function MarkdownTextBlock({ text }: { text: string }) {
     // Headers
     if (trimmed.startsWith("## ")) {
       pushList(idx);
-      inList = false;
       const content = parseInline(trimmed.substring(3));
       elements.push(<h3 key={idx} className="text-sm font-bold text-white uppercase tracking-wider mt-4 mb-2 biometric-glow">{content}</h3>);
       return;
     }
     if (trimmed.startsWith("### ")) {
       pushList(idx);
-      inList = false;
       const content = parseInline(trimmed.substring(4));
       elements.push(<h4 key={idx} className="text-xs font-bold text-zinc-300 mt-3 mb-1.5">{content}</h4>);
       return;
     }
     if (trimmed.startsWith("#### ")) {
       pushList(idx);
-      inList = false;
       const content = parseInline(trimmed.substring(5));
       elements.push(<h5 key={idx} className="text-[11px] font-bold text-zinc-400 mt-2 mb-1">{content}</h5>);
       return;
@@ -389,14 +382,12 @@ function MarkdownTextBlock({ text }: { text: string }) {
     // Dividers
     if (trimmed === "---" || trimmed === "___" || trimmed === "***") {
       pushList(idx);
-      inList = false;
       elements.push(<div key={idx} className="h-[1px] bg-white/5 my-4 border-none" />);
       return;
     }
 
     // List items: * or -
     if (trimmed.startsWith("* ") || trimmed.startsWith("- ")) {
-      inList = true;
       const content = parseInline(trimmed.substring(2));
       listItems.push(<li key={`li-${idx}`} className="font-light">{content}</li>);
       return;
@@ -405,7 +396,6 @@ function MarkdownTextBlock({ text }: { text: string }) {
     // Math block equation: $$ ... $$
     if (trimmed.startsWith("$$") && trimmed.endsWith("$$")) {
       pushList(idx);
-      inList = false;
       const formula = trimmed.substring(2, trimmed.length - 2).trim();
       elements.push(
         <div key={idx} className="bg-primary/5 border border-primary/10 p-3.5 rounded-2xl my-3 text-center shadow-inner">
@@ -420,13 +410,11 @@ function MarkdownTextBlock({ text }: { text: string }) {
     // Empty lines
     if (!trimmed) {
       pushList(idx);
-      inList = false;
       return;
     }
 
     // Standard paragraph line
     pushList(idx);
-    inList = false;
     const content = parseInline(line);
     elements.push(<p key={idx} className="mb-2 leading-relaxed font-light">{content}</p>);
   });
@@ -446,7 +434,7 @@ function formatMath(text: string): string {
   formatted = formatted.replace(/\\mathrm\{([^{}]+)\}/g, "$1");
 
   // Math symbol replacements
-  const replacements: [RegExp, any][] = [
+  const replacements: [RegExp, string | ((substring: string, ...args: string[]) => string)][] = [
     [/\\alpha/g, "α"],
     [/\\beta/g, "β"],
     [/\\gamma/g, "γ"],
@@ -541,7 +529,7 @@ function formatMath(text: string): string {
   formatted = formatted.replace(/\\omega/g, "ω");
 
   for (const [regex, replacement] of replacements) {
-    formatted = formatted.replace(regex, replacement as any);
+    formatted = formatted.replace(regex, replacement as unknown as string);
   }
 
   // Remove any remaining stray backslashes before characters

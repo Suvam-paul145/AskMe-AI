@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Navbar from "@/components/navbar";
 import Footer from "@/components/footer";
 import { useStore } from "@/lib/store";
-import { Upload, FileText, CheckCircle2, AlertCircle, RefreshCw, Cpu, Database } from "lucide-react";
+import { Upload, CheckCircle2, AlertCircle, RefreshCw, Cpu, Database } from "lucide-react";
 
 export default function UploadPage() {
   const { uploadDocument } = useStore();

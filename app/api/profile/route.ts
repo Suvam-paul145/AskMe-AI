@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
+interface DBQuizAttempt {
+  score: number;
+  weak_topics: string[] | null;
+  created_at: string;
+}
+
 // GET — fetch user profile
 export async function GET() {
   try {
@@ -73,7 +79,7 @@ export async function GET() {
 
     // Collect all weak topics across attempts
     const allWeakTopics = (attempts || []).flatMap(
-      (a: any) => a.weak_topics || []
+      (a: DBQuizAttempt) => a.weak_topics || []
     );
     const uniqueWeakTopics = [...new Set(allWeakTopics)];
 
@@ -86,9 +92,10 @@ export async function GET() {
       recentAttempts: attempts || [],
       weakTopics: uniqueWeakTopics,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Failed to fetch profile";
     return NextResponse.json(
-      { error: error.message || "Failed to fetch profile" },
+      { error: message },
       { status: 500 }
     );
   }
@@ -116,7 +123,7 @@ export async function PATCH(request: NextRequest) {
       "cognitive_profile",
     ];
 
-    const updates: Record<string, any> = {};
+    const updates: Record<string, unknown> = {};
     for (const field of allowedFields) {
       if (body[field] !== undefined) {
         updates[field] = body[field];
@@ -142,9 +149,10 @@ export async function PATCH(request: NextRequest) {
     }
 
     return NextResponse.json({ profile });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Failed to update profile";
     return NextResponse.json(
-      { error: error.message || "Failed to update profile" },
+      { error: message },
       { status: 500 }
     );
   }

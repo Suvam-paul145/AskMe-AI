@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import Navbar from "@/components/navbar";
 import { useStore } from "@/lib/store";
 import { 
@@ -55,7 +55,9 @@ export default function WorkspacePage() {
 
   // Get active document details
   const activeDoc = documents.find(d => d.id === selectedDocId) || documents[0];
-  const activeThread = activeDoc ? (chatThreads[activeDoc.id] || []) : [];
+  const activeThread = useMemo(() => {
+    return activeDoc ? (chatThreads[activeDoc.id] || []) : [];
+  }, [activeDoc, chatThreads]);
 
   // Load chat history and quiz when document changes
   useEffect(() => {
@@ -141,7 +143,7 @@ export default function WorkspacePage() {
       } catch {
         setRtmEvaluation(`### Cognitive Evaluation Output\n${response}`);
       }
-    } catch (err) {
+    } catch {
       setRtmEvaluation("Failed to evaluate. Please try again.");
     } finally {
       setRtmLoading(false);
@@ -287,7 +289,7 @@ export default function WorkspacePage() {
                   return (
                     <button
                       key={tab.id}
-                      onClick={() => setActiveTab(tab.id as any)}
+                      onClick={() => setActiveTab(tab.id as "chat" | "flashcards" | "rtm")}
                       className={`flex items-center gap-2 px-4 py-3.5 text-xs font-semibold border-b-2 transition-all duration-300 ${
                         isActive 
                           ? "border-primary text-primary dark:text-purple-400" 

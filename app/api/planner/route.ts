@@ -24,9 +24,10 @@ export async function GET() {
     }
 
     return NextResponse.json({ items: items || [] });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Failed to fetch planner items";
     return NextResponse.json(
-      { error: error.message || "Failed to fetch planner items" },
+      { error: message },
       { status: 500 }
     );
   }
@@ -72,9 +73,10 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({ item });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Failed to create planner item";
     return NextResponse.json(
-      { error: error.message || "Failed to create planner item" },
+      { error: message },
       { status: 500 }
     );
   }
@@ -128,9 +130,10 @@ export async function PATCH(request: NextRequest) {
     }
 
     return NextResponse.json({ item });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Failed to update planner item";
     return NextResponse.json(
-      { error: error.message || "Failed to update planner item" },
+      { error: message },
       { status: 500 }
     );
   }

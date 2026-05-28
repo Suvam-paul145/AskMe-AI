@@ -3,7 +3,7 @@
 import React from "react";
 import Navbar from "@/components/navbar";
 import Footer from "@/components/footer";
-import { Briefcase, MapPin, Clock, Search, Sparkles, ArrowRight } from "lucide-react";
+import { Briefcase, MapPin, Clock, Sparkles } from "lucide-react";
 import Link from "next/link";
 
 export default function CareersPage() {

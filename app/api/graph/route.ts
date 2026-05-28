@@ -1,6 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
+interface NodeData {
+  id: string;
+  label: string;
+  strength: number;
+  status: string;
+  x?: number;
+  y?: number;
+}
+
+interface LinkData {
+  source_node: string;
+  target_node: string;
+}
+
 // GET — fetch memory graph nodes and links
 export async function GET() {
   try {
@@ -26,7 +40,7 @@ export async function GET() {
     ]);
 
     return NextResponse.json({
-      nodes: (nodesResult.data || []).map((n: any) => ({
+      nodes: (nodesResult.data || []).map((n: NodeData) => ({
         id: n.id,
         label: n.label,
         strength: n.strength,
@@ -34,14 +48,15 @@ export async function GET() {
         x: n.x,
         y: n.y,
       })),
-      links: (linksResult.data || []).map((l: any) => ({
+      links: (linksResult.data || []).map((l: LinkData) => ({
         source: l.source_node,
         target: l.target_node,
       })),
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Failed to fetch graph";
     return NextResponse.json(
-      { error: error.message || "Failed to fetch graph" },
+      { error: message },
       { status: 500 }
     );
   }
@@ -104,9 +119,10 @@ export async function PATCH(request: NextRequest) {
     }
 
     return NextResponse.json({ node: updated });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Failed to update graph";
     return NextResponse.json(
-      { error: error.message || "Failed to update graph" },
+      { error: message },
       { status: 500 }
     );
   }

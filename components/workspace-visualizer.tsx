@@ -57,6 +57,7 @@ export default function WorkspaceVisualizer({
   const nodesRef = useRef<GraphNode[]>([]);
   const draggingNodeRef = useRef<string | null>(null);
   const mousePosRef = useRef({ x: 0, y: 0 });
+  const alphaRef = useRef(1.0);
 
   // Generate document colors using HSL gradients
   const getDocColors = (title: string, index: number) => {
@@ -224,6 +225,7 @@ export default function WorkspaceVisualizer({
     nodesRef.current = newNodes;
     setNodes(newNodes);
     setLinks(newLinks);
+    alphaRef.current = 1.0; // Reheat simulation on document/selection updates
   }, [documents, selectedDocId, attachedDocIds, lastAiMessage]);
 
   // Spring Simulation Animation Loop
@@ -237,6 +239,18 @@ export default function WorkspaceVisualizer({
     const tick = () => {
       const currentNodes = [...nodesRef.current];
       if (currentNodes.length === 0) {
+        animId = requestAnimationFrame(tick);
+        return;
+      }
+
+      // Reheat if dragging active
+      if (draggingNodeRef.current) {
+        alphaRef.current = 1.0;
+      }
+
+      const alpha = alphaRef.current;
+      // If the simulation is stable (cool), skip calculations and updates
+      if (alpha < 0.005) {
         animId = requestAnimationFrame(tick);
         return;
       }
@@ -255,9 +269,9 @@ export default function WorkspaceVisualizer({
           node.vx = 0;
           node.vy = 0;
         } else {
-          // Gravity pull to center
-          node.vx += (cx - node.x) * gravity;
-          node.vy += (cy - node.y) * gravity;
+          // Gravity pull to center, scaled by alpha
+          node.vx += (cx - node.x) * gravity * alpha;
+          node.vy += (cy - node.y) * gravity * alpha;
         }
       });
 
@@ -268,13 +282,13 @@ export default function WorkspaceVisualizer({
           const nodeB = currentNodes[j];
           const dx = nodeB.x - nodeA.x;
           const dy = nodeB.y - nodeA.y;
-          // Add small random noise to prevent coordinates from being exactly equal (divide by zero)
-          const distSq = dx * dx + dy * dy || 0.01;
+          // Soft-cushion of 100 to prevent numerical explosions when nodes overlap
+          const distSq = dx * dx + dy * dy + 100;
           const dist = Math.sqrt(distSq);
 
-          // Force is proportional to inverse square distance
+          // Force is proportional to inverse square distance, scaled by alpha
           if (dist < 180) {
-            const force = (charge * nodeA.radius * nodeB.radius) / (distSq * 0.4);
+            const force = ((charge * nodeA.radius * nodeB.radius) / (distSq * 0.4)) * alpha;
             const fx = (dx / dist) * force;
             const fy = (dy / dist) * force;
 
@@ -307,7 +321,8 @@ export default function WorkspaceVisualizer({
         if (link.type === "query-chunk") restLength = 40;
         if (link.type === "chunk-doc") restLength = 80;
 
-        const force = (dist - restLength) * springK;
+        // Scale force by alpha
+        const force = (dist - restLength) * springK * alpha;
         const fx = (dx / dist) * force;
         const fy = (dy / dist) * force;
 
@@ -321,11 +336,16 @@ export default function WorkspaceVisualizer({
         }
       });
 
-      // 3. Apply velocity with damping friction, and clamp within boundaries
+      // 3. Apply velocity with damping friction, clamp, and clamp within boundaries
       currentNodes.forEach((node) => {
         if (node.id !== draggingNodeRef.current) {
           node.vx *= damping;
           node.vy *= damping;
+
+          // Clamp velocity per frame to prevent wild oscillations/numerical jumps
+          node.vx = Math.max(-10, Math.min(10, node.vx));
+          node.vy = Math.max(-10, Math.min(10, node.vy));
+
           node.x += node.vx;
           node.y += node.vy;
 
@@ -334,6 +354,9 @@ export default function WorkspaceVisualizer({
           node.y = Math.max(node.radius + 10, Math.min(height - node.radius - 10, node.y));
         }
       });
+
+      // Cool/decay the system temperature
+      alphaRef.current *= 0.965; // smoothly cools down in ~100 frames (~1.5s)
 
       // Trigger re-render by updating state
       setNodes([...currentNodes]);
@@ -353,6 +376,7 @@ export default function WorkspaceVisualizer({
       x: e.clientX - rect.left,
       y: e.clientY - rect.top
     };
+    alphaRef.current = 1.0; // Reheat system when node dragging starts
   };
 
   const handleMouseMove = (e: React.MouseEvent<SVGSVGElement>) => {

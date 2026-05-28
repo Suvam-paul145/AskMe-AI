@@ -134,34 +134,65 @@ export async function POST(request: NextRequest) {
       console.error("Error storing attempt:", attemptError);
     }
 
-    // Update user XP
+    // Update user XP & all 8 Cognitive Traits dynamically based on performance
     const xpGain = 30 + Math.round(score / 2);
     const { data: profile } = await admin
       .from("profiles")
-      .select("xp, cognitive_profile")
+      .select("xp, streak, cognitive_profile")
       .eq("id", user.id)
       .single();
 
     if (profile) {
       const cogProfile = (profile.cognitive_profile || {}) as unknown as CognitiveProfileDB;
+      const currentStreak = profile.streak || 0;
+
+      // Dynamic calculation for all 8 learning dimensions
+      const newConceptual = Math.max(10, Math.min(100, (cogProfile.conceptual || 50) + (score >= 80 ? 4 : (score < 50 ? -3 : 1))));
+      const newRetention = Math.max(10, Math.min(100, (cogProfile.retention || 50) + (score >= 70 ? 3 : -2)));
+      const newAnalytical = Math.max(10, Math.min(100, (cogProfile.analytical || 50) + (score >= 90 ? 5 : (score < 40 ? -2 : 2))));
+      const newConsistency = Math.max(10, Math.min(100, Math.round(50 + (currentStreak * 5) + (score >= 70 ? 2 : 0))));
+      const newDiscipline = Math.max(10, Math.min(100, (cogProfile.discipline || 50) + (score >= 60 ? 3 : 1)));
+      const newCalibration = Math.max(10, Math.min(100, Math.round((cogProfile.calibration || 50) + (score - 50) / 10)));
+      const newAdaptability = Math.max(10, Math.min(100, (cogProfile.adaptability || 50) + (score >= 75 ? 4 : 1)));
+      const newEfficiency = Math.max(10, Math.min(100, Math.round((cogProfile.efficiency || 50) + (score >= 80 ? 4 : -2))));
+
+      // Dynamically determine student archetype and descriptions based on their strongest coordinates
+      let archetype = "The Diligent Scholar";
+      let description = "You are a steady and systematic learner, building strong foundations across conceptual domains.";
+
+      if (newConceptual > 75 && newAnalytical > 75) {
+        archetype = "The Cognitive Architect";
+        description = "Your mind excels at building complex logical blueprints, combining high speed with conceptual precision.";
+      } else if (newConceptual > 70 && newRetention < 55) {
+        archetype = "The Intuitive Analyst";
+        description = "You naturally grasp abstract principles quickly, though memory retention benefits from spaced repetitions.";
+      } else if (newDiscipline > 70 && newRetention > 70) {
+        archetype = "The Autopilot Master";
+        description = "Highly organized and disciplined, your retention is reinforced by robust scheduling and revisions.";
+      } else if (newEfficiency > 75 && newAnalytical > 70) {
+        archetype = "The Speed Strategist";
+        description = "You solve quantitative problems with maximum efficiency, making every second count during assessments.";
+      } else if (newAdaptability > 75 && newCalibration > 70) {
+        archetype = "The Calibration Expert";
+        description = "You possess deep metacognitive awareness, correctly predicting what you know and adapting under pressure.";
+      }
+
       await admin
         .from("profiles")
         .update({
           xp: (profile.xp || 0) + xpGain,
           cognitive_profile: {
             ...cogProfile,
-            adaptability: Math.min(
-              100,
-              (cogProfile.adaptability || 50) + 3
-            ),
-            calibration: Math.min(
-              100,
-              Math.round((cogProfile.calibration || 50) + score / 10)
-            ),
-            consistency: Math.min(
-              100,
-              (cogProfile.consistency || 50) + 5
-            ),
+            conceptual: newConceptual,
+            retention: newRetention,
+            analytical: newAnalytical,
+            consistency: newConsistency,
+            discipline: newDiscipline,
+            calibration: newCalibration,
+            adaptability: newAdaptability,
+            efficiency: newEfficiency,
+            archetype,
+            description,
           },
         })
         .eq("id", user.id);

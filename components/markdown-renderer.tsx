@@ -189,121 +189,344 @@ function parseMermaid(code: string): { nodes: FlowNode[]; links: FlowLink[]; dir
 
 // --- DIAGRAM RENDERER COMPONENT ---
 export function FlowchartRenderer({ code }: { code: string }) {
-  const { nodes, links } = parseMermaid(code);
+  const parsed = React.useMemo(() => parseMermaid(code), [code]);
+  const [nodes, setNodes] = React.useState<FlowNode[]>([]);
+  const [links, setLinks] = React.useState<FlowLink[]>([]);
+  const [draggingId, setDraggingId] = React.useState<string | null>(null);
+  const svgRef = React.useRef<SVGSVGElement | null>(null);
+
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      setNodes(parsed.nodes);
+      setLinks(parsed.links);
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [parsed]);
 
   if (nodes.length === 0) {
     return <pre className="bg-zinc-950 p-3 rounded-lg text-xs font-mono border border-white/5 overflow-x-auto">{code}</pre>;
   }
 
+  const handleMouseDown = (e: React.MouseEvent, nodeId: string) => {
+    e.preventDefault();
+    setDraggingId(nodeId);
+  };
+
+  const handleMouseMove = (e: React.MouseEvent<SVGSVGElement>) => {
+    if (!draggingId || !svgRef.current) return;
+    const rect = svgRef.current.getBoundingClientRect();
+    
+    // Scale client coords to match SVG viewBox (500x280)
+    const scaleX = 500 / rect.width;
+    const scaleY = 280 / rect.height;
+    
+    const x = (e.clientX - rect.left) * scaleX;
+    const y = (e.clientY - rect.top) * scaleY;
+
+    // Constrain inside bounds
+    const boundedX = Math.max(15, Math.min(485, x));
+    const boundedY = Math.max(15, Math.min(265, y));
+
+    setNodes(prev => prev.map(n => n.id === draggingId ? { ...n, x: boundedX, y: boundedY } : n));
+  };
+
+  const handleMouseUp = () => {
+    setDraggingId(null);
+  };
+
+  const handleResetLayout = () => {
+    setNodes(parsed.nodes);
+    setLinks(parsed.links);
+  };
+
+  // Helper to resolve node colors dynamically based on labels
+  const getNodeStyle = (label: string) => {
+    const text = label.toLowerCase();
+    
+    if (text.match(/doc|raw|file|text|chunk|pdf|txt|csv|data|ingest|source|input/)) {
+      return {
+        fill: "url(#grad-green)",
+        stroke: "#34d399",
+        glow: "rgba(52, 211, 153, 0.45)",
+        textColor: "#a7f3d0",
+        arrowId: "arrow-green"
+      };
+    }
+    if (text.match(/embed|vector|db|store|index|database|retriev/)) {
+      return {
+        fill: "url(#grad-blue)",
+        stroke: "#60a5fa",
+        glow: "rgba(96, 165, 250, 0.45)",
+        textColor: "#bfdbfe",
+        arrowId: "arrow-blue"
+      };
+    }
+    if (text.match(/query|user|prompt|question|search/)) {
+      return {
+        fill: "url(#grad-orange)",
+        stroke: "#fb923c",
+        glow: "rgba(251, 146, 60, 0.45)",
+        textColor: "#ffedd5",
+        arrowId: "arrow-orange"
+      };
+    }
+    if (text.match(/ai|llm|synth|model|generat|answer|result|final|response/)) {
+      return {
+        fill: "url(#grad-pink)",
+        stroke: "#f472b6",
+        glow: "rgba(244, 114, 182, 0.45)",
+        textColor: "#fce7f3",
+        arrowId: "arrow-pink"
+      };
+    }
+    
+    // Default fallback
+    return {
+      fill: "url(#grad-slate)",
+      stroke: "#94a3b8",
+      glow: "rgba(148, 163, 184, 0.25)",
+      textColor: "#f1f5f9",
+      arrowId: "arrow-slate"
+    };
+  };
+
   return (
-    <div className="w-full bg-black/45 border border-white/5 rounded-2xl p-4 my-4 flex flex-col items-center justify-center glass-card matte-layer shadow-lg">
-      <span className="text-[9px] uppercase font-bold tracking-widest text-primary dark:text-purple-400 mb-2 self-start flex items-center gap-1.5 biometric-glow">
-        <span className="h-1.5 w-1.5 rounded-full bg-primary animate-ping" />
-        Interactive AI Concept Map
-      </span>
-      <div className="relative w-full max-w-[500px] aspect-[16/9] overflow-hidden select-none">
-        <svg viewBox="0 0 500 280" className="w-full h-full">
-          {/* Defs for arrow markers */}
+    <div className="w-full bg-[#0d0d11]/80 border border-white/5 rounded-3xl p-5 my-5 flex flex-col items-center justify-center glass-card relative overflow-hidden shadow-2xl matte-layer spatial-shadow-lg select-none">
+      
+      {/* Decorative glows inside container */}
+      <div className="absolute top-0 right-0 w-[150px] h-[150px] bg-primary/5 rounded-full filter blur-2xl pointer-events-none" />
+      <div className="absolute bottom-0 left-0 w-[150px] h-[150px] bg-[#6366f1]/5 rounded-full filter blur-2xl pointer-events-none" />
+
+      {/* Header HUD */}
+      <div className="w-full flex items-center justify-between mb-3.5 z-10">
+        <span className="text-[10px] uppercase font-bold tracking-[0.2em] text-primary dark:text-purple-400 flex items-center gap-2 biometric-glow">
+          <span className="h-1.5 w-1.5 rounded-full bg-primary animate-ping" />
+          Interactive Learning Flow
+        </span>
+        <button
+          type="button"
+          onClick={handleResetLayout}
+          className="rounded-lg border border-white/5 bg-[#09090b]/60 hover:bg-[#09090b]/90 px-2.5 py-1 text-[9px] font-bold text-zinc-400 hover:text-white transition-all uppercase tracking-wider"
+        >
+          Reset Layout
+        </button>
+      </div>
+
+      <div className="relative w-full max-w-[500px] aspect-[16/9] overflow-hidden select-none z-10">
+        <svg
+          ref={svgRef}
+          viewBox="0 0 500 280"
+          className="w-full h-full"
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={handleMouseUp}
+        >
+          {/* Defs for arrow markers & gradients */}
           <defs>
-            <marker id="arrow" viewBox="0 0 10 10" refX="22" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-              <path d="M 0 1 L 10 5 L 0 9 z" fill="rgba(139, 92, 246, 0.45)" />
+            {/* Animated signal styling */}
+            <style>{`
+              @keyframes dashflow {
+                to {
+                  stroke-dashoffset: -20;
+                }
+              }
+              .flow-line {
+                stroke-dasharray: 6, 6;
+                animation: dashflow 1.2s linear infinite;
+              }
+            `}</style>
+
+            {/* Glowing filter for nodes */}
+            <filter id="node-glow" x="-20%" y="-20%" width="140%" height="140%">
+              <feGaussianBlur stdDeviation="3" result="blur" />
+              <feComposite in="SourceGraphic" in2="blur" operator="over" />
+            </filter>
+
+            {/* Arrow markers for each workflow stage */}
+            <marker id="arrow-green" viewBox="0 0 10 10" refX="22" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+              <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#34d399" />
             </marker>
+            <marker id="arrow-blue" viewBox="0 0 10 10" refX="22" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+              <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#60a5fa" />
+            </marker>
+            <marker id="arrow-orange" viewBox="0 0 10 10" refX="22" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+              <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#fb923c" />
+            </marker>
+            <marker id="arrow-pink" viewBox="0 0 10 10" refX="22" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+              <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#f472b6" />
+            </marker>
+            <marker id="arrow-slate" viewBox="0 0 10 10" refX="22" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+              <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#94a3b8" />
+            </marker>
+
+            {/* Vibrant gradients */}
+            <linearGradient id="grad-green" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#064e3b" stopOpacity="0.8" />
+              <stop offset="100%" stopColor="#022c22" stopOpacity="0.9" />
+            </linearGradient>
+            <linearGradient id="grad-blue" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#1e3a8a" stopOpacity="0.8" />
+              <stop offset="100%" stopColor="#0f172a" stopOpacity="0.9" />
+            </linearGradient>
+            <linearGradient id="grad-orange" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#7c2d12" stopOpacity="0.8" />
+              <stop offset="100%" stopColor="#431407" stopOpacity="0.9" />
+            </linearGradient>
+            <linearGradient id="grad-pink" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#701a75" stopOpacity="0.8" />
+              <stop offset="100%" stopColor="#4a044e" stopOpacity="0.9" />
+            </linearGradient>
+            <linearGradient id="grad-slate" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#1e293b" stopOpacity="0.85" />
+              <stop offset="100%" stopColor="#0f172a" stopOpacity="0.95" />
+            </linearGradient>
           </defs>
 
-          {/* Links */}
-          {links.map((link, idx) => {
-            const srcNode = nodes.find(n => n.id === link.source);
-            const tgtNode = nodes.find(n => n.id === link.target);
-            if (!srcNode || !tgtNode) return null;
+          {/* Render Links */}
+          <g>
+            {links.map((link, idx) => {
+              const srcNode = nodes.find(n => n.id === link.source);
+              const tgtNode = nodes.find(n => n.id === link.target);
+              if (!srcNode || !tgtNode) return null;
 
-            const x1 = srcNode.x || 0;
-            const y1 = srcNode.y || 0;
-            const x2 = tgtNode.x || 0;
-            const y2 = tgtNode.y || 0;
+              const x1 = srcNode.x ?? 0;
+              const y1 = srcNode.y ?? 0;
+              const x2 = tgtNode.x ?? 0;
+              const y2 = tgtNode.y ?? 0;
 
-            // Draw clean curved path for visual depth
-            const cx1 = x1 + (x2 - x1) * 0.25;
-            const cy1 = y1 + (y2 - y1) * 0.05;
-            const cx2 = x1 + (x2 - x1) * 0.75;
-            const cy2 = y1 + (y2 - y1) * 0.95;
+              // Draw curved Bezier path
+              const cx1 = x1 + (x2 - x1) * 0.25;
+              const cy1 = y1 + (y2 - y1) * 0.05;
+              const cx2 = x1 + (x2 - x1) * 0.75;
+              const cy2 = y1 + (y2 - y1) * 0.95;
 
-            return (
-              <g key={idx}>
-                <path
-                  d={`M ${x1} ${y1} C ${cx1} ${cy1}, ${cx2} ${cy2}, ${x2} ${y2}`}
-                  fill="none"
-                  stroke="rgba(139, 92, 246, 0.3)"
-                  strokeWidth="1.5"
-                  markerEnd="url(#arrow)"
-                  className="transition-all hover:stroke-primary duration-300"
-                />
-                {link.label && (
-                  <text
-                    x={(x1 + x2) / 2}
-                    y={(y1 + y2) / 2 - 4}
-                    fill="rgba(255,255,255,0.4)"
-                    fontSize="7"
-                    fontFamily="monospace"
-                    textAnchor="middle"
-                  >
-                    {link.label}
-                  </text>
-                )}
-              </g>
-            );
-          })}
+              const pathD = `M ${x1} ${y1} C ${cx1} ${cy1}, ${cx2} ${cy2}, ${x2} ${y2}`;
+              const style = getNodeStyle(tgtNode.label);
 
-          {/* Nodes */}
-          {nodes.map(node => {
-            const x = node.x || 0;
-            const y = node.y || 0;
-            const isCircle = node.shape === "circle";
-            const nodeWidth = 90;
-            const nodeHeight = 32;
-
-            return (
-              <g key={node.id} className="cursor-pointer group">
-                {isCircle ? (
-                  <circle
-                    cx={x}
-                    cy={y}
-                    r="20"
-                    fill="rgba(20, 20, 25, 0.9)"
-                    stroke="rgba(139, 92, 246, 0.45)"
-                    strokeWidth="1.5"
-                    className="group-hover:stroke-primary transition-colors duration-300 shadow-[0_0_10px_rgba(139,92,246,0.3)]"
+              return (
+                <g key={idx}>
+                  {/* Thick background glow path */}
+                  <path
+                    d={pathD}
+                    fill="none"
+                    stroke="rgba(255, 255, 255, 0.03)"
+                    strokeWidth="3.5"
                   />
-                ) : (
-                  <rect
-                    x={x - nodeWidth / 2}
-                    y={y - nodeHeight / 2}
-                    width={nodeWidth}
-                    height={nodeHeight}
-                    rx="8"
-                    fill="rgba(20, 20, 25, 0.9)"
-                    stroke="rgba(139, 92, 246, 0.45)"
-                    strokeWidth="1.5"
-                    className="group-hover:stroke-primary transition-colors duration-300 shadow-[0_0_15px_rgba(139,92,246,0.3)]"
+                  {/* Animated dashflow path */}
+                  <path
+                    d={pathD}
+                    fill="none"
+                    stroke={style.stroke}
+                    strokeWidth="1.2"
+                    className="flow-line"
+                    markerEnd={`url(#${style.arrowId})`}
+                    style={{ strokeOpacity: 0.75 }}
                   />
-                )}
-                {/* Node Label Text */}
-                <text
-                  x={x}
-                  y={y + 3}
-                  fill="#ffffff"
-                  fontSize="8"
-                  fontWeight="bold"
-                  fontFamily="sans-serif"
-                  textAnchor="middle"
-                  className="pointer-events-none text-zinc-100 group-hover:text-white transition-colors"
+                  {link.label && (
+                    <text
+                      x={(x1 + x2) / 2}
+                      y={(y1 + y2) / 2 - 5}
+                      fill="rgba(255,255,255,0.4)"
+                      fontSize="7"
+                      fontFamily="monospace"
+                      textAnchor="middle"
+                      className="pointer-events-none"
+                    >
+                      {link.label}
+                    </text>
+                  )}
+                </g>
+              );
+            })}
+          </g>
+
+          {/* Render Nodes */}
+          <g>
+            {nodes.map(node => {
+              const x = node.x ?? 0;
+              const y = node.y ?? 0;
+              const isCircle = node.shape === "circle";
+              const nodeWidth = 100;
+              const nodeHeight = 34;
+
+              const style = getNodeStyle(node.label);
+
+              return (
+                <g
+                  key={node.id}
+                  transform={`translate(${x}, ${y})`}
+                  className="cursor-pointer group"
+                  onMouseDown={(e) => handleMouseDown(e, node.id)}
                 >
-                  {node.label.length > 16 ? `${node.label.substring(0, 14)}...` : node.label}
-                </text>
-              </g>
-            );
-          })}
+                  {/* Glowing halo */}
+                  {isCircle ? (
+                    <circle
+                      r="22"
+                      fill="none"
+                      stroke={style.stroke}
+                      strokeWidth="2"
+                      style={{ opacity: 0.15, filter: "url(#node-glow)" }}
+                    />
+                  ) : (
+                    <rect
+                      x={-nodeWidth / 2 - 2}
+                      y={-nodeHeight / 2 - 2}
+                      width={nodeWidth + 4}
+                      height={nodeHeight + 4}
+                      rx="10"
+                      fill="none"
+                      stroke={style.stroke}
+                      strokeWidth="2"
+                      style={{ opacity: 0.15, filter: "url(#node-glow)" }}
+                    />
+                  )}
+
+                  {/* Base shape */}
+                  {isCircle ? (
+                    <circle
+                      r="20"
+                      fill={style.fill}
+                      stroke={style.stroke}
+                      strokeWidth="1.5"
+                      className="transition-colors group-hover:stroke-white duration-300"
+                    />
+                  ) : (
+                    <rect
+                      x={-nodeWidth / 2}
+                      y={-nodeHeight / 2}
+                      width={nodeWidth}
+                      height={nodeHeight}
+                      rx="8"
+                      fill={style.fill}
+                      stroke={style.stroke}
+                      strokeWidth="1.5"
+                      className="transition-all group-hover:stroke-white duration-300"
+                    />
+                  )}
+
+                  {/* Label */}
+                  <text
+                    y={3}
+                    fill={style.textColor}
+                    fontSize="7.5"
+                    fontWeight="bold"
+                    fontFamily="sans-serif"
+                    textAnchor="middle"
+                    className="pointer-events-none group-hover:fill-white transition-colors"
+                  >
+                    {node.label.length > 22 ? `${node.label.substring(0, 20)}...` : node.label}
+                  </text>
+                </g>
+              );
+            })}
+          </g>
         </svg>
       </div>
+
+      {/* Helpful Hint banner */}
+      <span className="mt-2.5 text-[9px] text-zinc-500 font-light z-10">
+        💡 Drag nodes above to organize overlays. Stages are color-coded: Ingestion/Docs (Green), Vector Data (Blue), Inputs/Query (Orange), and Model Answers (Pink).
+      </span>
     </div>
   );
 }

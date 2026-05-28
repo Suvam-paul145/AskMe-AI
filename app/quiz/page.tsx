@@ -50,6 +50,32 @@ function QuizContent() {
     return () => clearInterval(interval);
   }, [quizComplete, docQuestions]);
 
+  // Keyboard Navigation
+  useEffect(() => {
+    if (quizComplete || docQuestions.length === 0) return;
+    const handler = (e: KeyboardEvent) => {
+      const key = e.key;
+      // Number keys 1-4 to select options
+      if (key >= "1" && key <= "4" && !isAnswerSubmitted) {
+        const optionIdx = parseInt(key) - 1;
+        if (optionIdx < (docQuestions[currentQuestionIdx]?.options?.length ?? 0)) {
+          setSelectedOption(optionIdx);
+        }
+      }
+      // Enter to submit or next
+      if (key === "Enter") {
+        if (!isAnswerSubmitted && selectedOption !== null) {
+          handleSubmitAnswer();
+        } else if (isAnswerSubmitted) {
+          handleNextQuestion();
+        }
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [quizComplete, docQuestions, isAnswerSubmitted, selectedOption, currentQuestionIdx]);
+
   if (docQuestions.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center text-center p-8 space-y-6 py-32">

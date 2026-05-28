@@ -1,17 +1,37 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useStore } from "@/lib/store";
-import { Sun, Moon, Menu, X, Flame, Zap, Settings } from "lucide-react";
+import { Sun, Moon, Menu, X, Flame, Zap, Settings, LogIn, LogOut, User } from "lucide-react";
 import AvatarDisplay from "@/components/avatar-display";
 
 export default function Navbar() {
-  const { theme, toggleTheme, streak, xp, profile } = useStore();
+  const { theme, toggleTheme, streak, xp, profile, user, isAuthenticated, signOut } = useStore();
   const pathname = usePathname();
+  const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleSignOut = async () => {
+    setDropdownOpen(false);
+    await signOut();
+    router.push("/login");
+  };
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -88,18 +108,20 @@ export default function Navbar() {
 
           {/* Action buttons & Stats */}
           <div className="hidden md:flex items-center gap-4">
-            {/* User Stats Widget */}
-            <div className="flex items-center gap-3 rounded-full border border-zinc-200 dark:border-white/10 bg-zinc-50 dark:bg-[#0d0d11] px-4 py-1.5 text-xs font-semibold shadow-sm">
-              <div className="flex items-center gap-1 text-orange-500" title="Daily Study Streak">
-                <Flame className="h-4 w-4 fill-current animate-pulse" />
-                <span>{!mounted ? "0" : streak}d</span>
+            {/* User Stats Widget — only for authenticated users */}
+            {mounted && isAuthenticated ? (
+              <div className="flex items-center gap-3 rounded-full border border-zinc-200 dark:border-white/10 bg-zinc-50 dark:bg-[#0d0d11] px-4 py-1.5 text-xs font-semibold shadow-sm">
+                <div className="flex items-center gap-1 text-orange-500" title="Daily Study Streak">
+                  <Flame className="h-4 w-4 fill-current animate-pulse" />
+                  <span>{streak}d</span>
+                </div>
+                <div className="h-3 w-[1px] bg-zinc-200 dark:bg-white/10" />
+                <div className="flex items-center gap-1 text-primary dark:text-purple-400" title="Cognitive XP Accumulated">
+                  <Zap className="h-4 w-4 fill-current" />
+                  <span>{xp} XP</span>
+                </div>
               </div>
-              <div className="h-3 w-[1px] bg-zinc-200 dark:bg-white/10" />
-              <div className="flex items-center gap-1 text-primary dark:text-purple-400" title="Cognitive XP Accumulated">
-                <Zap className="h-4 w-4 fill-current" />
-                <span>{!mounted ? "0" : xp} XP</span>
-              </div>
-            </div>
+            ) : null}
 
             {/* Theme Toggle */}
             <button
@@ -115,24 +137,76 @@ export default function Navbar() {
               )}
             </button>
 
-            {/* Quick Settings Icon */}
-            <Link
-              href="/settings"
-              className="rounded-xl border border-zinc-200 dark:border-white/10 bg-zinc-50 dark:bg-[#0d0d11] p-2 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-[#18181b] hover:text-zinc-900 dark:hover:text-zinc-100 transition-all duration-200"
-              aria-label="Settings"
-            >
-              <Settings className="h-4.5 w-4.5" />
-            </Link>
+            {/* Authenticated: Settings + Avatar Dropdown */}
+            {mounted && isAuthenticated ? (
+              <>
+                <Link
+                  href="/settings"
+                  className="rounded-xl border border-zinc-200 dark:border-white/10 bg-zinc-50 dark:bg-[#0d0d11] p-2 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-[#18181b] hover:text-zinc-900 dark:hover:text-zinc-100 transition-all duration-200"
+                  aria-label="Settings"
+                >
+                  <Settings className="h-4.5 w-4.5" />
+                </Link>
 
-            {/* Dynamic Profile Avatar */}
-            {mounted && (
-              <Link href="/settings" title="Profile Settings" className="flex items-center shrink-0">
-                <AvatarDisplay 
-                  avatarUrl={profile.avatar_url} 
-                  name={profile.full_name} 
-                  className="h-8.5 w-8.5 text-[10px] border border-zinc-200 dark:border-white/10 hover:border-primary/50 transition-colors" 
-                />
-              </Link>
+                {/* Avatar with dropdown */}
+                <div className="relative" ref={dropdownRef}>
+                  <button
+                    onClick={() => setDropdownOpen(!dropdownOpen)}
+                    className="flex items-center shrink-0 cursor-pointer"
+                    title="Account menu"
+                  >
+                    <AvatarDisplay
+                      avatarUrl={profile.avatar_url}
+                      name={profile.full_name}
+                      className="h-8.5 w-8.5 text-[10px] border border-zinc-200 dark:border-white/10 hover:border-primary/50 transition-colors"
+                    />
+                  </button>
+
+                  {dropdownOpen && (
+                    <div className="absolute right-0 mt-2 w-52 rounded-xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-[#0d0d11] shadow-xl z-50 py-1.5 animate-float">
+                      <div className="px-4 py-2.5 border-b border-zinc-100 dark:border-white/5">
+                        <p className="text-xs font-semibold text-zinc-900 dark:text-white truncate">{profile.full_name || "Student"}</p>
+                        <p className="text-[10px] text-zinc-500 truncate">{profile.email || user?.email}</p>
+                      </div>
+                      <Link
+                        href="/settings"
+                        onClick={() => setDropdownOpen(false)}
+                        className="flex items-center gap-2.5 px-4 py-2 text-xs text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-white/5 transition-colors"
+                      >
+                        <User className="h-3.5 w-3.5" />
+                        <span>Profile & Settings</span>
+                      </Link>
+                      <Link
+                        href="/dashboard"
+                        onClick={() => setDropdownOpen(false)}
+                        className="flex items-center gap-2.5 px-4 py-2 text-xs text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-white/5 transition-colors"
+                      >
+                        <Zap className="h-3.5 w-3.5" />
+                        <span>Dashboard</span>
+                      </Link>
+                      <div className="border-t border-zinc-100 dark:border-white/5 my-1" />
+                      <button
+                        onClick={handleSignOut}
+                        className="flex items-center gap-2.5 px-4 py-2 text-xs text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/5 w-full text-left transition-colors"
+                      >
+                        <LogOut className="h-3.5 w-3.5" />
+                        <span>Sign Out</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </>
+            ) : (
+              /* Unauthenticated: Login button */
+              mounted && (
+                <Link
+                  href="/login"
+                  className="inline-flex items-center gap-2 rounded-xl border border-zinc-200 dark:border-white/10 bg-zinc-50 dark:bg-[#0d0d11] px-4 py-2 text-sm font-semibold text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-[#18181b] transition-all"
+                >
+                  <LogIn className="h-4 w-4" />
+                  <span>Login</span>
+                </Link>
+              )
             )}
 
             {/* CTA */}
@@ -176,17 +250,19 @@ export default function Navbar() {
       {/* Mobile Menu Panel */}
       {mobileMenuOpen && (
         <div className="md:hidden border-t border-zinc-200 dark:border-white/10 bg-white dark:bg-[#040406] px-4 py-3 space-y-2 animate-float">
-          {/* Stats Bar */}
-          <div className="flex items-center justify-around rounded-xl border border-zinc-200 dark:border-white/10 bg-zinc-50 dark:bg-[#0d0d11] p-2.5 text-xs font-semibold shadow-sm mb-3">
-            <div className="flex items-center gap-1.5 text-orange-500">
-              <Flame className="h-4.5 w-4.5 fill-current" />
-              <span>Streak: {!mounted ? "0" : streak} days</span>
+          {/* Stats Bar — only for authenticated users */}
+          {isAuthenticated && (
+            <div className="flex items-center justify-around rounded-xl border border-zinc-200 dark:border-white/10 bg-zinc-50 dark:bg-[#0d0d11] p-2.5 text-xs font-semibold shadow-sm mb-3">
+              <div className="flex items-center gap-1.5 text-orange-500">
+                <Flame className="h-4.5 w-4.5 fill-current" />
+                <span>Streak: {streak} days</span>
+              </div>
+              <div className="flex items-center gap-1.5 text-primary dark:text-purple-400">
+                <Zap className="h-4.5 w-4.5 fill-current" />
+                <span>XP: {xp} points</span>
+              </div>
             </div>
-            <div className="flex items-center gap-1.5 text-primary dark:text-purple-400">
-              <Zap className="h-4.5 w-4.5 fill-current" />
-              <span>XP: {!mounted ? "0" : xp} points</span>
-            </div>
-          </div>
+          )}
 
           {/* Navigation Links */}
           <div className="space-y-1">
@@ -210,18 +286,38 @@ export default function Navbar() {
           </div>
 
           <div className="border-t border-zinc-200 dark:border-white/10 pt-3 mt-3 space-y-2">
-            <Link
-              href="/settings"
-              onClick={() => setMobileMenuOpen(false)}
-              className="flex items-center gap-3 rounded-lg px-3 py-2 text-base font-medium text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-[#18181b] hover:text-zinc-900 dark:hover:text-zinc-100"
-            >
-              <AvatarDisplay 
-                avatarUrl={profile.avatar_url} 
-                name={profile.full_name} 
-                className="h-6 w-6 text-[8px]" 
-              />
-              <span>Settings</span>
-            </Link>
+            {isAuthenticated ? (
+              <>
+                <Link
+                  href="/settings"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center gap-3 rounded-lg px-3 py-2 text-base font-medium text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-[#18181b] hover:text-zinc-900 dark:hover:text-zinc-100"
+                >
+                  <AvatarDisplay
+                    avatarUrl={profile.avatar_url}
+                    name={profile.full_name}
+                    className="h-6 w-6 text-[8px]"
+                  />
+                  <span>Settings</span>
+                </Link>
+                <button
+                  onClick={() => { setMobileMenuOpen(false); handleSignOut(); }}
+                  className="flex items-center gap-3 rounded-lg px-3 py-2 text-base font-medium text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/5 w-full"
+                >
+                  <LogOut className="h-5 w-5" />
+                  <span>Sign Out</span>
+                </button>
+              </>
+            ) : (
+              <Link
+                href="/login"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center justify-center gap-2 rounded-lg bg-primary py-2.5 text-base font-semibold text-white shadow-md hover:bg-primary/90 dark:bg-purple-600 dark:hover:bg-purple-500"
+              >
+                <LogIn className="h-5 w-5" />
+                <span>Login</span>
+              </Link>
+            )}
             {!isWorkspacePath && (
               <Link
                 href="/upload"

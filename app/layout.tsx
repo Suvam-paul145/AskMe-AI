@@ -14,8 +14,22 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://ask-me-ai-chi.vercel.app"),
   title: "AskMe AI - Your Personal Cognitive Learning OS",
-  description: "Next-generation Cognitive Learning Operating System (CLOS) powered by AI. Upload notes, solve doubts, generate quizzes, track weak topics, and map your learning DNA.",
+  description: "Upload notes, solve doubts, generate quizzes, track weak topics, and map your learning DNA with AI-powered study tools.",
+  openGraph: {
+    title: "AskMe AI — Cognitive Learning OS",
+    description: "Upload notes → AI tutor, quizzes, and revision plans in 60 seconds.",
+    url: "https://ask-me-ai-chi.vercel.app",
+    siteName: "AskMe AI",
+    type: "website",
+    images: ["/favicon.png"],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "AskMe AI — Cognitive Learning OS",
+    description: "Upload notes → AI tutor, quizzes, and revision plans in 60 seconds.",
+  },
 };
 
 export default function RootLayout({

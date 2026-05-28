@@ -182,7 +182,7 @@ function CognitiveRadarChart() {
 }
 
 export default function DnaPage() {
-  const { profile } = useStore();
+  const { profile, attempts } = useStore();
 
   const dnaMetrics = [
     { name: "Conceptual Depth", val: profile.conceptual, desc: "Abstract logic and theory mapping speeds." },
@@ -194,6 +194,10 @@ export default function DnaPage() {
     { name: "Adaptability Index", val: profile.adaptability, desc: "Adjustment to difficult assessments." },
     { name: "Cognitive Efficiency", val: profile.efficiency, desc: "Ratio of correct answers relative to time spent." }
   ];
+
+  // Check if profile has default placeholder values (no real data yet)
+  const isPlaceholderData = attempts.length < 3 && 
+    dnaMetrics.every(m => m.val === 50);
 
   return (
     <div className="flex flex-col min-h-screen bg-[#040406] text-white neural-overlay relative select-none">
@@ -218,6 +222,23 @@ export default function DnaPage() {
             CLOS neural engine maps 8 dimensions of study performance, dynamically adjusting your cognitive profile indices on every interaction.
           </p>
         </div>
+
+        {/* Placeholder Banner for new users */}
+        {isPlaceholderData && (
+          <div className="max-w-2xl mx-auto rounded-2xl border border-amber-500/20 bg-amber-500/5 p-6 text-center space-y-3">
+            <div className="text-2xl">🧬</div>
+            <h3 className="text-sm font-bold text-amber-400">Your DNA Profile Is Initializing</h3>
+            <p className="text-xs text-zinc-400 font-light leading-relaxed">
+              Complete at least 3 quiz sessions to unlock your personalized cognitive profile. Currently showing default baseline values (50%).
+            </p>
+            <a
+              href="/workspace"
+              className="inline-flex items-center gap-2 rounded-xl bg-primary/10 border border-primary/20 px-4 py-2 text-xs font-semibold text-primary hover:bg-primary/20 transition-colors"
+            >
+              Take a Quiz to Build Your Profile →
+            </a>
+          </div>
+        )}
 
         {/* Radar & Archetype Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">

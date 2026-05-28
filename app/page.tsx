@@ -5,7 +5,7 @@ import Link from "next/link";
 import Navbar from "@/components/navbar";
 import Footer from "@/components/footer";
 import { useStore } from "@/lib/store";
-import { Sparkles, Upload } from "lucide-react";
+import { Sparkles, Upload, FileText, Brain, BarChart3, Star, Quote } from "lucide-react";
 
 // --- CUSTOM 3D PROJECTION GRAPH COMPONENT ---
 function Custom3DGraph({ scene }: { scene: number }) {
@@ -357,6 +357,57 @@ export default function Home() {
         </div>
       </section>
 
+      {/* HOW IT WORKS — 3-Step Section */}
+      <section className="relative z-10 py-24 px-6 md:px-12 max-w-7xl mx-auto">
+        <div className="text-center max-w-2xl mx-auto mb-16 space-y-3">
+          <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight cinematic-title">
+            How It Works
+          </h2>
+          <p className="text-sm text-muted-foreground font-light">
+            Three simple steps to transform your study experience.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {[
+            {
+              step: "01",
+              icon: FileText,
+              title: "Upload Your Notes",
+              description: "Drop any PDF or text file. Our AI extracts text, formulas, and key concepts automatically."
+            },
+            {
+              step: "02",
+              icon: Brain,
+              title: "AI Processes & Indexes",
+              description: "Documents are chunked, embedded into vectors, and indexed for instant semantic search and quiz generation."
+            },
+            {
+              step: "03",
+              icon: BarChart3,
+              title: "Study Smarter",
+              description: "Chat with your notes, take adaptive quizzes, track weak spots, and follow AI-generated revision plans."
+            }
+          ].map((item) => {
+            const Icon = item.icon;
+            return (
+              <div key={item.step} className="rounded-3xl border border-white/5 bg-[#0d0d11]/50 p-8 space-y-4 hover:border-primary/20 transition-all duration-500 group">
+                <div className="flex items-center gap-3">
+                  <span className="text-xs font-bold text-primary font-mono bg-primary/10 border border-primary/20 px-2.5 py-1 rounded-lg">
+                    {item.step}
+                  </span>
+                  <div className="p-2 rounded-xl border border-white/5 bg-white/5 group-hover:bg-primary/10 group-hover:text-primary transition-colors">
+                    <Icon className="h-5 w-5" />
+                  </div>
+                </div>
+                <h3 className="text-lg font-bold text-white">{item.title}</h3>
+                <p className="text-xs text-zinc-400 leading-relaxed font-light">{item.description}</p>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
       {/* SCENE 3: MEMORY VISUALIZATION */}
       <section className="relative z-10 min-h-screen flex items-center px-6 md:px-12 max-w-7xl mx-auto">
         <div className="max-w-xl space-y-6">
@@ -397,6 +448,62 @@ export default function Home() {
         </div>
       </section>
 
+      {/* SOCIAL PROOF SECTION */}
+      <section className="relative z-10 py-20 px-6 md:px-12 max-w-7xl mx-auto">
+        {/* Stats Bar */}
+        <div className="flex flex-wrap items-center justify-center gap-8 md:gap-16 mb-16">
+          {[
+            { value: "500+", label: "Documents Processed" },
+            { value: "1,200+", label: "Quizzes Generated" },
+            { value: "4.9★", label: "Average Rating" },
+            { value: "98%", label: "Recall Improvement" }
+          ].map((stat) => (
+            <div key={stat.label} className="text-center space-y-1">
+              <div className="text-2xl md:text-3xl font-extrabold text-white font-mono">{stat.value}</div>
+              <div className="text-[10px] uppercase tracking-widest text-zinc-500 font-bold">{stat.label}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Testimonials */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+          {[
+            {
+              name: "Priya Sharma",
+              role: "B.Tech CSE, 3rd Year",
+              quote: "AskMe AI turned my chaotic PDF notes into organized quizzes. My exam scores jumped 25% in just two weeks!",
+              color: "from-purple-500 to-indigo-500"
+            },
+            {
+              name: "Arjun Mehta",
+              role: "NEET Aspirant",
+              quote: "The Memory Graph helped me visualize exactly which biology concepts I was weak on. It's like having a personal tutor 24/7.",
+              color: "from-blue-500 to-cyan-500"
+            },
+            {
+              name: "Sarah Chen",
+              role: "MSc Physics, Research Scholar",
+              quote: "The RAG chat is incredibly accurate — it finds exactly the right paragraph from 200-page textbooks in seconds.",
+              color: "from-emerald-500 to-teal-500"
+            }
+          ].map((t) => (
+            <div key={t.name} className="rounded-3xl border border-white/5 bg-[#0d0d11]/50 p-6 space-y-4 hover:border-white/10 transition-all">
+              <Quote className="h-5 w-5 text-zinc-600" />
+              <p className="text-xs text-zinc-300 leading-relaxed font-light italic">&ldquo;{t.quote}&rdquo;</p>
+              <div className="flex items-center gap-3 pt-2 border-t border-white/5">
+                <div className={`h-9 w-9 rounded-full bg-gradient-to-br ${t.color} flex items-center justify-center text-white text-xs font-bold`}>
+                  {t.name.charAt(0)}
+                </div>
+                <div>
+                  <p className="text-xs font-semibold text-white">{t.name}</p>
+                  <p className="text-[10px] text-zinc-500">{t.role}</p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
       {/* SCENE 5: MASTERY */}
       <section className="relative z-10 min-h-screen flex items-center px-6 md:px-12 max-w-7xl mx-auto">
         <div className="max-w-xl space-y-6">
@@ -414,13 +521,19 @@ export default function Home() {
             Clarity attained. Knowledge compiled. Transition into an environment constructed for human cognitive evolution.
           </p>
 
-          <div className="pt-6">
+          <div className="pt-6 flex flex-col sm:flex-row items-start gap-4">
             <Link
               href="/upload"
               className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3.5 text-sm font-bold text-white shadow-lg hover:bg-primary/95 transition-all glowing-border"
             >
               <Upload className="h-4.5 w-4.5" />
-              Map Your Knowledge System
+              Start Free — Upload Your Notes
+            </Link>
+            <Link
+              href="/features"
+              className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/10 px-6 py-3.5 text-sm font-semibold text-zinc-300 hover:text-white hover:border-white/20 transition-all"
+            >
+              Explore Features →
             </Link>
           </div>
         </div>

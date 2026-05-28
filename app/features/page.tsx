@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Link from "next/link";
 import Navbar from "@/components/navbar";
 import Footer from "@/components/footer";
 import { 
@@ -28,7 +29,9 @@ const engines = [
     metric: "Inference latency: <1.8s",
     efficiency: "96.4%",
     entropy: "-42%",
-    highlights: ["Automatic formula extraction", "Mistakes warning registry", "Syllabus mapping links"]
+    highlights: ["Automatic formula extraction", "Mistakes warning registry", "Syllabus mapping links"],
+    route: "/workspace",
+    featured: true
   },
   {
     title: "Interactive Doubt Solver",
@@ -37,7 +40,9 @@ const engines = [
     metric: "RAG citation precision: 99.4%",
     efficiency: "99.1%",
     entropy: "-68%",
-    highlights: ["Multi-document context search", "Definitions highlight triggers", "Voice speech output simulation"]
+    highlights: ["Multi-document context search", "Definitions highlight triggers", "Voice speech output simulation"],
+    route: "/workspace",
+    featured: true
   },
   {
     title: "Calibration Quiz Engine",
@@ -46,7 +51,9 @@ const engines = [
     metric: "Average quiz generation: 2.2s",
     efficiency: "94.2%",
     entropy: "-35%",
-    highlights: ["Immediate scoring and graphs", "Wrong answers remediation logging", "Confetti celebrations"]
+    highlights: ["Immediate scoring and graphs", "Wrong answers remediation logging", "Confetti celebrations"],
+    route: "/quiz",
+    featured: true
   },
   {
     title: "Concept Memory Graph",
@@ -55,7 +62,9 @@ const engines = [
     metric: "Real-time canvas refresh",
     efficiency: "98.7%",
     entropy: "-85%",
-    highlights: ["Green/Yellow/Red strength levels", "Interactive linking details", "Syllabus forecasting tracker"]
+    highlights: ["Green/Yellow/Red strength levels", "Interactive linking details", "Syllabus forecasting tracker"],
+    route: "/memory-graph",
+    featured: false
   },
   {
     title: "Learning DNA Profile",
@@ -64,7 +73,9 @@ const engines = [
     metric: "Updated after every session",
     efficiency: "95.0%",
     entropy: "-50%",
-    highlights: ["Archetype mapping grids", "Custom focus recommendations", "Visual radar charts"]
+    highlights: ["Archetype mapping grids", "Custom focus recommendations", "Visual radar charts"],
+    route: "/dna",
+    featured: false
   },
   {
     title: "Autopilot Study Planner",
@@ -73,7 +84,9 @@ const engines = [
     metric: "Spaced-repetition scheduling",
     efficiency: "92.8%",
     entropy: "-72%",
-    highlights: ["Gantt timeline tracking", "Streak preservation logs", "XP reward integrations"]
+    highlights: ["Gantt timeline tracking", "Streak preservation logs", "XP reward integrations"],
+    route: "/planner",
+    featured: false
   },
   {
     title: "Reverse Teacher Mode (RTM)",
@@ -82,7 +95,9 @@ const engines = [
     metric: "Active retrieval mode",
     efficiency: "97.9%",
     entropy: "-90%",
-    highlights: ["Semantic gap calculations", "Socratic follow-ups", "Calibration score upgrades"]
+    highlights: ["Semantic gap calculations", "Socratic follow-ups", "Calibration score upgrades"],
+    route: "/workspace",
+    featured: false
   },
   {
     title: "Holographic Flashcards",
@@ -91,7 +106,9 @@ const engines = [
     metric: "Auto-deck clustering",
     efficiency: "93.6%",
     entropy: "-55%",
-    highlights: ["Double-tap flip mechanics", "Mastery ratings triggers", "Review decay alerts"]
+    highlights: ["Double-tap flip mechanics", "Mastery ratings triggers", "Review decay alerts"],
+    route: "/workspace",
+    featured: false
   },
   {
     title: "Autopilot Syllabus Gantt",
@@ -100,7 +117,9 @@ const engines = [
     metric: "Autopilot prioritization",
     efficiency: "91.5%",
     entropy: "-40%",
-    highlights: ["Syllabus completion percentages", "Urgency flags", "Duration estimations"]
+    highlights: ["Syllabus completion percentages", "Urgency flags", "Duration estimations"],
+    route: "/planner",
+    featured: false
   },
   {
     title: "Active Weak Area Remediator",
@@ -109,7 +128,9 @@ const engines = [
     metric: "Zero-friction revision loop",
     efficiency: "98.2%",
     entropy: "-88%",
-    highlights: ["Targeted review flashcards", "Confidence recalibrations", "Automatic study scheduling"]
+    highlights: ["Targeted review flashcards", "Confidence recalibrations", "Automatic study scheduling"],
+    route: "/quiz",
+    featured: false
   }
 ];
 
@@ -205,12 +226,15 @@ export default function FeaturesPage() {
                         : "border-white/5 bg-[#0d0d11]/40 text-zinc-400 hover:text-white"
                     }`}
                   >
-                    <div className={`p-2.5 rounded-xl border ${
+                    <div className={`p-2.5 rounded-xl border relative ${
                       isSelected 
                         ? "bg-primary text-white border-primary/20 shadow-md shadow-primary/20" 
                         : "bg-white/5 text-zinc-400 border-white/5"
                     }`}>
                       <Icon className="h-5 w-5" />
+                      {engine.featured && (
+                        <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-primary border-2 border-[#040406]" />
+                      )}
                     </div>
                     <div className="flex-1 min-w-0">
                       <h3 className="text-sm font-bold tracking-wide uppercase">{engine.title}</h3>
@@ -251,15 +275,21 @@ export default function FeaturesPage() {
                     {activeEngine.description}
                   </p>
 
-                  {/* Diagnostics Grid */}
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="rounded-2xl border border-white/5 bg-[#040406]/60 p-4 font-mono">
-                      <div className="text-[9px] uppercase font-bold text-zinc-500 tracking-wider">Calibration Index</div>
-                      <div className="text-lg font-bold text-white mt-1">{activeEngine.efficiency}</div>
+                  {/* Diagnostics Grid — Platform Benchmarks */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-[10px] uppercase font-bold tracking-widest text-zinc-500 font-mono">Platform Benchmarks</h4>
+                      <span className="text-[8px] text-zinc-600 font-mono">Based on beta user sessions</span>
                     </div>
-                    <div className="rounded-2xl border border-white/5 bg-[#040406]/60 p-4 font-mono">
-                      <div className="text-[9px] uppercase font-bold text-zinc-500 tracking-wider">Cognitive Load Delta</div>
-                      <div className="text-lg font-bold text-emerald-400 mt-1">{activeEngine.entropy}</div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="rounded-2xl border border-white/5 bg-[#040406]/60 p-4 font-mono">
+                        <div className="text-[9px] uppercase font-bold text-zinc-500 tracking-wider">Calibration Index</div>
+                        <div className="text-lg font-bold text-white mt-1">{activeEngine.efficiency}</div>
+                      </div>
+                      <div className="rounded-2xl border border-white/5 bg-[#040406]/60 p-4 font-mono">
+                        <div className="text-[9px] uppercase font-bold text-zinc-500 tracking-wider">Cognitive Load Delta</div>
+                        <div className="text-lg font-bold text-emerald-400 mt-1">{activeEngine.entropy}</div>
+                      </div>
                     </div>
                   </div>
 
@@ -275,6 +305,14 @@ export default function FeaturesPage() {
                       ))}
                     </div>
                   </div>
+
+                  {/* Try It CTA */}
+                  <Link
+                    href={activeEngine.route}
+                    className="inline-flex items-center gap-2 text-xs text-primary dark:text-purple-400 font-bold hover:underline mt-2"
+                  >
+                    <span>Try it →</span>
+                  </Link>
 
                   {/* Telemetry Simulator Box */}
                   <div className="bg-[#040406] border border-white/5 p-4 rounded-2xl space-y-3 font-mono">

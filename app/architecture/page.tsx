@@ -171,7 +171,7 @@ export default function ArchitecturePage() {
             <div className="bg-[#0d0d11]/40 border border-white/5 p-4 rounded-2xl flex items-start gap-3 mt-6">
               <Info className="h-4.5 w-4.5 text-primary shrink-0 mt-0.5" />
               <div className="text-[10px] text-zinc-400 leading-relaxed font-light">
-                For rapid local development diagnostics, the pipeline runs client-side vector synthesis, maintaining zero database latency and high refresh rates.
+                The architecture overview is rendered client-side for visualization. In production, vector synthesis and retrieval run on Supabase pgvector with Gemini text-embedding-004.
               </div>
             </div>
           </div>

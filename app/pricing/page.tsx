@@ -3,17 +3,56 @@
 import React, { useState } from "react";
 import Navbar from "@/components/navbar";
 import Footer from "@/components/footer";
-import { Check, Brain, Shield, Rocket, Sparkles } from "lucide-react";
+import { Check, X as XIcon, Brain, Shield, Rocket, Sparkles, ChevronDown } from "lucide-react";
 import Link from "next/link";
+
+const faqItems = [
+  {
+    q: "Is the free tier really free forever?",
+    a: "Yes! The Cognitive Starter plan is free forever. During our beta period, all Pro features are also unlocked for free so you can experience the full platform."
+  },
+  {
+    q: "Can I cancel my Pro subscription anytime?",
+    a: "Absolutely. You can downgrade or cancel at any time from your Settings page. Your data will be preserved even if you switch back to the free tier."
+  },
+  {
+    q: "What happens to my documents if I downgrade?",
+    a: "Your documents, chat history, and quiz results are never deleted. On the free tier, you'll have read-only access to documents beyond the 3-document limit."
+  },
+  {
+    q: "Do you offer student discounts?",
+    a: "Yes! Students with a valid .edu email automatically receive an additional 15% discount on the yearly Pro plan. Contact us for institutional bulk licensing."
+  },
+  {
+    q: "What payment methods do you accept?",
+    a: "We'll support all major credit cards, UPI, and PayPal when payments launch. During the beta period, all features are free — no payment required."
+  }
+];
+
+const comparisonFeatures = [
+  { name: "Active Documents", free: "3", pro: "Unlimited", institution: "Unlimited" },
+  { name: "RAG Doubt Chat", free: false, pro: true, institution: true },
+  { name: "Quiz Generation", free: "5/month", pro: "Unlimited", institution: "Unlimited" },
+  { name: "Memory Graph", free: "Static list", pro: "Interactive 3D", institution: "Interactive 3D" },
+  { name: "Learning DNA Profile", free: false, pro: true, institution: true },
+  { name: "Reverse Teacher Mode", free: false, pro: true, institution: true },
+  { name: "Spaced Repetition Planner", free: false, pro: true, institution: true },
+  { name: "Classroom Sharing", free: false, pro: false, institution: true },
+  { name: "Teacher Analytics", free: false, pro: false, institution: true },
+  { name: "API Access", free: false, pro: false, institution: true },
+  { name: "Priority Support", free: false, pro: "Email", institution: "Dedicated Manager" },
+];
 
 export default function PricingPage() {
   const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("monthly");
+  const [openFaq, setOpenFaq] = useState<number | null>(null);
 
   const plans = [
     {
       name: "Cognitive Starter",
       icon: Rocket,
-      price: billingCycle === "monthly" ? 0 : 0,
+      price: 0,
+      originalPrice: 0,
       description: "Experience the basic tools of the cognitive learning system.",
       features: [
         "Up to 3 active notes documents",
@@ -22,7 +61,7 @@ export default function PricingPage() {
         "Weekly learning metrics summary",
         "Light & Dark theme switches"
       ],
-      cta: "Start Free Preview",
+      cta: "Start Free",
       ctaLink: "/upload",
       accent: false
     },
@@ -30,6 +69,7 @@ export default function PricingPage() {
       name: "Cognitive Pro",
       icon: Brain,
       price: billingCycle === "monthly" ? 12 : 9,
+      originalPrice: billingCycle === "yearly" ? 12 : null,
       description: "Unlock full adaptive learning power and live neural diagrams.",
       features: [
         "Unlimited document vector uploads",
@@ -40,7 +80,7 @@ export default function PricingPage() {
         "Reverse Teacher Mode (RTM)",
         "Spaced repetition autopilot scheduler"
       ],
-      cta: "Upgrade to Pro",
+      cta: "Start Free Beta",
       ctaLink: "/upload",
       accent: true
     },
@@ -48,6 +88,7 @@ export default function PricingPage() {
       name: "Institutional / Lab",
       icon: Shield,
       price: billingCycle === "monthly" ? 49 : 39,
+      originalPrice: billingCycle === "yearly" ? 49 : null,
       description: "For departments and research groups needing custom parameters.",
       features: [
         "Everything in Pro plan",
@@ -77,14 +118,19 @@ export default function PricingPage() {
         <div className="text-center max-w-3xl mx-auto mb-16 space-y-4">
           <div className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/10 px-3.5 py-1 text-[10px] font-bold text-primary dark:text-purple-400 uppercase tracking-widest biometric-glow mb-2">
             <Sparkles className="h-3.5 w-3.5 animate-pulse" />
-            <span>Evolution Levels</span>
+            <span>Pricing Plans</span>
           </div>
           <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-white cinematic-title">
-            Choose Your Cognitive Evolution Level
+            Choose Your Learning Plan
           </h1>
           <p className="text-xs text-zinc-400 max-w-lg mx-auto font-light leading-relaxed">
-            Select an intelligence calibration tier to bypass standard study curves and map your neural frameworks.
+            Select a plan that fits your study needs. Upgrade anytime as your learning evolves.
           </p>
+
+          {/* Beta Banner */}
+          <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-4 py-1.5 text-[10px] font-bold text-emerald-400 uppercase tracking-widest mt-2">
+            🎉 Beta: All Pro features are free — no payment required
+          </div>
 
           {/* Billing Cycle Toggle */}
           <div className="inline-flex items-center gap-1 rounded-full border border-white/5 bg-[#09090b]/80 p-1.5 mt-8 hover:border-white/10 transition-colors matte-layer">
@@ -96,7 +142,7 @@ export default function PricingPage() {
                   : "text-zinc-500 hover:text-zinc-300"
               }`}
             >
-              Monthly Billing
+              Monthly
             </button>
             <button
               onClick={() => setBillingCycle("yearly")}
@@ -106,7 +152,7 @@ export default function PricingPage() {
                   : "text-zinc-500 hover:text-zinc-300"
               }`}
             >
-              Yearly billing (Save 25%)
+              Yearly (Save 25%)
             </button>
           </div>
         </div>
@@ -130,7 +176,7 @@ export default function PricingPage() {
                 {/* Popular Badge */}
                 {plan.accent && (
                   <span className="absolute top-3.5 right-3.5 text-[8px] uppercase font-bold tracking-widest text-primary dark:text-purple-400 bg-primary/10 border border-primary/20 px-3 py-1 rounded-full biometric-glow animate-pulse">
-                    RECOMMENDED EVOLUTION
+                    MOST POPULAR
                   </span>
                 )}
 
@@ -149,12 +195,17 @@ export default function PricingPage() {
 
                   {/* Price */}
                   <div className="pt-2">
-                    <div className="flex items-baseline text-white">
+                    <div className="flex items-baseline text-white gap-2">
                       <span className="text-4xl font-extrabold tracking-tight font-mono">${plan.price}</span>
-                      <span className="ml-1 text-xs font-light text-zinc-500">/ Cycle</span>
+                      <span className="text-xs font-light text-zinc-500">/ {billingCycle === "yearly" ? "month" : "month"}</span>
+                      {plan.originalPrice && plan.originalPrice > plan.price && (
+                        <span className="text-sm text-zinc-500 line-through font-mono">${plan.originalPrice}</span>
+                      )}
                     </div>
                     {billingCycle === "yearly" && plan.price > 0 && (
-                      <span className="text-[10px] text-emerald-400 font-medium font-mono block mt-1 biometric-glow">Saved 25% (Billed ${plan.price * 12}/yr)</span>
+                      <span className="text-[10px] text-emerald-400 font-medium font-mono block mt-1 biometric-glow">
+                        Save 25% — Billed ${plan.price * 12}/year
+                      </span>
                     )}
                   </div>
 
@@ -186,10 +237,82 @@ export default function PricingPage() {
                   >
                     {plan.cta}
                   </Link>
+                  {plan.accent && (
+                    <p className="text-[9px] text-center text-zinc-500 mt-2 font-light">
+                      🎉 Free during beta — no credit card required
+                    </p>
+                  )}
                 </div>
               </div>
             );
           })}
+        </div>
+
+        {/* Feature Comparison Table */}
+        <div className="max-w-5xl mx-auto mt-24">
+          <div className="text-center mb-10 space-y-2">
+            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-white cinematic-title">
+              Compare Plans
+            </h2>
+            <p className="text-xs text-zinc-400 font-light">See exactly what&apos;s included in each tier.</p>
+          </div>
+
+          <div className="rounded-2xl border border-white/5 bg-[#0d0d11]/60 overflow-hidden">
+            <div className="grid grid-cols-4 gap-0 text-xs font-bold uppercase tracking-wider text-zinc-500 border-b border-white/5">
+              <div className="p-4">Feature</div>
+              <div className="p-4 text-center">Free</div>
+              <div className="p-4 text-center text-primary">Pro</div>
+              <div className="p-4 text-center">Institution</div>
+            </div>
+            {comparisonFeatures.map((feat, i) => (
+              <div key={feat.name} className={`grid grid-cols-4 gap-0 text-xs ${i < comparisonFeatures.length - 1 ? "border-b border-white/5" : ""}`}>
+                <div className="p-4 text-zinc-300 font-medium">{feat.name}</div>
+                {[feat.free, feat.pro, feat.institution].map((val, j) => (
+                  <div key={j} className="p-4 text-center">
+                    {val === true ? (
+                      <Check className="h-4 w-4 text-emerald-400 mx-auto" />
+                    ) : val === false ? (
+                      <XIcon className="h-4 w-4 text-zinc-600 mx-auto" />
+                    ) : (
+                      <span className="text-zinc-400 font-light">{val}</span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* FAQ Section */}
+        <div className="max-w-3xl mx-auto mt-24 mb-8">
+          <div className="text-center mb-10 space-y-2">
+            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-white cinematic-title">
+              Frequently Asked Questions
+            </h2>
+            <p className="text-xs text-zinc-400 font-light">Everything you need to know about our plans.</p>
+          </div>
+
+          <div className="space-y-3">
+            {faqItems.map((item, idx) => (
+              <div
+                key={idx}
+                className="rounded-2xl border border-white/5 bg-[#0d0d11]/50 overflow-hidden transition-all duration-300 hover:border-white/10"
+              >
+                <button
+                  onClick={() => setOpenFaq(openFaq === idx ? null : idx)}
+                  className="w-full flex items-center justify-between p-5 text-left"
+                >
+                  <span className="text-sm font-semibold text-white">{item.q}</span>
+                  <ChevronDown className={`h-4 w-4 text-zinc-500 transition-transform duration-300 shrink-0 ml-4 ${openFaq === idx ? "rotate-180" : ""}`} />
+                </button>
+                {openFaq === idx && (
+                  <div className="px-5 pb-5 pt-0">
+                    <p className="text-xs text-zinc-400 leading-relaxed font-light">{item.a}</p>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
         </div>
 
       </main>

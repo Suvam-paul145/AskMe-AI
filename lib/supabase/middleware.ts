@@ -54,15 +54,18 @@ export async function updateSession(request: NextRequest) {
 
   // Redirect to login if not authenticated and on a protected route
   if (!user && isProtectedRoute) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/login";
-    return NextResponse.redirect(url);
+    const loginUrl = new URL("/login", request.url);
+    loginUrl.searchParams.set("message", "Please sign in to continue");
+    loginUrl.searchParams.set("redirectTo", request.nextUrl.pathname);
+    return NextResponse.redirect(loginUrl);
   }
 
-  // Redirect to dashboard if authenticated and on login page
+  // Redirect to dashboard (or original destination) if authenticated and on login page
   if (user && request.nextUrl.pathname === "/login") {
+    const redirectTo = request.nextUrl.searchParams.get("redirectTo") || "/dashboard";
     const url = request.nextUrl.clone();
-    url.pathname = "/dashboard";
+    url.pathname = redirectTo;
+    url.search = ""; // Clear query params
     return NextResponse.redirect(url);
   }
 

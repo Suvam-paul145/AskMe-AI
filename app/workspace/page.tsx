@@ -21,6 +21,10 @@ import {
   Sparkles,
   ChevronRight,
   Trash2,
+  Mic,
+  MicOff,
+  Volume2,
+  VolumeX,
 } from "lucide-react";
 import Link from "next/link";
 import { MarkdownRenderer } from "@/components/markdown-renderer";
@@ -58,6 +62,100 @@ export default function WorkspacePage() {
   const [rtmAnswer, setRtmAnswer] = useState("");
   const [rtmEvaluation, setRtmEvaluation] = useState("");
   const [rtmLoading, setRtmLoading] = useState(false);
+
+  // Voice Chat mode states
+  const [isListening, setIsListening] = useState(false);
+  const [currentlySpeakingId, setCurrentlySpeakingId] = useState<string | null>(null);
+  const recognitionRef = useRef<any>(null);
+
+  // Voice Input (STT) SpeechRecognition Setup
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      if (SpeechRecognition) {
+        const rec = new SpeechRecognition();
+        rec.continuous = false;
+        rec.interimResults = false;
+        rec.lang = "en-US";
+        
+        rec.onstart = () => {
+          setIsListening(true);
+        };
+        
+        rec.onresult = (e: any) => {
+          const transcript = e.results[0][0].transcript;
+          setChatInput((prev) => (prev ? `${prev} ${transcript}` : transcript));
+        };
+        
+        rec.onerror = (e: any) => {
+          console.error("Speech recognition error:", e);
+          setIsListening(false);
+        };
+        
+        rec.onend = () => {
+          setIsListening(false);
+        };
+        
+        recognitionRef.current = rec;
+      }
+    }
+  }, []);
+
+  // Voice Output (TTS) Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (typeof window !== "undefined" && window.speechSynthesis) {
+        window.speechSynthesis.cancel();
+      }
+    };
+  }, []);
+
+  const toggleListening = () => {
+    if (!recognitionRef.current) {
+      alert("Speech recognition is not supported in this browser. Try using Google Chrome or Microsoft Edge!");
+      return;
+    }
+
+    if (isListening) {
+      recognitionRef.current.stop();
+    } else {
+      recognitionRef.current.start();
+    }
+  };
+
+  const speakText = (text: string, messageId: string) => {
+    if (typeof window === "undefined" || !window.speechSynthesis) {
+      alert("Text-to-speech is not supported in this browser.");
+      return;
+    }
+
+    if (currentlySpeakingId === messageId) {
+      window.speechSynthesis.cancel();
+      setCurrentlySpeakingId(null);
+      return;
+    }
+
+    window.speechSynthesis.cancel();
+
+    // Strip markdown formatting, code snippets, sources, images for a very clean, simple voice reading
+    const cleanText = text
+      .replace(/```[\s\S]*?```/g, "[Code details omitted]")
+      .replace(/`([^`]+)`/g, "$1")
+      .replace(/[*#_~-]/g, "")
+      .replace(/\[Source \d+\]/g, "")
+      .replace(/!\[.*?\]\(.*?\)/g, "[Visual image generated]");
+
+    const utterance = new SpeechSynthesisUtterance(cleanText);
+    utterance.onend = () => {
+      setCurrentlySpeakingId(null);
+    };
+    utterance.onerror = () => {
+      setCurrentlySpeakingId(null);
+    };
+
+    setCurrentlySpeakingId(messageId);
+    window.speechSynthesis.speak(utterance);
+  };
 
   // Initialize attachedDocIds with the selectedDocId on load
   useEffect(() => {
@@ -437,6 +535,20 @@ export default function WorkspacePage() {
                           {msg.sources && msg.sources.length > 0 && (
                             <span className="text-[8px] text-primary/60 font-bold uppercase">📎 {msg.sources.length} sources</span>
                           )}
+                          {msg.sender === "ai" && (
+                            <button
+                              type="button"
+                              onClick={() => speakText(msg.text, msg.id)}
+                              className="p-1 rounded bg-white/5 border border-white/10 hover:bg-white/10 text-zinc-400 hover:text-white transition-all shrink-0 ml-1.5"
+                              title={currentlySpeakingId === msg.id ? "Stop reading" : "Read aloud"}
+                            >
+                              {currentlySpeakingId === msg.id ? (
+                                <VolumeX className="h-3 w-3 text-primary animate-pulse" />
+                              ) : (
+                                <Volume2 className="h-3 w-3" />
+                              )}
+                            </button>
+                          )}
                         </div>
                       </div>
                     ))}
@@ -456,19 +568,35 @@ export default function WorkspacePage() {
                   </div>
 
                   {/* Message Form */}
-                  <form onSubmit={handleSendMessage} className="flex gap-2 pt-4 border-t border-white/5 mt-auto">
+                  <form onSubmit={handleSendMessage} className="flex gap-2 pt-4 border-t border-white/5 mt-auto items-center">
+                    <button
+                      type="button"
+                      onClick={toggleListening}
+                      title={isListening ? "Listening... click to stop" : "Ask by Voice"}
+                      className={`p-3 rounded-xl border transition-all duration-300 flex items-center justify-center shrink-0 ${
+                        isListening
+                          ? "bg-rose-500/10 border-rose-500/30 text-rose-400 animate-pulse shadow-[0_0_15px_rgba(239,68,68,0.2)]"
+                          : "bg-[#09090b]/60 border-white/5 text-zinc-400 hover:text-white hover:border-white/20 hover:bg-white/5"
+                      }`}
+                    >
+                      {isListening ? (
+                        <MicOff className="h-4.5 w-4.5" />
+                      ) : (
+                        <Mic className="h-4.5 w-4.5" />
+                      )}
+                    </button>
                     <input
                       type="text"
                       required
                       value={chatInput}
                       onChange={(e) => setChatInput(e.target.value)}
-                      placeholder="Ask any question about your study material..."
+                      placeholder={isListening ? "Listening... speak now..." : "Ask any question about your study material..."}
                       className="w-full rounded-xl border border-white/5 bg-[#09090b]/60 px-4 py-3.5 text-xs text-zinc-200 focus:border-primary focus:outline-none transition-all placeholder-zinc-600 font-light"
                     />
                     <button
                       type="submit"
                       disabled={isAiReplying}
-                      className="rounded-xl bg-primary px-6 text-white hover:bg-primary/95 transition-all shadow-md flex items-center justify-center shrink-0"
+                      className="rounded-xl bg-primary px-6 py-3.5 text-white hover:bg-primary/95 transition-all shadow-md flex items-center justify-center shrink-0"
                     >
                       <Send className="h-4.5 w-4.5" />
                     </button>

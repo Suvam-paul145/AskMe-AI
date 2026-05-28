@@ -91,6 +91,28 @@ export async function generateChatResponse(
 }
 
 /**
+ * Generate a RAG-powered contextual chat response stream
+ */
+export async function generateChatResponseStream(
+  question: string,
+  contextChunks: { content: string; similarity: number }[]
+) {
+  const context = contextChunks
+    .map(
+      (chunk, i) =>
+        `[Source ${i + 1}] (relevance: ${(chunk.similarity * 100).toFixed(0)}%)\n${chunk.content}`
+    )
+    .join("\n\n---\n\n");
+
+  const prompt = RAG_ANSWER_PROMPT.replace("{context}", context).replace(
+    "{question}",
+    question
+  );
+
+  return model.generateContentStream(prompt);
+}
+
+/**
  * Generate quiz questions from document text
  */
 export async function generateQuiz(

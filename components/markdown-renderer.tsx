@@ -16,6 +16,16 @@ interface FlowLink {
   label?: string;
 }
 
+function extractNodeIdAndLabel(part: string): { id: string; label?: string } {
+  const match = part.trim().match(/^([a-zA-Z0-9_-]+)(?:\s*(?:\["(.*?)"\]|\[(.*?)\]|\("(.*?)"\)|\((.*?)\)))?/);
+  if (match) {
+    const id = match[1];
+    const label = match[2] || match[3] || match[4] || match[5];
+    return { id, label };
+  }
+  return { id: part.trim() };
+}
+
 function parseMermaid(code: string): { nodes: FlowNode[]; links: FlowLink[]; direction: "TD" | "LR" } {
   const nodes: FlowNode[] = [];
   const links: FlowLink[] = [];
@@ -48,54 +58,47 @@ function parseMermaid(code: string): { nodes: FlowNode[]; links: FlowLink[]; dir
       return;
     }
 
-    // Node definition with label: A[Label], A(Label), A((Label))
-    const nodeMatch = trimmed.match(/^([a-zA-Z0-9_-]+)\s*(?:\[(.*?)\]|\((.*?)\))/);
+    const isLink = trimmed.includes("-->") || trimmed.includes("---");
+    const extracted = extractNodeIdAndLabel(trimmed);
 
-    if (nodeMatch) {
-      const id = nodeMatch[1];
-      const label = nodeMatch[2] || nodeMatch[3] || id;
+    if (!isLink && extracted.label) {
       const shape = trimmed.includes("[") ? "rect" : "circle";
-      const node = getOrCreateNode(id, label);
+      const node = getOrCreateNode(extracted.id, extracted.label);
       node.shape = shape as "rect" | "circle";
-    } else if (trimmed.includes("-->") || trimmed.includes("---")) {
-      // Complex link parsing: support labels on edges
-      let sourceId = "";
-      let targetId = "";
+    } else if (isLink) {
+      let sourceIdRaw = "";
+      let targetIdRaw = "";
       let edgeLabel = "";
 
       if (trimmed.includes("-->|")) {
         const parts = trimmed.split("-->|");
-        sourceId = parts[0].trim();
+        sourceIdRaw = parts[0].trim();
         const subparts = parts[1].split("|");
         edgeLabel = subparts[0].trim();
-        targetId = subparts[1].trim();
+        targetIdRaw = subparts[1].trim();
       } else {
-        const arrowMatch = trimmed.match(/([a-zA-Z0-9_-]+)\s*-->\s*([a-zA-Z0-9_-]+)/);
+        const arrowMatch = trimmed.match(/^(.+?)\s*-->\s*(.+)$/);
         if (arrowMatch) {
-          sourceId = arrowMatch[1];
-          targetId = arrowMatch[2];
+          sourceIdRaw = arrowMatch[1].trim();
+          targetIdRaw = arrowMatch[2].trim();
         }
       }
 
-      if (sourceId && targetId) {
-        // Handle inline node definition in link lines (e.g. A[Label] --> B[Label])
-        const srcNodeMatch = sourceId.match(/^([a-zA-Z0-9_-]+)(?:\[(.*?)\]|\((.*?)\))/);
-        if (srcNodeMatch) {
-          sourceId = srcNodeMatch[1];
-          getOrCreateNode(sourceId, srcNodeMatch[2] || srcNodeMatch[3]);
-        } else {
-          getOrCreateNode(sourceId);
-        }
+      if (sourceIdRaw && targetIdRaw) {
+        const src = extractNodeIdAndLabel(sourceIdRaw);
+        const tgt = extractNodeIdAndLabel(targetIdRaw);
 
-        const tgtNodeMatch = targetId.match(/^([a-zA-Z0-9_-]+)(?:\[(.*?)\]|\((.*?)\))/);
-        if (tgtNodeMatch) {
-          targetId = tgtNodeMatch[1];
-          getOrCreateNode(targetId, tgtNodeMatch[2] || tgtNodeMatch[3]);
-        } else {
-          getOrCreateNode(targetId);
-        }
+        // Determine shape based on raw string
+        const srcShape = sourceIdRaw.includes("[") ? "rect" : (sourceIdRaw.includes("(") ? "circle" : undefined);
+        const tgtShape = targetIdRaw.includes("[") ? "rect" : (targetIdRaw.includes("(") ? "circle" : undefined);
 
-        links.push({ source: sourceId, target: targetId, label: edgeLabel });
+        const srcNode = getOrCreateNode(src.id, src.label);
+        if (srcShape) srcNode.shape = srcShape as "rect" | "circle";
+        
+        const tgtNode = getOrCreateNode(tgt.id, tgt.label);
+        if (tgtShape) tgtNode.shape = tgtShape as "rect" | "circle";
+
+        links.push({ source: src.id, target: tgt.id, label: edgeLabel });
       }
     } else {
       // Single node definition line (no labels/shapes)

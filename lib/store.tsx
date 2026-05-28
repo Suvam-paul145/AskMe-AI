@@ -345,16 +345,26 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, []);
 
   const sendMessage = useCallback(async (docId: string, message: string, mode?: string): Promise<string> => {
-    // Optimistically add user message
+    // Optimistically add user message and a placeholder AI message
     const userMsg: ChatMessage = {
-      id: `temp-${Date.now()}`,
+      id: `user-${Date.now()}`,
       sender: "user",
       text: message,
       timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
     };
+
+    const aiMsgId = `ai-${Date.now()}`;
+    const initialAiMsg: ChatMessage = {
+      id: aiMsgId,
+      sender: "ai",
+      text: "",
+      timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      sources: [],
+    };
+
     setChatThreads((prev) => ({
       ...prev,
-      [docId]: [...(prev[docId] || []), userMsg],
+      [docId]: [...(prev[docId] || []), userMsg, initialAiMsg],
     }));
 
     try {
@@ -364,48 +374,78 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         body: JSON.stringify({ message, documentId: docId, mode }),
       });
 
-      const data = await res.json().catch(() => ({}));
-
-      if (res.ok) {
-        const aiMsg: ChatMessage = {
-          id: `ai-${Date.now()}`,
-          sender: "ai",
-          text: data.response,
-          timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-          sources: data.sources,
-        };
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        const errorText = errorData.error || "Sorry, I couldn't process your request. Please try again.";
         setChatThreads((prev) => ({
           ...prev,
-          [docId]: [...(prev[docId] || []), aiMsg],
+          [docId]: (prev[docId] || []).map((msg) =>
+            msg.id === aiMsgId ? { ...msg, text: errorText } : msg
+          ),
         }));
-        setXp((prev) => prev + 5);
-        setDailyGoalProgress((prev) => Math.min(100, prev + 10));
-        return data.response;
+        return errorText;
       }
-      const errorText = data.error || "Sorry, I couldn't process your request. Please try again.";
-      const aiMsg: ChatMessage = {
-        id: `ai-error-${Date.now()}`,
-        sender: "ai",
-        text: errorText,
-        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-      };
-      setChatThreads((prev) => ({
-        ...prev,
-        [docId]: [...(prev[docId] || []), aiMsg],
-      }));
-      return errorText;
+
+      if (!res.body) {
+        throw new Error("No response body");
+      }
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let accumulatedText = "";
+      let accumulatedSources: string[] = [];
+      let buffer = "";
+
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || "";
+
+        for (const line of lines) {
+          if (!line.trim()) continue;
+          try {
+            const parsed = JSON.parse(line);
+            if (parsed.sources) {
+              accumulatedSources = parsed.sources;
+            }
+            if (parsed.text) {
+              accumulatedText += parsed.text;
+            }
+            if (parsed.rtm) {
+              accumulatedText = JSON.stringify(parsed.rtm);
+            }
+
+            // Progressively update state!
+            setChatThreads((prev) => ({
+              ...prev,
+              [docId]: (prev[docId] || []).map((msg) =>
+                msg.id === aiMsgId
+                  ? { ...msg, text: accumulatedText, sources: accumulatedSources.length > 0 ? accumulatedSources : undefined }
+                  : msg
+              ),
+            }));
+          } catch (e) {
+            console.error("Stream parse error:", e);
+          }
+        }
+      }
+
+      // Grant XP and daily goal progress locally once successfully complete
+      setXp((prev) => prev + 5);
+      setDailyGoalProgress((prev) => Math.min(100, prev + 10));
+
+      return accumulatedText;
     } catch (err) {
       console.error("Chat error:", err);
       const errorText = "Network or server error. Please try again.";
-      const aiMsg: ChatMessage = {
-        id: `ai-error-${Date.now()}`,
-        sender: "ai",
-        text: errorText,
-        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-      };
       setChatThreads((prev) => ({
         ...prev,
-        [docId]: [...(prev[docId] || []), aiMsg],
+        [docId]: (prev[docId] || []).map((msg) =>
+          msg.id === aiMsgId ? { ...msg, text: errorText } : msg
+        ),
       }));
       return errorText;
     }

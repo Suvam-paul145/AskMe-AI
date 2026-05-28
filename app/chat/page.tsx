@@ -86,7 +86,7 @@ export default function ChatPage() {
           )}
 
           {/* Chat message list area */}
-          <div className="flex-1 overflow-y-auto my-4 space-y-4 pr-2 max-h-[380px]">
+          <div className="flex-1 overflow-y-auto my-4 space-y-4 pr-2">
             {activeThread.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center text-center p-8 space-y-4 py-20">
                 <Brain className="h-12 w-12 text-primary/40 animate-drift" />

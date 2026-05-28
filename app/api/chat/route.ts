@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/server";
-import { generateChatResponse, evaluateRTM } from "@/lib/ai/gemini";
+import { generateChatResponseStream, evaluateRTM } from "@/lib/ai/gemini";
 import { retrieveRelevantChunks } from "@/lib/ai/rag";
 
 function getErrorMessage(error: unknown, fallback: string) {
@@ -61,61 +61,95 @@ export async function POST(request: NextRequest) {
       5
     );
 
-    let aiResponse: string;
-    let sources: string[] = [];
+    const sources = relevantChunks
+      .filter((c) => c.similarity > 0.3)
+      .map((c) => c.content.slice(0, 100) + "...");
 
-    if (mode === "rtm") {
-      // Reverse Teacher Mode — evaluate the student's explanation
-      const evaluation = await evaluateRTM(
-        message,
-        relevantChunks.map((c) => ({ content: c.content }))
-      );
-      aiResponse = JSON.stringify(evaluation);
-    } else {
-      // Regular doubt solver — RAG-powered response
-      if (relevantChunks.length === 0) {
-        aiResponse = "I could not find enough matching material in this document to answer precisely. Try asking a narrower question or upload more related notes.";
-      } else {
-        aiResponse = await generateChatResponse(
-          message,
-          relevantChunks.map((c) => ({
-            content: c.content,
-            similarity: c.similarity,
-          }))
-        );
+    const encoder = new TextEncoder();
+    const stream = new ReadableStream({
+      async start(controller) {
+        try {
+          if (mode === "rtm") {
+            // Reverse Teacher Mode — evaluate the student's explanation
+            const evaluation = await evaluateRTM(
+              message,
+              relevantChunks.map((c) => ({ content: c.content }))
+            );
+            const evaluationStr = JSON.stringify(evaluation);
+
+            // Send RTM result in one chunk
+            controller.enqueue(encoder.encode(JSON.stringify({ rtm: evaluation }) + "\n"));
+
+            // Store AI response in DB
+            await admin.from("chat_messages").insert({
+              document_id: documentId,
+              user_id: user.id,
+              sender: "ai",
+              content: evaluationStr,
+              sources: null,
+            });
+          } else {
+            // Regular doubt solver — stream sources first
+            controller.enqueue(encoder.encode(JSON.stringify({ sources }) + "\n"));
+
+            let fullText = "";
+            if (relevantChunks.length === 0) {
+              const fallbackMsg = "I could not find enough matching material in this document to answer precisely. Try asking a narrower question or upload more related notes.";
+              fullText = fallbackMsg;
+              controller.enqueue(encoder.encode(JSON.stringify({ text: fallbackMsg }) + "\n"));
+            } else {
+              const resultStream = await generateChatResponseStream(
+                message,
+                relevantChunks.map((c) => ({
+                  content: c.content,
+                  similarity: c.similarity,
+                }))
+              );
+              for await (const chunk of resultStream.stream) {
+                const chunkText = chunk.text();
+                fullText += chunkText;
+                controller.enqueue(encoder.encode(JSON.stringify({ text: chunkText }) + "\n"));
+              }
+            }
+
+            // Store AI response in DB after stream finishes
+            await admin.from("chat_messages").insert({
+              document_id: documentId,
+              user_id: user.id,
+              sender: "ai",
+              content: fullText,
+              sources: sources.length > 0 ? sources : null,
+            });
+          }
+
+          // Grant XP for asking questions
+          const { data: profile } = await admin
+            .from("profiles")
+            .select("xp")
+            .eq("id", user.id)
+            .single();
+
+          if (profile) {
+            await admin
+              .from("profiles")
+              .update({ xp: (profile.xp || 0) + 5 })
+              .eq("id", user.id);
+          }
+
+          controller.close();
+        } catch (err) {
+          console.error("Stream generation error:", err);
+          controller.error(err);
+        }
       }
-      sources = relevantChunks
-        .filter((c) => c.similarity > 0.3)
-        .map((c) => c.content.slice(0, 100) + "...");
-    }
-
-    // Store AI response
-    await admin.from("chat_messages").insert({
-      document_id: documentId,
-      user_id: user.id,
-      sender: "ai",
-      content: aiResponse,
-      sources: sources.length > 0 ? sources : null,
     });
 
-    // Grant XP for asking questions
-    const { data: profile } = await admin
-      .from("profiles")
-      .select("xp")
-      .eq("id", user.id)
-      .single();
-
-    if (profile) {
-      await admin
-        .from("profiles")
-        .update({ xp: (profile.xp || 0) + 5 })
-        .eq("id", user.id);
-    }
-
-    return NextResponse.json({
-      response: aiResponse,
-      sources,
-      mode: mode || "chat",
+    return new Response(stream, {
+      headers: {
+        "Content-Type": "text/event-stream; charset=utf-8",
+        "Cache-Control": "no-cache, no-transform",
+        "Connection": "keep-alive",
+      }
     });
   } catch (error: unknown) {
     console.error("Chat error:", error);

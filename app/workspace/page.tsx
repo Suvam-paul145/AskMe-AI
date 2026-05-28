@@ -316,13 +316,13 @@ export default function WorkspacePage() {
             </div>
 
             {/* Dynamic Tab Body Panel */}
-            <div className="flex-1 overflow-y-auto p-6 flex flex-col">
+            <div className={`flex-1 p-6 flex flex-col ${activeTab === "chat" ? "overflow-hidden" : "overflow-y-auto"}`}>
               
               {/* Tab 1: AI Chat Doubt Solver */}
               {activeTab === "chat" && (
-                <div className="flex flex-col h-full justify-between gap-6 flex-1">
+                <div className="flex flex-col h-full justify-between gap-6 flex-1 overflow-hidden">
                   {/* Messages list */}
-                  <div className="flex-1 space-y-4 max-h-[440px] overflow-y-auto pr-2">
+                  <div className="flex-1 space-y-4 overflow-y-auto pr-2">
                     {activeThread.map((msg) => (
                       <div 
                         key={msg.id} 

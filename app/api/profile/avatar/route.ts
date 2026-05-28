@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createAdminClient } from "@/lib/supabase/server";
 
 export const maxDuration = 60; // Allow up to 60s for processing
 
@@ -50,7 +50,8 @@ export async function POST(request: NextRequest) {
     const cleanFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
     const filePath = `${user.id}/${Date.now()}-${cleanFileName}`;
     
-    const { error: uploadError } = await supabase.storage
+    const admin = createAdminClient();
+    const { error: uploadError } = await admin.storage
       .from("avatars")
       .upload(filePath, fileBuffer, {
         contentType: file.type,

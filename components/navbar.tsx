@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useStore } from "@/lib/store";
-import { Sun, Moon, Menu, X, Flame, Zap, Brain, Settings } from "lucide-react";
+import { Sun, Moon, Menu, X, Flame, Zap, Settings } from "lucide-react";
 import AvatarDisplay from "@/components/avatar-display";
 
 export default function Navbar() {
@@ -51,8 +51,9 @@ export default function Navbar() {
           {/* Logo */}
           <div className="flex items-center gap-2">
             <Link href="/" className="flex items-center gap-2 group">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-primary to-purple-400 text-white shadow-[0_0_15px_rgba(139,92,246,0.3)] transition-transform group-hover:scale-105">
-                <Brain className="h-5 w-5" />
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#09090b]/40 border border-white/5 shadow-[0_0_15px_rgba(139,92,246,0.15)] transition-transform group-hover:scale-105 overflow-hidden">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/favicon.png" alt="AskMe AI Logo" className="h-6 w-6 object-contain" />
               </div>
               <span className="bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-xl font-bold tracking-tight text-transparent dark:from-white dark:to-zinc-300">
                 AskMe <span className="bg-gradient-to-r from-primary to-purple-400 bg-clip-text text-transparent">AI</span>

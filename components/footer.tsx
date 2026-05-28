@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { Brain, Send } from "lucide-react";
+import { Send } from "lucide-react";
 
 export default function Footer() {
   const [email, setEmail] = useState("");
@@ -26,8 +26,9 @@ export default function Footer() {
           {/* Brand Info */}
           <div className="space-y-4 md:col-span-1">
             <Link href="/" className="flex items-center gap-2 group">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-tr from-primary to-purple-400 text-white shadow-[0_0_15px_rgba(139,92,246,0.3)]">
-                <Brain className="h-4.5 w-4.5" />
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#09090b]/40 border border-white/5 shadow-[0_0_15px_rgba(139,92,246,0.15)] overflow-hidden">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/favicon.png" alt="AskMe AI Logo" className="h-5.5 w-5.5 object-contain" />
               </div>
               <span className="text-lg font-bold tracking-tight text-white">
                 AskMe <span className="text-primary dark:text-purple-400">AI</span>

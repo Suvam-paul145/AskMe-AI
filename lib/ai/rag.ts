@@ -59,38 +59,43 @@ export async function storeEmbeddings(
   const supabase = createAdminClient();
 
   // Process chunks in batches to avoid rate limits
-  // batchSize of 30 allows embedding 30 chunks in a single API call
-  const batchSize = 30;
+  // batchSize of 40 is a great balance to fit within single requests
+  const batchSize = 40;
+  const promises: Promise<void>[] = [];
+
   for (let i = 0; i < chunks.length; i += batchSize) {
     const batch = chunks.slice(i, i + batchSize);
+    const batchIndex = i;
 
-    // Call Gemini batch embedding API
-    const embeddings = await generateEmbeddingsBatch(batch);
+    promises.push(
+      (async () => {
+        // Call batch embedding API
+        const embeddings = await generateEmbeddingsBatch(batch);
 
-    const rows = batch.map((chunk, idx) => ({
-      document_id: documentId,
-      user_id: userId,
-      chunk_index: i + idx,
-      content: chunk,
-      embedding: JSON.stringify(embeddings[idx]),
-      metadata: {
-        chunk_index: i + idx,
-        char_count: chunk.length,
-      },
-    }));
+        const rows = batch.map((chunk, idx) => ({
+          document_id: documentId,
+          user_id: userId,
+          chunk_index: batchIndex + idx,
+          content: chunk,
+          embedding: JSON.stringify(embeddings[idx]),
+          metadata: {
+            chunk_index: batchIndex + idx,
+            char_count: chunk.length,
+          },
+        }));
 
-    const { error } = await supabase.from("document_chunks").insert(rows);
+        const { error } = await supabase.from("document_chunks").insert(rows);
 
-    if (error) {
-      console.error("Error storing embeddings batch:", error);
-      throw new Error(`Failed to store embeddings: ${error.message}`);
-    }
-
-    // Small delay between batches to respect rate limits
-    if (i + batchSize < chunks.length) {
-      await new Promise((resolve) => setTimeout(resolve, 500));
-    }
+        if (error) {
+          console.error("Error storing embeddings batch:", error);
+          throw new Error(`Failed to store embeddings: ${error.message}`);
+        }
+      })()
+    );
   }
+
+  // Await all parallel embedding batch uploads
+  await Promise.all(promises);
 }
 
 /**

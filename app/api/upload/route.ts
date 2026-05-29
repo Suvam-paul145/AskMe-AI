@@ -106,10 +106,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Step 3: Generate AI summary
-    const summary = await generateSummary(extractedText);
-
-    // Step 4: Create document record
+    // Step 3: Create initial placeholder document record to get document.id
     const { data: document, error: docError } = await admin
       .from("documents")
       .insert({
@@ -118,7 +115,13 @@ export async function POST(request: NextRequest) {
         file_url: fileUrl,
         file_size: fileSize,
         extracted_text: extractedText,
-        summary,
+        summary: {
+          overview: "Extracting concepts from your study notes...",
+          keyPoints: [],
+          formulas: [],
+          examTips: [],
+          confusedTopics: [],
+        },
       })
       .select()
       .single();
@@ -131,13 +134,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Step 5: Chunk text and generate embeddings
+    // Step 4: Chunk text
     const chunks = chunkText(extractedText);
-    await storeEmbeddings(chunks, document.id, user.id);
 
-    // Step 6: Auto-generate quiz
-    const quizQuestions = await generateQuiz(extractedText, 5);
-    const { data: quiz } = await admin
+    // Step 5: Execute AI summary, embedding storage, and quiz generation in PARALLEL
+    const [summary, embeddingsResult, quizQuestions] = await Promise.all([
+      generateSummary(extractedText),
+      storeEmbeddings(chunks, document.id, user.id),
+      generateQuiz(extractedText, 5)
+    ]);
+
+    // Step 6: Save completed summary and quiz questions to Supabase in parallel
+    const updateDocPromise = admin
+      .from("documents")
+      .update({ summary })
+      .eq("id", document.id);
+
+    const insertQuizPromise = admin
       .from("quizzes")
       .insert({
         document_id: document.id,
@@ -147,6 +160,13 @@ export async function POST(request: NextRequest) {
       })
       .select()
       .single();
+
+    const [updateDocResult, quizResult] = await Promise.all([
+      updateDocPromise,
+      insertQuizPromise
+    ]);
+
+    const quiz = quizResult.data;
 
     // Step 7: Create memory graph node
     const cleanTitle = file.name.replace(/\.[^/.]+$/, "");

@@ -1,4 +1,5 @@
 import React from "react";
+import { ZoomIn, ZoomOut, RotateCcw } from "lucide-react";
 
 // --- FLOWCHART TYPES & PARSER ---
 interface FlowNode {
@@ -158,28 +159,48 @@ function parseMermaid(code: string): { nodes: FlowNode[]; links: FlowLink[]; dir
   const height = 280;
 
   if (direction === "TD") {
+    const minX = 65;
+    const maxX = 435;
+    const availableWidth = maxX - minX;
+    
+    const minY = 35;
+    const maxY = 245;
+    const availableHeight = maxY - minY;
+
     const levels = Object.keys(levelGroups).map(Number).sort((a, b) => a - b);
-    const ySpacing = height / (levels.length + 1 || 2);
+    const ySpacing = levels.length > 1 ? availableHeight / (levels.length - 1) : 0;
     
     levels.forEach((lvl, lvlIdx) => {
       const group = levelGroups[lvl];
-      const xSpacing = width / (group.length + 1 || 2);
+      const xSpacing = group.length > 1 ? availableWidth / (group.length - 1) : 0;
+      const yVal = levels.length > 1 ? minY + ySpacing * lvlIdx : 140;
+
       group.forEach((node, nodeIdx) => {
-        node.x = xSpacing * (nodeIdx + 1);
-        node.y = ySpacing * (lvlIdx + 1);
+        node.x = group.length > 1 ? minX + xSpacing * nodeIdx : 250;
+        node.y = yVal;
       });
     });
   } else {
     // Left-Right layout
+    const minX = 65;
+    const maxX = 435;
+    const availableWidth = maxX - minX;
+    
+    const minY = 35;
+    const maxY = 245;
+    const availableHeight = maxY - minY;
+
     const levels = Object.keys(levelGroups).map(Number).sort((a, b) => a - b);
-    const xSpacing = width / (levels.length + 1 || 2);
+    const xSpacing = levels.length > 1 ? availableWidth / (levels.length - 1) : 0;
     
     levels.forEach((lvl, lvlIdx) => {
       const group = levelGroups[lvl];
-      const ySpacing = height / (group.length + 1 || 2);
+      const ySpacing = group.length > 1 ? availableHeight / (group.length - 1) : 0;
+      const xVal = levels.length > 1 ? minX + xSpacing * lvlIdx : 250;
+
       group.forEach((node, nodeIdx) => {
-        node.x = xSpacing * (lvlIdx + 1);
-        node.y = ySpacing * (nodeIdx + 1);
+        node.x = xVal;
+        node.y = group.length > 1 ? minY + ySpacing * nodeIdx : 140;
       });
     });
   }
@@ -193,7 +214,15 @@ export function FlowchartRenderer({ code }: { code: string }) {
   const [nodes, setNodes] = React.useState<FlowNode[]>([]);
   const [links, setLinks] = React.useState<FlowLink[]>([]);
   const [draggingId, setDraggingId] = React.useState<string | null>(null);
+  
+  // Viewport states for zoom & pan
+  const [zoom, setZoom] = React.useState(1);
+  const [pan, setPan] = React.useState({ x: 0, y: 0 });
+  const [isPanning, setIsPanning] = React.useState(false);
+  const [panStart, setPanStart] = React.useState({ x: 0, y: 0 });
+
   const svgRef = React.useRef<SVGSVGElement | null>(null);
+  const containerRef = React.useRef<HTMLDivElement | null>(null);
 
   React.useEffect(() => {
     const timer = setTimeout(() => {
@@ -203,35 +232,86 @@ export function FlowchartRenderer({ code }: { code: string }) {
     return () => clearTimeout(timer);
   }, [parsed]);
 
+  // Hook trackpad/mouse scroll wheel for zooming
+  React.useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const handleWheelNative = (e: WheelEvent) => {
+      e.preventDefault();
+      const zoomFactor = 1.05;
+      let newZoom = zoom;
+      if (e.deltaY < 0) {
+        newZoom = Math.min(zoom * zoomFactor, 5); // Max 5x zoom
+      } else {
+        newZoom = Math.max(zoom / zoomFactor, 0.4); // Min 0.4x zoom
+      }
+      setZoom(newZoom);
+    };
+
+    container.addEventListener("wheel", handleWheelNative, { passive: false });
+    return () => {
+      container.removeEventListener("wheel", handleWheelNative);
+    };
+  }, [zoom]);
+
   if (nodes.length === 0) {
     return <pre className="bg-zinc-950 p-3 rounded-lg text-xs font-mono border border-white/5 overflow-x-auto">{code}</pre>;
   }
 
   const handleMouseDown = (e: React.MouseEvent, nodeId: string) => {
+    e.stopPropagation();
     e.preventDefault();
     setDraggingId(nodeId);
   };
 
+  const handleSvgMouseDown = (e: React.MouseEvent<SVGSVGElement>) => {
+    const target = e.target as SVGElement;
+    if (target.closest(".node-group")) {
+      return;
+    }
+    e.preventDefault();
+    setIsPanning(true);
+    setPanStart({ x: e.clientX - pan.x, y: e.clientY - pan.y });
+  };
+
   const handleMouseMove = (e: React.MouseEvent<SVGSVGElement>) => {
-    if (!draggingId || !svgRef.current) return;
-    const rect = svgRef.current.getBoundingClientRect();
-    
-    // Scale client coords to match SVG viewBox (500x280)
-    const scaleX = 500 / rect.width;
-    const scaleY = 280 / rect.height;
-    
-    const x = (e.clientX - rect.left) * scaleX;
-    const y = (e.clientY - rect.top) * scaleY;
+    if (isPanning) {
+      setPan({
+        x: e.clientX - panStart.x,
+        y: e.clientY - panStart.y
+      });
+    } else if (draggingId && svgRef.current) {
+      const rect = svgRef.current.getBoundingClientRect();
+      
+      const svgUnitsPerPixelX = 500 / rect.width;
+      const svgUnitsPerPixelY = 280 / rect.height;
+      
+      // Delta-based movement adjusted for current zoom
+      const dx = e.movementX * svgUnitsPerPixelX / zoom;
+      const dy = e.movementY * svgUnitsPerPixelY / zoom;
 
-    // Constrain inside bounds
-    const boundedX = Math.max(15, Math.min(485, x));
-    const boundedY = Math.max(15, Math.min(265, y));
-
-    setNodes(prev => prev.map(n => n.id === draggingId ? { ...n, x: boundedX, y: boundedY } : n));
+      setNodes(prev => prev.map(n => {
+        if (n.id === draggingId) {
+          const boundedX = Math.max(50, Math.min(450, (n.x ?? 0) + dx));
+          const boundedY = Math.max(17, Math.min(263, (n.y ?? 0) + dy));
+          return { ...n, x: boundedX, y: boundedY };
+        }
+        return n;
+      }));
+    }
   };
 
   const handleMouseUp = () => {
     setDraggingId(null);
+    setIsPanning(false);
+  };
+
+  const handleResetLayout = () => {
+    setNodes(parsed.nodes);
+    setLinks(parsed.links);
+    setZoom(1);
+    setPan({ x: 0, y: 0 });
   };
 
   const handleResetLayout = () => {
@@ -312,11 +392,15 @@ export function FlowchartRenderer({ code }: { code: string }) {
         </button>
       </div>
 
-      <div className="relative w-full max-w-[500px] aspect-[16/9] overflow-hidden select-none z-10">
+      <div 
+        ref={containerRef}
+        className="relative w-full max-w-[500px] aspect-[16/9] overflow-hidden select-none z-10 rounded-2xl bg-zinc-950/40 border border-white/5 cursor-grab active:cursor-grabbing"
+      >
         <svg
           ref={svgRef}
           viewBox="0 0 500 280"
           className="w-full h-full"
+          onMouseDown={handleSvgMouseDown}
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
           onMouseLeave={handleMouseUp}
@@ -382,145 +466,180 @@ export function FlowchartRenderer({ code }: { code: string }) {
             </linearGradient>
           </defs>
 
-          {/* Render Links */}
-          <g>
-            {links.map((link, idx) => {
-              const srcNode = nodes.find(n => n.id === link.source);
-              const tgtNode = nodes.find(n => n.id === link.target);
-              if (!srcNode || !tgtNode) return null;
+          {/* Centered pan-and-zoom transformation group */}
+          <g transform={`translate(${pan.x}, ${pan.y}) translate(250, 140) scale(${zoom}) translate(-250, -140)`}>
+            {/* Render Links */}
+            <g>
+              {links.map((link, idx) => {
+                const srcNode = nodes.find(n => n.id === link.source);
+                const tgtNode = nodes.find(n => n.id === link.target);
+                if (!srcNode || !tgtNode) return null;
 
-              const x1 = srcNode.x ?? 0;
-              const y1 = srcNode.y ?? 0;
-              const x2 = tgtNode.x ?? 0;
-              const y2 = tgtNode.y ?? 0;
+                const x1 = srcNode.x ?? 0;
+                const y1 = srcNode.y ?? 0;
+                const x2 = tgtNode.x ?? 0;
+                const y2 = tgtNode.y ?? 0;
 
-              // Draw curved Bezier path
-              const cx1 = x1 + (x2 - x1) * 0.25;
-              const cy1 = y1 + (y2 - y1) * 0.05;
-              const cx2 = x1 + (x2 - x1) * 0.75;
-              const cy2 = y1 + (y2 - y1) * 0.95;
+                // Draw curved Bezier path
+                const cx1 = x1 + (x2 - x1) * 0.25;
+                const cy1 = y1 + (y2 - y1) * 0.05;
+                const cx2 = x1 + (x2 - x1) * 0.75;
+                const cy2 = y1 + (y2 - y1) * 0.95;
 
-              const pathD = `M ${x1} ${y1} C ${cx1} ${cy1}, ${cx2} ${cy2}, ${x2} ${y2}`;
-              const style = getNodeStyle(tgtNode.label);
+                const pathD = `M ${x1} ${y1} C ${cx1} ${cy1}, ${cx2} ${cy2}, ${x2} ${y2}`;
+                const style = getNodeStyle(tgtNode.label);
 
-              return (
-                <g key={idx}>
-                  {/* Thick background glow path */}
-                  <path
-                    d={pathD}
-                    fill="none"
-                    stroke="rgba(255, 255, 255, 0.03)"
-                    strokeWidth="3.5"
-                  />
-                  {/* Animated dashflow path */}
-                  <path
-                    d={pathD}
-                    fill="none"
-                    stroke={style.stroke}
-                    strokeWidth="1.2"
-                    className="flow-line"
-                    markerEnd={`url(#${style.arrowId})`}
-                    style={{ strokeOpacity: 0.75 }}
-                  />
-                  {link.label && (
-                    <text
-                      x={(x1 + x2) / 2}
-                      y={(y1 + y2) / 2 - 5}
-                      fill="rgba(255,255,255,0.4)"
-                      fontSize="7"
-                      fontFamily="monospace"
-                      textAnchor="middle"
-                      className="pointer-events-none"
-                    >
-                      {link.label}
-                    </text>
-                  )}
-                </g>
-              );
-            })}
-          </g>
-
-          {/* Render Nodes */}
-          <g>
-            {nodes.map(node => {
-              const x = node.x ?? 0;
-              const y = node.y ?? 0;
-              const isCircle = node.shape === "circle";
-              const nodeWidth = 100;
-              const nodeHeight = 34;
-
-              const style = getNodeStyle(node.label);
-
-              return (
-                <g
-                  key={node.id}
-                  transform={`translate(${x}, ${y})`}
-                  className="cursor-pointer group"
-                  onMouseDown={(e) => handleMouseDown(e, node.id)}
-                >
-                  {/* Glowing halo */}
-                  {isCircle ? (
-                    <circle
-                      r="22"
+                return (
+                  <g key={idx}>
+                    {/* Thick background glow path */}
+                    <path
+                      d={pathD}
+                      fill="none"
+                      stroke="rgba(255, 255, 255, 0.03)"
+                      strokeWidth="3.5"
+                    />
+                    {/* Animated dashflow path */}
+                    <path
+                      d={pathD}
                       fill="none"
                       stroke={style.stroke}
-                      strokeWidth="2"
-                      style={{ opacity: 0.15, filter: "url(#node-glow)" }}
+                      strokeWidth="1.2"
+                      className="flow-line"
+                      markerEnd={`url(#${style.arrowId})`}
+                      style={{ strokeOpacity: 0.75 }}
                     />
-                  ) : (
-                    <rect
-                      x={-nodeWidth / 2 - 2}
-                      y={-nodeHeight / 2 - 2}
-                      width={nodeWidth + 4}
-                      height={nodeHeight + 4}
-                      rx="10"
-                      fill="none"
-                      stroke={style.stroke}
-                      strokeWidth="2"
-                      style={{ opacity: 0.15, filter: "url(#node-glow)" }}
-                    />
-                  )}
+                    {link.label && (
+                      <text
+                        x={(x1 + x2) / 2}
+                        y={(y1 + y2) / 2 - 5}
+                        fill="rgba(255,255,255,0.4)"
+                        fontSize="7"
+                        fontFamily="monospace"
+                        textAnchor="middle"
+                        className="pointer-events-none"
+                      >
+                        {link.label}
+                      </text>
+                    )}
+                  </g>
+                );
+              })}
+            </g>
 
-                  {/* Base shape */}
-                  {isCircle ? (
-                    <circle
-                      r="20"
-                      fill={style.fill}
-                      stroke={style.stroke}
-                      strokeWidth="1.5"
-                      className="transition-colors group-hover:stroke-white duration-300"
-                    />
-                  ) : (
-                    <rect
-                      x={-nodeWidth / 2}
-                      y={-nodeHeight / 2}
-                      width={nodeWidth}
-                      height={nodeHeight}
-                      rx="8"
-                      fill={style.fill}
-                      stroke={style.stroke}
-                      strokeWidth="1.5"
-                      className="transition-all group-hover:stroke-white duration-300"
-                    />
-                  )}
+            {/* Render Nodes */}
+            <g>
+              {nodes.map(node => {
+                const x = node.x ?? 0;
+                const y = node.y ?? 0;
+                const isCircle = node.shape === "circle";
+                const nodeWidth = 100;
+                const nodeHeight = 34;
 
-                  {/* Label */}
-                  <text
-                    y={3}
-                    fill={style.textColor}
-                    fontSize="7.5"
-                    fontWeight="bold"
-                    fontFamily="sans-serif"
-                    textAnchor="middle"
-                    className="pointer-events-none group-hover:fill-white transition-colors"
+                const style = getNodeStyle(node.label);
+
+                return (
+                  <g
+                    key={node.id}
+                    transform={`translate(${x}, ${y})`}
+                    className="cursor-pointer group node-group"
+                    onMouseDown={(e) => handleMouseDown(e, node.id)}
                   >
-                    {node.label.length > 22 ? `${node.label.substring(0, 20)}...` : node.label}
-                  </text>
-                </g>
-              );
-            })}
+                    {/* Glowing halo */}
+                    {isCircle ? (
+                      <circle
+                        r="22"
+                        fill="none"
+                        stroke={style.stroke}
+                        strokeWidth="2"
+                        style={{ opacity: 0.15, filter: "url(#node-glow)" }}
+                      />
+                    ) : (
+                      <rect
+                        x={-nodeWidth / 2 - 2}
+                        y={-nodeHeight / 2 - 2}
+                        width={nodeWidth + 4}
+                        height={nodeHeight + 4}
+                        rx="10"
+                        fill="none"
+                        stroke={style.stroke}
+                        strokeWidth="2"
+                        style={{ opacity: 0.15, filter: "url(#node-glow)" }}
+                      />
+                    )}
+
+                    {/* Base shape */}
+                    {isCircle ? (
+                      <circle
+                        r="20"
+                        fill={style.fill}
+                        stroke={style.stroke}
+                        strokeWidth="1.5"
+                        className="transition-colors group-hover:stroke-white duration-300"
+                      />
+                    ) : (
+                      <rect
+                        x={-nodeWidth / 2}
+                        y={-nodeHeight / 2}
+                        width={nodeWidth}
+                        height={nodeHeight}
+                        rx="8"
+                        fill={style.fill}
+                        stroke={style.stroke}
+                        strokeWidth="1.5"
+                        className="transition-all group-hover:stroke-white duration-300"
+                      />
+                    )}
+
+                    {/* Label */}
+                    <text
+                      y={3}
+                      fill={style.textColor}
+                      fontSize="7.5"
+                      fontWeight="bold"
+                      fontFamily="sans-serif"
+                      textAnchor="middle"
+                      className="pointer-events-none group-hover:fill-white transition-colors"
+                    >
+                      {node.label.length > 22 ? `${node.label.substring(0, 20)}...` : node.label}
+                    </text>
+                  </g>
+                );
+              })}
+            </g>
           </g>
         </svg>
+
+        {/* Floating Figma/CAD Style viewport controls HUD */}
+        <div className="absolute bottom-3 right-3 flex items-center gap-1 bg-[#09090b]/90 border border-white/5 backdrop-blur-md px-2 py-1 rounded-xl z-20 shadow-lg select-none">
+          <button
+            type="button"
+            onClick={() => setZoom(z => Math.max(z / 1.15, 0.4))}
+            className="p-1 text-zinc-400 hover:text-white hover:bg-white/5 rounded-lg transition-all"
+            title="Zoom Out"
+          >
+            <ZoomOut className="h-3.5 w-3.5" />
+          </button>
+          <span className="text-[9px] font-mono text-zinc-400 font-bold px-1.5 min-w-[32px] text-center">
+            {Math.round(zoom * 100)}%
+          </span>
+          <button
+            type="button"
+            onClick={() => setZoom(z => Math.min(z * 1.15, 5))}
+            className="p-1 text-zinc-400 hover:text-white hover:bg-white/5 rounded-lg transition-all"
+            title="Zoom In"
+          >
+            <ZoomIn className="h-3.5 w-3.5" />
+          </button>
+          <div className="h-3.5 w-[1px] bg-white/10 mx-1" />
+          <button
+            type="button"
+            onClick={() => { setZoom(1); setPan({ x: 0, y: 0 }); }}
+            className="p-1 text-zinc-400 hover:text-white hover:bg-white/5 rounded-lg transition-all"
+            title="Reset Viewport"
+          >
+            <RotateCcw className="h-3.5 w-3.5" />
+          </button>
+        </div>
       </div>
 
       {/* Helpful Hint banner */}

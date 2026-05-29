@@ -439,10 +439,6 @@ export function FlowchartRenderer({ code }: { code: string }) {
     setHoveredNode(null);
   };
 
-  const handleResetLayout = () => {
-    setNodes(parsed.nodes);
-    setLinks(parsed.links);
-  };
 
   // Helper to resolve node colors dynamically based on labels
   const getNodeStyle = (label: string) => {
@@ -769,9 +765,10 @@ export function FlowchartRenderer({ code }: { code: string }) {
             <RotateCcw className="h-3.5 w-3.5" />
           </button>
         </div>
+      </div>
 
-        {/* Interactive Side details HUD Panel */}
-        <div className="w-full lg:w-[200px] shrink-0 bg-zinc-950/60 border border-white/5 rounded-2xl p-4 flex flex-col justify-between backdrop-blur-md relative overflow-hidden transition-all duration-300">
+      {/* Interactive Side details HUD Panel */}
+      <div className="w-full lg:w-[200px] shrink-0 bg-zinc-950/60 border border-white/5 rounded-2xl p-4 flex flex-col justify-between backdrop-blur-md relative overflow-hidden transition-all duration-300">
           {hoveredNode ? (
             (() => {
               const details = getConceptDetails(hoveredNode.label);

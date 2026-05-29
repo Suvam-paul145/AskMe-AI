@@ -30,14 +30,24 @@ export default function UploadPage() {
 
   const processFile = async (file: File) => {
     // Validate file type
-    const allowedTypes = ["application/pdf", "text/plain"];
-    if (!allowedTypes.includes(file.type) && !file.name.endsWith(".pdf") && !file.name.endsWith(".txt")) {
-      setError("Only PDF and TXT text files are supported for vector indexing.");
+    const allowedTypes = [
+      "application/pdf",
+      "text/plain",
+      "image/png",
+      "image/jpeg",
+      "image/jpg",
+      "image/webp"
+    ];
+    const allowedExts = [".pdf", ".txt", ".png", ".jpg", ".jpeg", ".webp"];
+    const hasAllowedExt = allowedExts.some((ext) => file.name.toLowerCase().endsWith(ext));
+
+    if (!allowedTypes.includes(file.type) && !hasAllowedExt) {
+      setError("Only PDF, TXT notes, and Image (PNG, JPEG, WEBP) files are supported for vector indexing.");
       return;
     }
 
     if (file.size > 10 * 1024 * 1024) {
-      setError("This file is too large. Upload a PDF or TXT file under 10 MB.");
+      setError("This file is too large. Upload a PDF, TXT, or Image under 10 MB.");
       return;
     }
 
@@ -135,7 +145,7 @@ export default function UploadPage() {
                   type="file"
                   id="file-upload"
                   className="hidden"
-                  accept=".pdf,.txt,application/pdf,text/plain"
+                  accept=".pdf,.txt,.png,.jpg,.jpeg,.webp,application/pdf,text/plain,image/*"
                   onChange={handleFileInput}
                 />
                 
@@ -145,7 +155,7 @@ export default function UploadPage() {
                   </div>
                   <div>
                     <p className="text-xs font-bold text-white tracking-wide">Drag and drop document here</p>
-                    <p className="text-[10px] text-zinc-400 dark:text-zinc-300 mt-1 font-light">or click to browse local files (PDF or TXT, under 10 MB)</p>
+                    <p className="text-[10px] text-zinc-400 dark:text-zinc-300 mt-1 font-light">or click to browse local files (PDF, TXT or Image, under 10 MB)</p>
                   </div>
                 </label>
               </div>

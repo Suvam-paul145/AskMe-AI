@@ -386,8 +386,22 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       });
 
       if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
-        const errorText = errorData.error || "Sorry, I couldn't process your request. Please try again.";
+        let errorText = "Sorry, I couldn't process your request. Please try again.";
+        if (res.status === 429) {
+          errorText = "Rate limit exceeded. Please wait a moment before sending another message.";
+        } else {
+          try {
+            const errorData = await res.json();
+            errorText = errorData.error || errorText;
+          } catch {
+            const rawText = await res.text().catch(() => "");
+            if (rawText && rawText.length < 150) {
+              errorText = rawText;
+            } else {
+              errorText = `Server error (${res.status}). Please try again shortly.`;
+            }
+          }
+        }
         setChatThreads((prev) => ({
           ...prev,
           [docId]: (prev[docId] || []).map((msg) =>
@@ -751,8 +765,24 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       onProgress?.("Processing vector embeddings...", 70);
 
       if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.error || "Upload failed");
+        let errorMessage = "Upload failed";
+        try {
+          const errorData = await res.json();
+          errorMessage = errorData.error || errorMessage;
+        } catch {
+          // If JSON parsing fails (e.g. gateway HTML error page or text error)
+          const textError = await res.text().catch(() => "");
+          if (res.status === 429) {
+            errorMessage = "Too many upload attempts. Please wait a minute before trying again.";
+          } else if (res.status === 504) {
+            errorMessage = "Server timeout while processing large document. Try splitting the file into smaller sections.";
+          } else if (textError && textError.length < 200) {
+            errorMessage = textError;
+          } else {
+            errorMessage = `Server error (${res.status}): Failed to parse upload response.`;
+          }
+        }
+        throw new Error(errorMessage);
       }
 
       const data = await res.json();

@@ -10,6 +10,25 @@ function getErrorMessage(error: unknown, fallback: string) {
 
 export async function POST(request: NextRequest) {
   try {
+    // Enforce Rate Limiting (sliding-window IP check)
+    const ip = (request as any).ip || request.headers.get("x-forwarded-for") || "127.0.0.1";
+    const { rateLimit } = await import("@/lib/security/rate-limit");
+    const rateLimitResult = rateLimit(ip, 15); // Max 15 chat prompts per minute
+    if (!rateLimitResult.success) {
+      return NextResponse.json(
+        { error: `Too many chat requests. Please wait ${rateLimitResult.reset} seconds before trying again.` },
+        { 
+          status: 429,
+          headers: {
+            "Retry-After": String(rateLimitResult.reset),
+            "X-RateLimit-Limit": String(rateLimitResult.limit),
+            "X-RateLimit-Remaining": String(rateLimitResult.remaining),
+            "X-RateLimit-Reset": String(rateLimitResult.reset),
+          }
+        }
+      );
+    }
+
     const supabase = await createClient();
     const {
       data: { user },

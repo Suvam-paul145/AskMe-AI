@@ -33,11 +33,31 @@ interface RawQuizQuestion {
 }
 
 /**
- * Determine current primary AI provider based on environment config
+ * Determine the primary AI provider for text-generation operations
  */
-const getProvider = (): string => {
-  const provider = (process.env.AI_PROVIDER || "gemini").toLowerCase().trim();
-  return ["gemini", "openrouter", "openai", "groq"].includes(provider) ? provider : "gemini";
+const getTextProvider = (): string => {
+  const configProvider = (process.env.AI_PROVIDER || "").toLowerCase().trim();
+  if (configProvider === "groq") return "groq";
+  if (configProvider === "openai") return "openai";
+  if (configProvider === "openrouter") return "openrouter";
+  if (configProvider === "gemini") return "gemini";
+
+  // Hybrid smart routing: If Groq key is present, default text operations to Groq
+  if (process.env.GROQ_API_KEY) {
+    return "groq";
+  }
+  return "gemini";
+};
+
+/**
+ * Determine the primary AI provider for vector embedding operations
+ */
+const getEmbeddingProvider = (): string => {
+  const configProvider = (process.env.AI_PROVIDER || "").toLowerCase().trim();
+  // Vector embeddings default to Gemini unless explicitly overridden
+  if (configProvider === "openai") return "openai";
+  if (configProvider === "openrouter") return "openrouter";
+  return "gemini";
 };
 
 /**
@@ -365,7 +385,7 @@ export async function generateSummary(
   const prompt = SUMMARY_PROMPT + text.slice(0, 15000); // Limit input to avoid token limits
   let response = "";
 
-  const provider = getProvider();
+  const provider = getTextProvider();
   if (provider !== "gemini") {
     console.log(`[AI Engine] Bypassing Gemini as requested by config. Using custom provider: ${provider}`);
     try {
@@ -421,7 +441,7 @@ export async function generateChatResponse(
     question
   );
 
-  const provider = getProvider();
+  const provider = getTextProvider();
   if (provider !== "gemini") {
     console.log(`[AI Engine] Bypassing Gemini as requested by config. Using custom provider: ${provider}`);
     try {
@@ -475,7 +495,7 @@ export async function generateChatResponseStream(
     prompt += `\n\n[MODE DIRECTIVE: AGENT MODE] Act as a highly personalized, guiding cognitive mentor. Guide the student specifically based on their recent performance and their document's context. Proactively suggest revision steps, mention spacing review intervals, ask diagnostic questions, and direct them to focus on areas of potential weakness. Maintain a highly supportive, coaching tone.`;
   }
 
-  const provider = getProvider();
+  const provider = getTextProvider();
   if (provider !== "gemini") {
     console.log(`[AI Engine] Bypassing Gemini as requested by config. Using custom provider stream: ${provider}`);
     try {
@@ -534,7 +554,7 @@ export async function generateQuiz(
     topic: string;
   }[]
 > {
-  const provider = getProvider();
+  const provider = getTextProvider();
 
   if (text.length <= 15000) {
     const prompt = QUIZ_PROMPT.replace("{numQuestions}", String(numQuestions)).replace("{text}", text);
@@ -691,7 +711,7 @@ export async function analyzeWeakTopics(
   const prompt = WEAK_TOPIC_PROMPT.replace("{wrongAnswers}", wrongAnswersStr);
   let response = "";
 
-  const provider = getProvider();
+  const provider = getTextProvider();
   if (provider !== "gemini") {
     console.log(`[AI Engine] Bypassing Gemini as requested by config. Using custom provider: ${provider}`);
     try {
@@ -759,7 +779,7 @@ export async function evaluateRTM(
 
   let response = "";
 
-  const provider = getProvider();
+  const provider = getTextProvider();
   if (provider !== "gemini") {
     console.log(`[AI Engine] Bypassing Gemini as requested by config. Using custom provider: ${provider}`);
     try {
@@ -838,7 +858,7 @@ async function retryWithBackoff<T>(
  * Falls back to OpenRouter or OpenAI text-embedding-3-small (exactly 768 dimensions) on failure.
  */
 export async function generateEmbedding(text: string): Promise<number[]> {
-  const provider = getProvider();
+  const provider = getEmbeddingProvider();
   if (provider !== "gemini") {
     console.log(`[AI Engine] Bypassing Gemini for single embedding. Using provider fallback...`);
     return await generateEmbeddingFallback(text);
@@ -866,7 +886,7 @@ export async function generateEmbedding(text: string): Promise<number[]> {
 export async function generateEmbeddingsBatch(chunks: string[]): Promise<number[][]> {
   if (chunks.length === 0) return [];
 
-  const provider = getProvider();
+  const provider = getEmbeddingProvider();
   if (provider !== "gemini") {
     console.log(`[AI Engine] Bypassing Gemini for batch embeddings. Using provider fallback...`);
     return await generateEmbeddingsBatchFallback(chunks);

@@ -208,12 +208,136 @@ function parseMermaid(code: string): { nodes: FlowNode[]; links: FlowLink[]; dir
   return { nodes, links, direction };
 }
 
+// --- EDUCATIONAL CONCEPT EXPLANATION DICTIONARY ---
+const CONCEPT_EXPLANATIONS: Record<string, { category: string; desc: string; stage: string }> = {
+  "database management": {
+    category: "System Core",
+    stage: "Database Architecture",
+    desc: "The overarching software system used to store, manage, query, and administrative data records securely."
+  },
+  "classical databases": {
+    category: "Ingestion Stage",
+    stage: "Historical Models",
+    desc: "Early navigational storage schemas including hierarchical trees and networked graphs popular before the SQL revolution."
+  },
+  "traditional database": {
+    category: "Storage Stage",
+    stage: "Relational Models",
+    desc: "Structured relational databases utilizing schemas, tabular layouts, foreign keys, and SQL engines for operational consistency."
+  },
+  "modern databases": {
+    category: "AI & Vector Stage",
+    stage: "Contemporary Models",
+    desc: "Modern scalable systems, NoSQL key-value stores, graph engines, and high-dimensional vector search frameworks."
+  },
+  "hierarchical model": {
+    category: "Ingestion Stage",
+    stage: "Historical Models",
+    desc: "Data organized strictly as parent-child tree pathways where each child record has exactly one parent."
+  },
+  "network model": {
+    category: "Ingestion Stage",
+    stage: "Historical Models",
+    desc: "An evolution of the hierarchical model that allows many-to-many child-parent links, forming dynamic graph networks."
+  },
+  "rdbms": {
+    category: "Storage Stage",
+    stage: "Relational Core",
+    desc: "Relational Database Management System. Organizes data rows into rigid columns and tables with strict primary/foreign key connections."
+  },
+  "sql": {
+    category: "Storage Stage",
+    stage: "Query Interface",
+    desc: "Structured Query Language. The standardized declarative language used to read, update, and manage relational database schemas."
+  },
+  "acid compliant": {
+    category: "Storage Stage",
+    stage: "Reliability Guarantee",
+    desc: "Ensures transaction integrity through Atomicity (all or nothing), Consistency, Isolation, and Durability."
+  },
+  "nosql": {
+    category: "AI & Vector Stage",
+    stage: "Contemporary Models",
+    desc: "Non-relational schemas offering horizontal scaling, flexible document formats (JSON), and fast unstructured read/write pipelines."
+  },
+  "document stores": {
+    category: "AI & Vector Stage",
+    stage: "Contemporary Models",
+    desc: "NoSQL engines (like MongoDB) designed to store and query records as self-contained nested documents (JSON/BSON)."
+  },
+  "vector databases": {
+    category: "AI & Vector Stage",
+    stage: "Cognitive Storage",
+    desc: "Specialized databases designed to index high-dimensional numeric arrays (vector embeddings) for high-speed semantic similarity searches."
+  }
+};
+
+function getConceptDetails(label: string) {
+  const cleanLabel = label.toLowerCase().trim().replace(/[^\w\s-]/g, "");
+  
+  // Try exact match
+  if (CONCEPT_EXPLANATIONS[cleanLabel]) {
+    return CONCEPT_EXPLANATIONS[cleanLabel];
+  }
+  
+  // Try partial match
+  for (const key in CONCEPT_EXPLANATIONS) {
+    if (cleanLabel.includes(key) || key.includes(cleanLabel)) {
+      return CONCEPT_EXPLANATIONS[key];
+    }
+  }
+
+  // Fallback dynamic generator based on color-coded stages
+  const isIngestion = cleanLabel.match(/doc|raw|file|text|chunk|pdf|txt|csv|data|ingest|source|input/);
+  const isStorage = cleanLabel.match(/embed|vector|db|store|index|database|retriev|rdbms|sql/);
+  const isQuery = cleanLabel.match(/query|user|prompt|question|search/);
+  const isAI = cleanLabel.match(/ai|llm|synth|model|generat|answer|result|final|response/);
+
+  if (isIngestion) {
+    return {
+      category: "Ingestion Stage",
+      stage: "Source Data",
+      desc: `Ingestion module representing '${label}'. Validates and parses raw text variables into clean cognitive structures.`
+    };
+  }
+  if (isStorage) {
+    return {
+      category: "Storage Stage",
+      stage: "Semantic Cache",
+      desc: `Semantic storage index representing '${label}'. Encodes knowledge dimensions for quick context extraction.`
+    };
+  }
+  if (isQuery) {
+    return {
+      category: "Query Stage",
+      stage: "User Interface",
+      desc: `Query control block representing '${label}'. Intercepts and aligns queries against indexed memory blocks.`
+    };
+  }
+  if (isAI) {
+    return {
+      category: "AI Stage",
+      stage: "Cognitive Model",
+      desc: `LLM generator block representing '${label}'. Compiles matching document chunks into premium, cited user guides.`
+    };
+  }
+
+  return {
+    category: "Revision Concept",
+    stage: "Active Core",
+    desc: `Educational study unit for '${label}'. Drag to align connections or study adjacent nodes to master this topic.`
+  };
+}
+
 // --- DIAGRAM RENDERER COMPONENT ---
 export function FlowchartRenderer({ code }: { code: string }) {
   const parsed = React.useMemo(() => parseMermaid(code), [code]);
   const [nodes, setNodes] = React.useState<FlowNode[]>([]);
   const [links, setLinks] = React.useState<FlowLink[]>([]);
   const [draggingId, setDraggingId] = React.useState<string | null>(null);
+  
+  // Track hovered node for details display
+  const [hoveredNode, setHoveredNode] = React.useState<FlowNode | null>(null);
   
   // Viewport states for zoom & pan
   const [zoom, setZoom] = React.useState(1);
@@ -312,6 +436,7 @@ export function FlowchartRenderer({ code }: { code: string }) {
     setLinks(parsed.links);
     setZoom(1);
     setPan({ x: 0, y: 0 });
+    setHoveredNode(null);
   };
 
   const handleResetLayout = () => {
@@ -371,14 +496,14 @@ export function FlowchartRenderer({ code }: { code: string }) {
   };
 
   return (
-    <div className="w-full bg-[#0d0d11]/80 border border-white/5 rounded-3xl p-5 my-5 flex flex-col items-center justify-center glass-card relative overflow-hidden shadow-2xl matte-layer spatial-shadow-lg select-none">
+    <div className="w-full bg-[#0d0d11]/80 border border-white/5 rounded-3xl p-5 my-5 flex flex-col glass-card relative overflow-hidden shadow-2xl matte-layer spatial-shadow-lg select-none">
       
       {/* Decorative glows inside container */}
       <div className="absolute top-0 right-0 w-[150px] h-[150px] bg-primary/5 rounded-full filter blur-2xl pointer-events-none" />
       <div className="absolute bottom-0 left-0 w-[150px] h-[150px] bg-[#6366f1]/5 rounded-full filter blur-2xl pointer-events-none" />
 
       {/* Header HUD */}
-      <div className="w-full flex items-center justify-between mb-3.5 z-10">
+      <div className="w-full flex items-center justify-between mb-4 z-10">
         <span className="text-[10px] uppercase font-bold tracking-[0.2em] text-primary dark:text-purple-400 flex items-center gap-2 biometric-glow">
           <span className="h-1.5 w-1.5 rounded-full bg-primary animate-ping" />
           Interactive Learning Flow
@@ -392,10 +517,12 @@ export function FlowchartRenderer({ code }: { code: string }) {
         </button>
       </div>
 
-      <div 
-        ref={containerRef}
-        className="relative w-full max-w-[500px] aspect-[16/9] overflow-hidden select-none z-10 rounded-2xl bg-zinc-950/40 border border-white/5 cursor-grab active:cursor-grabbing"
-      >
+      {/* Main Grid Layout for SVG and Info Side Panel */}
+      <div className="w-full flex flex-col lg:flex-row gap-4 items-stretch z-10">
+        <div 
+          ref={containerRef}
+          className="flex-1 relative aspect-[16/9] overflow-hidden select-none rounded-2xl bg-zinc-950/40 border border-white/5 cursor-grab active:cursor-grabbing"
+        >
         <svg
           ref={svgRef}
           viewBox="0 0 500 280"
@@ -543,6 +670,8 @@ export function FlowchartRenderer({ code }: { code: string }) {
                     transform={`translate(${x}, ${y})`}
                     className="cursor-pointer group node-group"
                     onMouseDown={(e) => handleMouseDown(e, node.id)}
+                    onMouseEnter={() => setHoveredNode(node)}
+                    onMouseLeave={() => setHoveredNode(null)}
                   >
                     {/* Glowing halo */}
                     {isCircle ? (
@@ -640,10 +769,71 @@ export function FlowchartRenderer({ code }: { code: string }) {
             <RotateCcw className="h-3.5 w-3.5" />
           </button>
         </div>
+
+        {/* Interactive Side details HUD Panel */}
+        <div className="w-full lg:w-[200px] shrink-0 bg-zinc-950/60 border border-white/5 rounded-2xl p-4 flex flex-col justify-between backdrop-blur-md relative overflow-hidden transition-all duration-300">
+          {hoveredNode ? (
+            (() => {
+              const details = getConceptDetails(hoveredNode.label);
+              const style = getNodeStyle(hoveredNode.label);
+              return (
+                <>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[8px] uppercase tracking-widest font-mono text-zinc-500 font-bold">
+                        {details.stage}
+                      </span>
+                      <span className="h-1.5 w-1.5 rounded-full animate-pulse" style={{ backgroundColor: style.stroke }} />
+                    </div>
+                    
+                    <h4 className="text-sm font-bold text-white leading-tight">
+                      {hoveredNode.label}
+                    </h4>
+
+                    <div className="inline-flex rounded-md border text-[8px] font-mono font-bold px-1.5 py-0.5" style={{ color: style.textColor, borderColor: `${style.stroke}20`, backgroundColor: `${style.stroke}10` }}>
+                      {details.category}
+                    </div>
+
+                    <p className="text-[10px] text-zinc-400 leading-relaxed font-light mt-2 transition-all duration-300">
+                      {details.desc}
+                    </p>
+                  </div>
+                  
+                  <div className="text-[8px] text-zinc-500 font-light pt-3 border-t border-white/5">
+                    💡 Try dragging this node to customize the layout.
+                  </div>
+                </>
+              );
+            })()
+          ) : (
+            <>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-[8px] uppercase tracking-widest font-mono text-zinc-500 font-bold">
+                    Interactive HUD
+                  </span>
+                  <span className="h-1.5 w-1.5 rounded-full bg-primary/40 animate-ping" />
+                </div>
+                
+                <h4 className="text-sm font-bold text-white/80 leading-tight">
+                  Study Assistant
+                </h4>
+
+                <p className="text-[10px] text-zinc-500 leading-relaxed font-light mt-2">
+                  Hover over any node in the interactive learning flowchart to reveal key concepts, relationships, and study explanations in real-time.
+                </p>
+              </div>
+
+              <div className="text-[8px] text-zinc-600 font-light pt-3 border-t border-white/5">
+                💡 Drag nodes or use scroll to zoom/pan the diagram.
+              </div>
+            </>
+          )}
+        </div>
       </div>
 
       {/* Helpful Hint banner */}
-      <span className="mt-2.5 text-[9px] text-zinc-500 font-light z-10">
+      <span className="mt-3.5 text-[9px] text-zinc-500 font-light z-10">
         💡 Drag nodes above to organize overlays. Stages are color-coded: Ingestion/Docs (Green), Vector Data (Blue), Inputs/Query (Orange), and Model Answers (Pink).
       </span>
     </div>

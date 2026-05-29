@@ -12,15 +12,45 @@ import {
   Sparkles, 
   Info,
   Mic,
-  Brain
+  Brain,
+  Paperclip,
+  Loader2
 } from "lucide-react";
 
 export default function ChatPage() {
-  const { documents, selectedDocId, chatThreads, sendMessage, loadChatHistory, profile } = useStore();
+  const { documents, selectedDocId, chatThreads, sendMessage, loadChatHistory, profile, uploadDocument, setSelectedDocId } = useStore();
   const [inputText, setInputText] = useState("");
   const [isAiReplying, setIsAiReplying] = useState(false);
   const [voiceActive, setVoiceActive] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // ChatGPT-style PDF/Image inline uploading states
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadStage, setUploadStage] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    setUploadStage("Preparing upload...");
+
+    try {
+      const doc = await uploadDocument(file, (stage, progress) => {
+        setUploadStage(stage);
+      });
+      if (doc) {
+        setSelectedDocId(doc.id);
+      }
+    } catch (err: any) {
+      alert(`Upload failed: ${err.message || "Unknown error"}`);
+    } finally {
+      setIsUploading(false);
+      setUploadStage("");
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
 
   // Mode Selection States: auto (Auto-Detect), ask, learning, agent
   const [activeMode, setActiveMode] = useState<"auto" | "ask" | "learning" | "agent">("auto");
@@ -378,14 +408,25 @@ export default function ChatPage() {
           {/* Chat message list area */}
           <div className="flex-1 overflow-y-auto my-4 space-y-4 pr-2">
             {activeThread.length === 0 ? (
-              <div className="h-full flex flex-col items-center justify-center text-center p-8 space-y-4 py-20">
-                <Brain className="h-12 w-12 text-primary/40 animate-drift" />
+              <div className="h-full flex flex-col items-center justify-center text-center p-8 space-y-4 py-20 select-none">
+                <Brain className="h-12 w-12 text-primary/40 animate-drift animate-pulse" />
                 <h3 className="text-base font-bold text-foreground">Launch Cognitive Conversation</h3>
                 <p className="text-xs text-muted-foreground max-w-xs">
                   {documents.length === 0 
-                    ? "Upload study notes on the Ingestion screen to align the AI tutor context."
+                    ? "Upload study notes or images directly below, or click here to start your learning journey."
                     : "Ask any question about your uploaded material. The AI will find the most relevant sections to answer."}
                 </p>
+                {documents.length === 0 && (
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isUploading}
+                    className="mt-2 px-5 py-2.5 bg-primary text-white rounded-xl text-xs font-bold hover:bg-primary/95 transition-all shadow-md flex items-center gap-1.5"
+                  >
+                    <Paperclip className="h-4 w-4" />
+                    <span>Upload Notes or Image</span>
+                  </button>
+                )}
               </div>
             ) : (
               activeThread.map((msg) => (
@@ -470,11 +511,41 @@ export default function ChatPage() {
               ))}
             </div>
 
-            <form onSubmit={handleSend} className="flex gap-2">
+            {isUploading && (
+              <div className="flex items-center gap-2.5 text-xs bg-primary/10 border border-primary/20 p-4 rounded-2xl text-primary animate-pulse select-none">
+                <Loader2 className="h-4 w-4 animate-spin shrink-0" />
+                <span><strong>Ingestion HUD:</strong> {uploadStage}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleSend} className="flex gap-2 relative">
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileChange}
+                accept=".pdf,.txt,.png,.jpg,.jpeg,.webp"
+                className="hidden"
+              />
+
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isUploading}
+                className="rounded-xl border border-border bg-card hover:bg-muted text-muted-foreground p-3.5 transition-all flex items-center justify-center shrink-0 disabled:opacity-50"
+                title="Attach PDF, TXT or Image"
+              >
+                {isUploading ? (
+                  <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                ) : (
+                  <Paperclip className="h-5 w-5" />
+                )}
+              </button>
+
               <button
                 type="button"
                 onClick={launchVoiceMode}
-                className="rounded-xl border border-border bg-card hover:bg-muted text-muted-foreground p-3.5 transition-all"
+                disabled={isUploading}
+                className="rounded-xl border border-border bg-card hover:bg-muted text-muted-foreground p-3.5 transition-all flex items-center justify-center shrink-0 disabled:opacity-50"
                 title="Launch Conversational Voice Mode"
               >
                 <Mic className="h-5 w-5" />
@@ -485,13 +556,14 @@ export default function ChatPage() {
                 required
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
-                placeholder={voiceActive ? "Listening..." : "Ask a question about your study material..."}
-                className="w-full rounded-xl border border-border bg-card/60 px-4 py-3.5 text-xs text-foreground focus:border-primary focus:outline-none transition-all"
+                placeholder={isUploading ? `Uploading: ${uploadStage}` : "Ask a question about your study material..."}
+                disabled={isUploading}
+                className="w-full rounded-xl border border-border bg-card/60 px-4 py-3.5 text-xs text-foreground focus:border-primary focus:outline-none transition-all disabled:opacity-50"
               />
               <button
                 type="submit"
-                disabled={isAiReplying}
-                className="rounded-xl bg-primary px-6 text-white hover:bg-primary/95 transition-all shadow-md flex items-center justify-center shrink-0"
+                disabled={isAiReplying || isUploading}
+                className="rounded-xl bg-primary px-6 text-white hover:bg-primary/95 transition-all shadow-md flex items-center justify-center shrink-0 disabled:opacity-50"
               >
                 <Send className="h-4.5 w-4.5" />
               </button>

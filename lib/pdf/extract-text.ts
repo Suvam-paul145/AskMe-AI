@@ -57,6 +57,9 @@ export async function extractText(
     return extractTextFromPDF(buffer);
   } else if (mimeType === "text/plain") {
     return extractTextFromTXT(buffer);
+  } else if (mimeType.startsWith("image/")) {
+    const { describeImage } = await import("@/lib/ai/gemini");
+    return await describeImage(buffer, mimeType);
   } else {
     throw new Error(`Unsupported file type: ${mimeType}`);
   }

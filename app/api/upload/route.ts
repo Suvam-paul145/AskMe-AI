@@ -35,11 +35,18 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate file type and size before doing AI work.
-    const allowedTypes = ["application/pdf", "text/plain"];
-    const hasAllowedExtension = /\.(pdf|txt)$/i.test(file.name);
+    const allowedTypes = [
+      "application/pdf",
+      "text/plain",
+      "image/png",
+      "image/jpeg",
+      "image/jpg",
+      "image/webp"
+    ];
+    const hasAllowedExtension = /\.(pdf|txt|png|jpe?g|webp)$/i.test(file.name);
     if (!allowedTypes.includes(file.type) && !hasAllowedExtension) {
       return NextResponse.json(
-        { error: "Only PDF and TXT files are supported" },
+        { error: "Only PDF, TXT, and Image (PNG, JPEG, WEBP) files are supported" },
         { status: 400 }
       );
     }
@@ -77,11 +84,16 @@ export async function POST(request: NextRequest) {
     }
 
     // Step 2: Extract text
-    const normalizedType =
-      file.type ||
-      (file.name.toLowerCase().endsWith(".pdf")
-        ? "application/pdf"
-        : "text/plain");
+    let normalizedType = file.type;
+    if (!normalizedType) {
+      const ext = file.name.toLowerCase().split(".").pop();
+      if (ext === "pdf") normalizedType = "application/pdf";
+      else if (ext === "txt") normalizedType = "text/plain";
+      else if (ext === "png") normalizedType = "image/png";
+      else if (ext === "webp") normalizedType = "image/webp";
+      else if (ext === "jpg" || ext === "jpeg") normalizedType = "image/jpeg";
+      else normalizedType = "text/plain";
+    }
     const extractedText = await extractText(fileBuffer, normalizedType);
 
     if (!extractedText || extractedText.trim().length < 50) {

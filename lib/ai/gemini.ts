@@ -912,3 +912,76 @@ export async function generateEmbeddingsBatch(chunks: string[]): Promise<number[
     return await generateEmbeddingsBatchFallback(chunks);
   }
 }
+
+/**
+ * Describe or perform OCR on an uploaded image using Gemini Vision (or OpenAI fallback)
+ */
+export async function describeImage(buffer: Buffer, mimeType: string): Promise<string> {
+  try {
+    console.log("[AI Vision] Analyzing image contents using Gemini Vision...");
+    const imagePart = {
+      inlineData: {
+        data: buffer.toString("base64"),
+        mimeType
+      }
+    };
+
+    const prompt = "You are an expert academic study assistant. Transcribe any text visible in this image. If there are diagrams, charts, formulas, or drawings, describe them in highly detailed academic terms so a student can learn from them. Format your response clearly.";
+    
+    const result = await model.generateContent([prompt, imagePart]);
+    const text = result.response.text();
+    if (text) {
+      console.log("[AI Vision] Image analysis succeeded.");
+      return text;
+    }
+  } catch (err) {
+    console.error("[AI Vision] Gemini image analysis failed, trying OpenAI vision fallback...", err);
+  }
+
+  const openAiKey = process.env.OPENAI_API_KEY;
+  if (openAiKey) {
+    try {
+      console.log("[AI Vision] Attempting OpenAI Vision fallback...");
+      const base64Image = buffer.toString("base64");
+      const response = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${openAiKey}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          model: "gpt-4o-mini",
+          messages: [
+            {
+              role: "user",
+              content: [
+                {
+                  type: "text",
+                  text: "You are an expert academic study assistant. Transcribe any text visible in this image. If there are diagrams, charts, formulas, or drawings, describe them in highly detailed academic terms so a student can learn from them. Format your response clearly."
+                },
+                {
+                  type: "image_url",
+                  image_url: {
+                    url: `data:${mimeType};base64,${base64Image}`
+                  }
+                }
+              ]
+            }
+          ]
+        })
+      });
+
+      if (response.ok) {
+        const json = await response.json();
+        if (json.choices && json.choices[0]?.message?.content) {
+          console.log("[AI Vision] OpenAI vision fallback succeeded.");
+          return json.choices[0].message.content;
+        }
+      }
+    } catch (fallbackErr) {
+      console.error("[AI Vision] OpenAI vision fallback failed:", fallbackErr);
+    }
+  }
+
+  return "Image file uploaded. [No visual transcription could be extracted from image content due to AI provider quota limits]";
+}

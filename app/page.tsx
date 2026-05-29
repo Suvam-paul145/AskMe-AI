@@ -273,6 +273,74 @@ function Custom3DGraph({ scene }: { scene: number }) {
   );
 }
 
+// --- ANIMATED COUNTER COMPONENT FOR SCROLL-IN-VIEW INCREMENTS ---
+function AnimatedCounter({ value }: { value: string }) {
+  const [count, setCount] = useState(0);
+  const elementRef = useRef<HTMLDivElement>(null);
+  const hasAnimated = useRef(false);
+
+  useEffect(() => {
+    const numericPart = value.replace(/[^\d.]/g, "");
+    const target = parseFloat(numericPart) || 0;
+    const isDecimal = numericPart.includes(".");
+    
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !hasAnimated.current) {
+          hasAnimated.current = true;
+          let startTime: number | null = null;
+          const duration = 2000; // 2 seconds
+
+          const animate = (timestamp: number) => {
+            if (!startTime) startTime = timestamp;
+            const progress = Math.min((timestamp - startTime) / duration, 1);
+            
+            // Easing function: easeOutQuad
+            const easeProgress = progress * (2 - progress);
+            
+            setCount(easeProgress * target);
+
+            if (progress < 1) {
+              requestAnimationFrame(animate);
+            }
+          };
+
+          requestAnimationFrame(animate);
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    if (elementRef.current) {
+      observer.observe(elementRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, [value]);
+
+  const formatCount = () => {
+    const numericPart = value.replace(/[^\d.]/g, "");
+    const isDecimal = numericPart.includes(".");
+    const decimalPlaces = isDecimal ? numericPart.split(".")[1].length : 0;
+    const hasCommas = value.includes(",");
+    const suffix = value.replace(/[\d,.]/g, "");
+
+    let formatted = count.toFixed(decimalPlaces);
+    if (hasCommas) {
+      const parts = formatted.split(".");
+      parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+      formatted = parts.join(".");
+    }
+    return `${formatted}${suffix}`;
+  };
+
+  return (
+    <span ref={elementRef} className="tabular-nums">
+      {formatCount()}
+    </span>
+  );
+}
+
 // --- MAIN CINEMATIC LANDING SCREEN ---
 export default function Home() {
   const [activeScene, setActiveScene] = useState(1);
@@ -401,7 +469,7 @@ export default function Home() {
                   </div>
                 </div>
                 <h3 className="text-lg font-bold text-white">{item.title}</h3>
-                <p className="text-xs text-zinc-400 leading-relaxed font-light">{item.description}</p>
+                <p className="text-xs text-zinc-300 dark:text-zinc-300 leading-relaxed font-light">{item.description}</p>
               </div>
             );
           })}
@@ -451,16 +519,18 @@ export default function Home() {
       {/* SOCIAL PROOF SECTION */}
       <section className="relative z-10 py-20 px-6 md:px-12 max-w-7xl mx-auto">
         {/* Stats Bar */}
-        <div className="flex flex-wrap items-center justify-center gap-8 md:gap-16 mb-16">
+        <div className="flex flex-wrap items-center justify-center gap-8 md:gap-16 mb-16 relative z-20">
           {[
             { value: "500+", label: "Documents Processed" },
             { value: "1,200+", label: "Quizzes Generated" },
             { value: "4.9★", label: "Average Rating" },
             { value: "98%", label: "Recall Improvement" }
           ].map((stat) => (
-            <div key={stat.label} className="text-center space-y-1">
-              <div className="text-2xl md:text-3xl font-extrabold text-white font-mono">{stat.value}</div>
-              <div className="text-[10px] uppercase tracking-widest text-zinc-500 font-bold">{stat.label}</div>
+            <div key={stat.label} className="text-center space-y-1 bg-zinc-950/20 backdrop-blur-sm p-4 rounded-2xl border border-white/5 md:border-transparent">
+              <div className="text-2xl md:text-3xl font-extrabold text-white font-mono">
+                <AnimatedCounter value={stat.value} />
+              </div>
+              <div className="text-[10px] uppercase tracking-widest text-zinc-300 font-bold">{stat.label}</div>
             </div>
           ))}
         </div>

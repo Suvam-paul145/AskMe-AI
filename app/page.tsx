@@ -391,14 +391,14 @@ export default function Home() {
 
           <h1 className="text-5xl md:text-7xl font-extrabold tracking-tighter leading-none cinematic-title text-foreground">
             Your Mind. <br />
-            <span className="text-zinc-600">Fragmented.</span>
+            <span className="text-zinc-400">Fragmented.</span>
           </h1>
 
           <p className="text-sm md:text-base text-muted-foreground leading-relaxed">
             Syllabus files scattered. Core definitions decaying. Traditional reading creates an illusion of competence while memory retention fades.
           </p>
 
-          <div className="flex items-center gap-4 text-xs font-bold text-zinc-500 uppercase tracking-widest pt-4">
+          <div className="flex items-center gap-4 text-xs font-bold text-zinc-400 uppercase tracking-widest pt-4">
             <span>Scroll to awaken</span>
             <div className="h-5 w-[1px] bg-zinc-800" />
             <span className="animate-pulse">↓</span>
@@ -558,7 +558,7 @@ export default function Home() {
             }
           ].map((t) => (
             <div key={t.name} className="rounded-3xl border border-white/5 bg-[#0d0d11]/50 p-6 space-y-4 hover:border-white/10 transition-all">
-              <Quote className="h-5 w-5 text-zinc-600" />
+              <Quote className="h-5 w-5 text-zinc-400" />
               <p className="text-xs text-zinc-300 leading-relaxed font-light italic">&ldquo;{t.quote}&rdquo;</p>
               <div className="flex items-center gap-3 pt-2 border-t border-white/5">
                 <div className={`h-9 w-9 rounded-full bg-gradient-to-br ${t.color} flex items-center justify-center text-white text-xs font-bold`}>
@@ -566,7 +566,7 @@ export default function Home() {
                 </div>
                 <div>
                   <p className="text-xs font-semibold text-white">{t.name}</p>
-                  <p className="text-[10px] text-zinc-500">{t.role}</p>
+                  <p className="text-[10px] text-zinc-400">{t.role}</p>
                 </div>
               </div>
             </div>
@@ -584,7 +584,7 @@ export default function Home() {
 
           <h2 className="text-5xl md:text-7xl font-extrabold tracking-tighter leading-none cinematic-title">
             Calm. Focus. <br />
-            <span className="text-zinc-500">Solidified.</span>
+            <span className="text-zinc-400">Solidified.</span>
           </h2>
 
           <p className="text-sm md:text-base text-muted-foreground leading-relaxed">

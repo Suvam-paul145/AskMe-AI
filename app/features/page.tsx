@@ -238,7 +238,7 @@ export default function FeaturesPage() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <h3 className="text-sm font-bold tracking-wide uppercase">{engine.title}</h3>
-                      <p className="text-xs text-zinc-500 truncate font-light mt-0.5">{engine.description}</p>
+                      <p className="text-xs text-zinc-300 truncate font-light mt-0.5">{engine.description}</p>
                     </div>
                   </button>
                 );

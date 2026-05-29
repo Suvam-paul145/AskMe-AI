@@ -145,7 +145,7 @@ export default function UploadPage() {
                   </div>
                   <div>
                     <p className="text-xs font-bold text-white tracking-wide">Drag and drop document here</p>
-                    <p className="text-[10px] text-zinc-500 mt-1 font-light">or click to browse local files (PDF or TXT, under 10 MB)</p>
+                    <p className="text-[10px] text-zinc-400 dark:text-zinc-300 mt-1 font-light">or click to browse local files (PDF or TXT, under 10 MB)</p>
                   </div>
                 </label>
               </div>
@@ -182,7 +182,7 @@ export default function UploadPage() {
 
               {/* Real-time scanning log terminal */}
               <div className="w-full max-w-md mx-auto bg-[#070709] border border-white/5 rounded-xl p-4 text-left font-mono text-[9px] text-zinc-400 space-y-2.5 max-h-[140px] overflow-y-auto">
-                <div className="flex items-center justify-between border-b border-white/5 pb-2 text-[8px] uppercase tracking-wider text-zinc-500">
+                <div className="flex items-center justify-between border-b border-white/5 pb-2 text-[8px] uppercase tracking-wider text-zinc-400 dark:text-zinc-300">
                   <span className="flex items-center gap-1"><Cpu className="h-3 w-3" /> Console Log output</span>
                   <span className="animate-pulse">● Live</span>
                 </div>
@@ -194,7 +194,7 @@ export default function UploadPage() {
               </div>
 
               <div className="flex items-center justify-center gap-2 text-xs font-semibold text-zinc-400 font-light">
-                <CheckCircle2 className={`h-4.5 w-4.5 ${progress === 100 ? "text-emerald-400 animate-pulse" : "text-zinc-600"}`} />
+                <CheckCircle2 className={`h-4.5 w-4.5 ${progress === 100 ? "text-emerald-400 animate-pulse" : "text-zinc-400"}`} />
                 <span>{progress}% Complete</span>
               </div>
             </div>

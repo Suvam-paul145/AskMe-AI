@@ -305,7 +305,7 @@ export default function WorkspacePage() {
             
             {/* Document list row */}
             <div className="space-y-3">
-              <h2 className="text-[10px] uppercase font-bold tracking-[0.25em] text-zinc-500 flex items-center gap-2">
+              <h2 className="text-[10px] uppercase font-bold tracking-[0.25em] text-zinc-400 flex items-center gap-2">
                 <FileText className="h-4 w-4 text-primary animate-pulse" />
                 Active Study Library
               </h2>
@@ -319,7 +319,7 @@ export default function WorkspacePage() {
                       className={`group flex items-center justify-between p-1 rounded-xl border transition-all duration-300 tactile-card ${
                         isSelected 
                           ? "border-primary bg-primary/10 text-white shadow-[0_0_15px_rgba(139,92,246,0.15)]" 
-                          : "border-white/5 bg-[#0d0d11]/40 hover:bg-[#0d0d11]/85 text-zinc-400 hover:text-white"
+                          : "border-white/5 bg-[#0d0d11]/40 hover:bg-[#0d0d11]/85 text-zinc-300 hover:text-white"
                       }`}
                     >
                       <button
@@ -374,7 +374,7 @@ export default function WorkspacePage() {
             {/* Document Summary display */}
             {activeDoc.summary && (
               <div className="space-y-4">
-                <h2 className="text-[10px] uppercase font-bold tracking-[0.25em] text-zinc-500 flex items-center gap-2">
+                <h2 className="text-[10px] uppercase font-bold tracking-[0.25em] text-zinc-400 dark:text-zinc-300 flex items-center gap-2">
                   <BookOpen className="h-4 w-4 text-primary" />
                   Auto-Synthesis Summaries
                 </h2>
@@ -469,7 +469,7 @@ export default function WorkspacePage() {
                       className={`flex items-center gap-2 px-4 py-3.5 text-xs font-semibold border-b-2 transition-all duration-300 ${
                         isActive 
                           ? "border-primary text-primary dark:text-purple-400" 
-                          : "border-transparent text-zinc-500 hover:text-zinc-300"
+                          : "border-transparent text-zinc-400 dark:text-zinc-300 hover:text-zinc-200"
                       }`}
                     >
                       <Icon className="h-4 w-4" />
@@ -531,7 +531,7 @@ export default function WorkspacePage() {
                           )}
                         </div>
                         <div className="flex items-center gap-2">
-                          <span className="text-[9px] text-zinc-500 px-2 font-mono">{msg.timestamp}</span>
+                          <span className="text-[9px] text-zinc-400 dark:text-zinc-300 px-2 font-mono">{msg.timestamp}</span>
                           {msg.sources && msg.sources.length > 0 && (
                             <span className="text-[8px] text-primary/60 font-bold uppercase">📎 {msg.sources.length} sources</span>
                           )}
@@ -591,7 +591,7 @@ export default function WorkspacePage() {
                       value={chatInput}
                       onChange={(e) => setChatInput(e.target.value)}
                       placeholder={isListening ? "Listening... speak now..." : "Ask any question about your study material..."}
-                      className="w-full rounded-xl border border-white/5 bg-[#09090b]/60 px-4 py-3.5 text-xs text-zinc-200 focus:border-primary focus:outline-none transition-all placeholder-zinc-600 font-light"
+                      className="w-full rounded-xl border border-white/5 bg-[#09090b]/60 px-4 py-3.5 text-xs text-zinc-200 focus:border-primary focus:outline-none transition-all placeholder-zinc-400 font-light"
                     />
                     <button
                       type="submit"
@@ -609,7 +609,7 @@ export default function WorkspacePage() {
                 <div className="flex flex-col items-center justify-center h-full max-w-2xl mx-auto space-y-8 py-4 w-full">
                   <div className="text-center space-y-1.5">
                     <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest">Holographic Deck Review</h3>
-                    <p className="text-[10px] text-zinc-500 font-light">
+                    <p className="text-[10px] text-zinc-400 dark:text-zinc-300 font-light">
                       {docQuizQuestions.length > 0 
                         ? `${flashcards.length} cards from your AI-generated quiz. Tap to flip.` 
                         : "Upload study material to generate AI flashcards."}
@@ -637,7 +637,7 @@ export default function WorkspacePage() {
                       >
                         <HelpCircle className="h-7 w-7 text-primary mb-4 animate-pulse" />
                         <h4 className="text-base sm:text-lg font-bold text-white leading-relaxed px-6">{flashcards[currentCardIndex]?.q}</h4>
-                        <span className="text-[9px] text-zinc-600 uppercase font-semibold tracking-wider absolute bottom-4">Tap to flip card</span>
+                        <span className="text-[9px] text-zinc-400 dark:text-zinc-300 uppercase font-semibold tracking-wider absolute bottom-4">Tap to flip card</span>
                       </div>
 
                       {/* Back Side */}
@@ -650,7 +650,7 @@ export default function WorkspacePage() {
                       >
                         <CheckCircle className="h-7 w-7 text-primary dark:text-purple-400 mb-4" />
                         <h4 className="text-sm sm:text-base font-mono font-semibold text-white leading-relaxed px-6">{flashcards[currentCardIndex]?.a}</h4>
-                        <span className="text-[9px] text-zinc-500 uppercase font-semibold tracking-wider absolute bottom-4">Tap to reverse</span>
+                        <span className="text-[9px] text-zinc-400 dark:text-zinc-300 uppercase font-semibold tracking-wider absolute bottom-4">Tap to reverse</span>
                       </div>
                     </div>
                   </div>
@@ -699,9 +699,9 @@ export default function WorkspacePage() {
                             value={rtmAnswer}
                             onChange={(e) => setRtmAnswer(e.target.value)}
                             placeholder="Type your detailed explanation here. Include formulas, definitions, and mechanisms to maximize coverage score..."
-                            className="w-full rounded-xl border border-white/5 bg-[#09090b]/60 p-4 text-xs text-zinc-200 focus:border-primary focus:outline-none transition-all resize-none font-light leading-relaxed placeholder-zinc-600"
+                            className="w-full rounded-xl border border-white/5 bg-[#09090b]/60 p-4 text-xs text-zinc-200 focus:border-primary focus:outline-none transition-all resize-none font-light leading-relaxed placeholder-zinc-400"
                           />
-                          <div className="absolute bottom-3 right-3 text-[10px] text-zinc-500 font-mono">
+                          <div className="absolute bottom-3 right-3 text-[10px] text-zinc-400 dark:text-zinc-300 font-mono">
                             {rtmAnswer.length} chars
                           </div>
                         </div>

@@ -344,7 +344,7 @@ export default function ChatPage() {
           {/* Active doc HUD header */}
           {activeDoc && (
             <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-border/80 pb-4 gap-4 z-10">
-              <span className="flex items-center gap-1.5 text-xs font-semibold text-zinc-500">
+              <span className="flex items-center gap-1.5 text-xs font-semibold text-zinc-400 dark:text-zinc-300">
                 <Bot className="h-4 w-4 text-primary animate-pulse" />
                 Active Context: <strong className="text-foreground truncate max-w-[150px]">{activeDoc.title}</strong>
               </span>
@@ -364,7 +364,7 @@ export default function ChatPage() {
                     className={`px-3 py-1.5 rounded-xl text-[10px] font-bold transition-all relative ${
                       activeMode === m.id
                         ? "bg-primary text-white shadow-md border border-primary/20"
-                        : "text-zinc-500 hover:text-white hover:bg-white/5 border border-transparent"
+                        : "text-zinc-400 dark:text-zinc-300 hover:text-white hover:bg-white/5 border border-transparent"
                     }`}
                     title={m.desc}
                   >
@@ -403,7 +403,7 @@ export default function ChatPage() {
                     {msg.text}
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-[9px] text-zinc-500 px-1">{msg.timestamp}</span>
+                    <span className="text-[9px] text-zinc-400 dark:text-zinc-300 px-1">{msg.timestamp}</span>
                     {msg.sources && msg.sources.length > 0 && (
                       <span className="text-[8px] text-primary/60 font-bold uppercase">📎 {msg.sources.length} sources</span>
                     )}

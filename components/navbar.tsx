@@ -166,7 +166,7 @@ export default function Navbar() {
                     <div className="absolute right-0 mt-2 w-52 rounded-xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-[#0d0d11] shadow-xl z-50 py-1.5 animate-float">
                       <div className="px-4 py-2.5 border-b border-zinc-100 dark:border-white/5">
                         <p className="text-xs font-semibold text-zinc-900 dark:text-white truncate">{profile.full_name || "Student"}</p>
-                        <p className="text-[10px] text-zinc-500 truncate">{profile.email || user?.email}</p>
+                        <p className="text-[10px] text-zinc-400 dark:text-zinc-300 truncate">{profile.email || user?.email}</p>
                       </div>
                       <Link
                         href="/settings"

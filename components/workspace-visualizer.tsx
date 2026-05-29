@@ -422,7 +422,7 @@ export default function WorkspaceVisualizer({
 
       <div className="absolute top-4 right-4 z-20 bg-[#09090b]/80 border border-white/5 rounded-full px-4 py-1.5 flex items-center gap-2 text-[9px] uppercase tracking-wider font-bold text-zinc-400 backdrop-blur-md">
         <Activity className="h-3.5 w-3.5 text-emerald-400" />
-        <span className="text-zinc-500 font-light">Interactive Concept Mesh:</span>
+        <span className="text-zinc-400 dark:text-zinc-300 font-medium">Interactive Concept Mesh:</span>
         <span className="text-emerald-400">Live</span>
       </div>
 
@@ -592,7 +592,7 @@ export default function WorkspaceVisualizer({
                   <text
                     y={node.radius + 12}
                     textAnchor="middle"
-                    fill={isSelectedDoc ? "#ffffff" : "rgba(255, 255, 255, 0.45)"}
+                    fill={isSelectedDoc ? "#ffffff" : "rgba(255, 255, 255, 0.75)"}
                     fontSize="8"
                     fontWeight={isSelectedDoc ? "bold" : "normal"}
                     fontFamily="sans-serif"
@@ -627,7 +627,7 @@ export default function WorkspaceVisualizer({
               {hoveredNode.label}
             </p>
             {hoveredNode.type === "document" && (
-              <span className="text-[8px] text-zinc-500 block italic leading-none pt-1">
+              <span className="text-[8px] text-zinc-400 dark:text-zinc-300 block italic leading-none pt-1">
                 {hoveredNode.attached ? "🟢 Attached to Chat. Click to detach." : "🔴 Detached. Click to attach to chat context."}
               </span>
             )}

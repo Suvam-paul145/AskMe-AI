@@ -130,13 +130,13 @@ export default function SettingsPage() {
           <div className="space-y-6">
             {/* Account Credentials displaying user email */}
             <div className="space-y-2 border-b border-white/5 pb-6">
-              <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider flex items-center gap-1">
+              <span className="text-[9px] font-bold text-zinc-400 dark:text-zinc-300 uppercase tracking-wider flex items-center gap-1">
                 <Mail className="h-3.5 w-3.5 text-primary" />
                 <span>Account Credentials</span>
               </span>
               <div className="flex flex-col sm:flex-row sm:items-center justify-between rounded-xl border border-white/5 bg-[#09090b]/40 px-4 py-3 gap-3">
                 <div className="space-y-0.5">
-                  <span className="text-[9px] text-zinc-500 block leading-none font-light">Signed in as</span>
+                  <span className="text-[9px] text-zinc-400 dark:text-zinc-300 block leading-none font-light">Signed in as</span>
                   <span className="text-xs font-semibold text-zinc-200">{mounted ? (profile.email || "Loading...") : "Loading..."}</span>
                 </div>
                 <button
@@ -151,7 +151,7 @@ export default function SettingsPage() {
 
             {/* Avatar customization */}
             <div className="space-y-3 border-b border-white/5 pb-6">
-              <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider flex items-center gap-1">
+              <span className="text-[9px] font-bold text-zinc-400 dark:text-zinc-300 uppercase tracking-wider flex items-center gap-1">
                 <User className="h-3.5 w-3.5 text-primary" />
                 <span>Profile Avatar & Customization</span>
               </span>
@@ -209,7 +209,7 @@ export default function SettingsPage() {
                         disabled={uploading}
                       />
                     </label>
-                    {uploading && <span className="text-[9px] text-zinc-500 animate-pulse">Uploading file...</span>}
+                    {uploading && <span className="text-[9px] text-zinc-400 dark:text-zinc-300 animate-pulse">Uploading file...</span>}
                   </div>
                 </div>
               </div>
@@ -218,7 +218,7 @@ export default function SettingsPage() {
             <form onSubmit={handleSave} className="space-y-6">
               {/* Nickname */}
               <div className="space-y-2">
-                <label htmlFor="user-name" className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider flex items-center gap-1">
+                <label htmlFor="user-name" className="text-[9px] font-bold text-zinc-400 dark:text-zinc-300 uppercase tracking-wider flex items-center gap-1">
                   <User className="h-3.5 w-3.5 text-primary" />
                   <span>Student Nickname</span>
                 </label>
@@ -229,13 +229,13 @@ export default function SettingsPage() {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Enter name"
-                  className="w-full rounded-xl border border-white/5 bg-[#09090b]/60 px-4 py-3.5 text-xs text-white focus:border-primary focus:outline-none transition-all placeholder-zinc-700 font-light"
+                  className="w-full rounded-xl border border-white/5 bg-[#09090b]/60 px-4 py-3.5 text-xs text-white focus:border-primary focus:outline-none transition-all placeholder-zinc-400 font-light"
                 />
               </div>
 
               {/* Personality Adaptation */}
               <div className="space-y-2">
-                <label className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider flex items-center gap-1">
+                <label className="text-[9px] font-bold text-zinc-400 dark:text-zinc-300 uppercase tracking-wider flex items-center gap-1">
                   <Cpu className="h-3.5 w-3.5 text-primary" />
                   <span>AI Tutor Personality Mode</span>
                 </label>
@@ -252,7 +252,7 @@ export default function SettingsPage() {
                       className={`rounded-xl border p-3 text-left transition-all duration-300 ${
                         personality === mode.id
                           ? "border-primary bg-primary/10 text-white shadow-[0_0_15px_rgba(139,92,246,0.1)]"
-                          : "border-white/5 bg-[#09090b]/40 text-zinc-500 hover:text-zinc-300"
+                          : "border-white/5 bg-[#09090b]/40 text-zinc-400 dark:text-zinc-300 hover:text-zinc-200"
                       }`}
                     >
                       <span className="text-[10px] font-bold block">{mode.name}</span>
@@ -264,7 +264,7 @@ export default function SettingsPage() {
 
               {/* Study Pace */}
               <div className="space-y-2">
-                <label htmlFor="study-pace" className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider">Study Pacing Intensity</label>
+                <label htmlFor="study-pace" className="text-[9px] font-bold text-zinc-400 dark:text-zinc-300 uppercase tracking-wider">Study Pacing Intensity</label>
                 <select
                   id="study-pace"
                   value={pace}
@@ -275,14 +275,14 @@ export default function SettingsPage() {
                   <option value="calibrated">Calibrated Spaced Repetition (recommended)</option>
                   <option value="intense">Intense Cram Mode (90% recall pressure)</option>
                 </select>
-                <span className="text-[9px] text-zinc-500 block leading-normal mt-1.5 font-light">
+                <span className="text-[9px] text-zinc-400 dark:text-zinc-300 block leading-normal mt-1.5 font-light">
                   Pacing adjustments calibrate memory decay triggers on your study scheduler autopilot.
                 </span>
               </div>
 
               {/* Theme section */}
               <div className="space-y-2.5 pt-2">
-                <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider block">Appearance Theme</span>
+                <span className="text-[9px] font-bold text-zinc-400 dark:text-zinc-300 uppercase tracking-wider block">Appearance Theme</span>
                 <div className="flex gap-3">
                   <button
                     type="button"
@@ -290,7 +290,7 @@ export default function SettingsPage() {
                     className={`w-full rounded-xl border p-3 text-xs font-semibold flex items-center justify-center gap-2 transition-all duration-300 ${
                       mounted && theme === "light"
                         ? "border-primary bg-primary/10 text-primary shadow-[0_0_10px_rgba(139,92,246,0.1)]"
-                        : "border-white/5 bg-[#09090b]/60 text-zinc-500 hover:text-zinc-300"
+                        : "border-white/5 bg-[#09090b]/60 text-zinc-400 dark:text-zinc-300 hover:text-zinc-200"
                     }`}
                   >
                     <Sun className="h-4.5 w-4.5 text-yellow-500" />
@@ -302,7 +302,7 @@ export default function SettingsPage() {
                     className={`w-full rounded-xl border p-3 text-xs font-semibold flex items-center justify-center gap-2 transition-all duration-300 ${
                       !mounted || theme === "dark"
                         ? "border-primary bg-primary/10 text-white shadow-[0_0_10px_rgba(139,92,246,0.1)] animate-pulse"
-                        : "border-white/5 bg-[#09090b]/60 text-zinc-500 hover:text-zinc-300"
+                        : "border-white/5 bg-[#09090b]/60 text-zinc-400 dark:text-zinc-300 hover:text-zinc-200"
                     }`}
                   >
                     <Moon className="h-4.5 w-4.5 text-indigo-400" />
@@ -328,7 +328,7 @@ export default function SettingsPage() {
             <ShieldAlert className="h-5.5 w-5.5 animate-pulse biometric-glow" />
             <h3 className="text-xs font-bold uppercase tracking-wider">Danger Zone Controls</h3>
           </div>
-          <p className="text-[10px] text-zinc-500 leading-relaxed font-light">
+          <p className="text-[10px] text-zinc-400 dark:text-zinc-300 leading-relaxed font-light">
             Deletes your full active session cookies, streak counters, document vector weights, quiz records, and learning DNA. Re-initializes study loops from onboarding stages.
           </p>
           <button

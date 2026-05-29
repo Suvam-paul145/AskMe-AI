@@ -777,7 +777,7 @@ export function FlowchartRenderer({ code }: { code: string }) {
                 <>
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
-                      <span className="text-[8px] uppercase tracking-widest font-mono text-zinc-500 font-bold">
+                      <span className="text-[8px] uppercase tracking-widest font-mono text-zinc-400 dark:text-zinc-300 font-bold">
                         {details.stage}
                       </span>
                       <span className="h-1.5 w-1.5 rounded-full animate-pulse" style={{ backgroundColor: style.stroke }} />
@@ -791,12 +791,12 @@ export function FlowchartRenderer({ code }: { code: string }) {
                       {details.category}
                     </div>
 
-                    <p className="text-[10px] text-zinc-400 leading-relaxed font-light mt-2 transition-all duration-300">
+                    <p className="text-[10px] text-zinc-300 dark:text-zinc-300 leading-relaxed font-light mt-2 transition-all duration-300">
                       {details.desc}
                     </p>
                   </div>
                   
-                  <div className="text-[8px] text-zinc-500 font-light pt-3 border-t border-white/5">
+                  <div className="text-[8px] text-zinc-400 dark:text-zinc-400 font-light pt-3 border-t border-white/5">
                     💡 Try dragging this node to customize the layout.
                   </div>
                 </>
@@ -806,7 +806,7 @@ export function FlowchartRenderer({ code }: { code: string }) {
             <>
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-[8px] uppercase tracking-widest font-mono text-zinc-500 font-bold">
+                  <span className="text-[8px] uppercase tracking-widest font-mono text-zinc-400 dark:text-zinc-400 font-bold">
                     Interactive HUD
                   </span>
                   <span className="h-1.5 w-1.5 rounded-full bg-primary/40 animate-ping" />
@@ -816,12 +816,12 @@ export function FlowchartRenderer({ code }: { code: string }) {
                   Study Assistant
                 </h4>
 
-                <p className="text-[10px] text-zinc-500 leading-relaxed font-light mt-2">
+                <p className="text-[10px] text-zinc-300 dark:text-zinc-300 leading-relaxed font-light mt-2">
                   Hover over any node in the interactive learning flowchart to reveal key concepts, relationships, and study explanations in real-time.
                 </p>
               </div>
 
-              <div className="text-[8px] text-zinc-600 font-light pt-3 border-t border-white/5">
+              <div className="text-[8px] text-zinc-400 dark:text-zinc-400 font-light pt-3 border-t border-white/5">
                 💡 Drag nodes or use scroll to zoom/pan the diagram.
               </div>
             </>
@@ -830,7 +830,7 @@ export function FlowchartRenderer({ code }: { code: string }) {
       </div>
 
       {/* Helpful Hint banner */}
-      <span className="mt-3.5 text-[9px] text-zinc-500 font-light z-10">
+      <span className="mt-3.5 text-[9px] text-zinc-300 dark:text-zinc-300 font-light z-10">
         💡 Drag nodes above to organize overlays. Stages are color-coded: Ingestion/Docs (Green), Vector Data (Blue), Inputs/Query (Orange), and Model Answers (Pink).
       </span>
     </div>

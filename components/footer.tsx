@@ -34,7 +34,7 @@ export default function Footer() {
                 AskMe <span className="text-primary dark:text-purple-400">AI</span>
               </span>
             </Link>
-            <p className="text-sm leading-relaxed text-zinc-500">
+            <p className="text-sm leading-relaxed text-zinc-400">
               The Tesla of EdTech: a next-generation Cognitive Learning Operating System that aligns with your brain&apos;s unique wiring.
             </p>
             <div className="flex items-center gap-3">
@@ -88,7 +88,7 @@ export default function Footer() {
           {/* Subscription Newsletter */}
           <div className="space-y-4">
             <h3 className="text-sm font-semibold tracking-wider text-white uppercase">Cognitive Dispatch</h3>
-            <p className="text-sm text-zinc-500">
+            <p className="text-sm text-zinc-400">
               Subscribe to get the latest research updates in active recall methodology and neural study integrations.
             </p>
             <form onSubmit={handleSubmit} className="flex gap-2">
@@ -98,7 +98,7 @@ export default function Footer() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="Enter your email"
-                className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-3.5 py-2 text-sm text-white placeholder-zinc-600 focus:border-primary focus:outline-none transition-all"
+                className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-3.5 py-2 text-sm text-white placeholder-zinc-400 focus:border-primary focus:outline-none transition-all"
                 suppressHydrationWarning
               />
               <button
@@ -119,7 +119,7 @@ export default function Footer() {
         </div>
 
         {/* Bottom copyright */}
-        <div className="border-t border-zinc-900 mt-10 pt-8 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-zinc-600">
+        <div className="border-t border-zinc-900 mt-10 pt-8 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-zinc-400">
           <p>© {currentYear} AskMe AI Inc. All rights reserved.</p>
           <div className="flex gap-6">
             <Link href="/careers" className="hover:text-zinc-400">Careers</Link>

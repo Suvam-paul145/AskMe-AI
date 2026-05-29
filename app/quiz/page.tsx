@@ -81,7 +81,7 @@ function QuizContent() {
       <div className="flex flex-col items-center justify-center text-center p-8 space-y-6 py-32">
         <HelpCircle className="h-16 w-16 text-primary animate-drift" />
         <h2 className="text-xl font-bold text-white leading-snug">No quiz calibration ready</h2>
-        <p className="text-xs text-zinc-500 max-w-sm font-light">Please select a valid study notes chapter containing generated questions.</p>
+        <p className="text-xs text-zinc-400 dark:text-zinc-300 max-w-sm font-light">Please select a valid study notes chapter containing generated questions.</p>
         <button
           onClick={() => router.push("/workspace")}
           className="rounded-xl bg-primary px-6 py-3 text-xs font-bold text-white shadow-md hover:bg-primary/95 transition-all duration-300"
@@ -177,7 +177,7 @@ function QuizContent() {
             {stressInfo.name}
           </span>
           <div className="flex items-center gap-1.5 text-zinc-400 font-mono">
-            <Timer className="h-4 w-4 text-zinc-500" />
+            <Timer className="h-4 w-4 text-zinc-400" />
             <span>{formatTime(timerSeconds)}</span>
           </div>
         </div>
@@ -188,7 +188,7 @@ function QuizContent() {
           <div className="absolute top-0 right-0 w-[150px] h-[150px] radial-glow opacity-25 pointer-events-none" />
 
           {/* Progress row */}
-          <div className="flex items-center justify-between text-xs text-zinc-500 border-b border-white/5 pb-4 font-mono">
+          <div className="flex items-center justify-between text-xs text-zinc-400 dark:text-zinc-300 border-b border-white/5 pb-4 font-mono">
             <span>Question {currentQuestionIdx + 1} of {docQuestions.length}</span>
             <span className="font-bold text-primary dark:text-purple-400 uppercase tracking-widest biometric-glow">Topic: {currentQuestion.topic}</span>
           </div>
@@ -277,7 +277,7 @@ function QuizContent() {
 
           <div className="space-y-2">
             <h2 className="text-2xl font-extrabold text-white cinematic-title">Assessment Complete!</h2>
-            <p className="text-xs text-zinc-500 font-light">Calibration nodes and learning DNA metrics successfully synced.</p>
+            <p className="text-xs text-zinc-400 dark:text-zinc-300 font-light">Calibration nodes and learning DNA metrics successfully synced.</p>
           </div>
 
           {/* Metrics summary */}
@@ -286,13 +286,13 @@ function QuizContent() {
               <span className="text-2xl font-bold text-white font-mono">
                 {score} / {docQuestions.length}
               </span>
-              <p className="text-[9px] text-zinc-500 uppercase tracking-widest font-semibold mt-1">Questions Correct</p>
+              <p className="text-[9px] text-zinc-400 dark:text-zinc-300 uppercase tracking-widest font-semibold mt-1">Questions Correct</p>
             </div>
             <div>
               <span className="text-2xl font-bold text-primary dark:text-purple-400 font-mono biometric-glow">
                 +{30 + Math.round((score / docQuestions.length) * 50)} XP
               </span>
-              <p className="text-[9px] text-zinc-500 uppercase tracking-widest font-semibold mt-1">Cognitive Points</p>
+              <p className="text-[9px] text-zinc-400 dark:text-zinc-300 uppercase tracking-widest font-semibold mt-1">Cognitive Points</p>
             </div>
           </div>
 
@@ -320,7 +320,7 @@ function QuizContent() {
                   <div key={`${item.topic}-${idx}`} className="rounded-xl border border-white/5 bg-[#0d0d11]/60 p-3">
                     <div className="flex items-center justify-between gap-3">
                       <span className="text-xs font-bold text-white">{item.topic}</span>
-                      <span className="text-[9px] font-mono text-zinc-500">{item.duration || 15} min</span>
+                      <span className="text-[9px] font-mono text-zinc-400 dark:text-zinc-300">{item.duration || 15} min</span>
                     </div>
                     <p className="mt-1 text-[10px] leading-relaxed text-zinc-400">{item.action}</p>
                   </div>
@@ -378,7 +378,7 @@ export default function QuizPage() {
         <Suspense fallback={
           <div className="text-center py-20">
             <RefreshCw className="h-8 w-8 animate-spin mx-auto text-primary" />
-            <p className="text-xs text-zinc-500 mt-2 font-light">Loading cognitive questions...</p>
+            <p className="text-xs text-zinc-400 dark:text-zinc-300 mt-2 font-light">Loading cognitive questions...</p>
           </div>
         }>
           <QuizContent />

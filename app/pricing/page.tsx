@@ -139,7 +139,7 @@ export default function PricingPage() {
               className={`rounded-full px-5 py-1.5 text-xs font-bold transition-all duration-300 ${
                 billingCycle === "monthly"
                   ? "bg-primary text-white shadow-md"
-                  : "text-zinc-500 hover:text-zinc-300"
+                  : "text-zinc-400 dark:text-zinc-300 hover:text-zinc-200"
               }`}
             >
               Monthly
@@ -149,7 +149,7 @@ export default function PricingPage() {
               className={`rounded-full px-5 py-1.5 text-xs font-bold transition-all duration-300 ${
                 billingCycle === "yearly"
                   ? "bg-primary text-white shadow-md"
-                  : "text-zinc-500 hover:text-zinc-300"
+                  : "text-zinc-400 dark:text-zinc-300 hover:text-zinc-200"
               }`}
             >
               Yearly (Save 25%)
@@ -186,7 +186,7 @@ export default function PricingPage() {
                     <div className={`p-2.5 rounded-xl border transition-colors ${
                       plan.accent 
                         ? "bg-primary/10 text-primary border-primary/20 shadow-[0_0_10px_rgba(139,92,246,0.15)]" 
-                        : "bg-white/5 text-zinc-500 border-white/5 group-hover:text-white"
+                        : "bg-white/5 text-zinc-400 border-white/5 group-hover:text-white"
                     }`}>
                       <Icon className="h-5 w-5" />
                     </div>
@@ -197,9 +197,9 @@ export default function PricingPage() {
                   <div className="pt-2">
                     <div className="flex items-baseline text-white gap-2">
                       <span className="text-4xl font-extrabold tracking-tight font-mono">${plan.price}</span>
-                      <span className="text-xs font-light text-zinc-500">/ {billingCycle === "yearly" ? "month" : "month"}</span>
+                      <span className="text-xs font-light text-zinc-400">/ {billingCycle === "yearly" ? "month" : "month"}</span>
                       {plan.originalPrice && plan.originalPrice > plan.price && (
-                        <span className="text-sm text-zinc-500 line-through font-mono">${plan.originalPrice}</span>
+                        <span className="text-sm text-zinc-400 line-through font-mono">${plan.originalPrice}</span>
                       )}
                     </div>
                     {billingCycle === "yearly" && plan.price > 0 && (
@@ -238,7 +238,7 @@ export default function PricingPage() {
                     {plan.cta}
                   </Link>
                   {plan.accent && (
-                    <p className="text-[9px] text-center text-zinc-500 mt-2 font-light">
+                    <p className="text-[9px] text-center text-zinc-400 dark:text-zinc-300 mt-2 font-light">
                       🎉 Free during beta — no credit card required
                     </p>
                   )}
@@ -258,7 +258,7 @@ export default function PricingPage() {
           </div>
 
           <div className="rounded-2xl border border-white/5 bg-[#0d0d11]/60 overflow-hidden">
-            <div className="grid grid-cols-4 gap-0 text-xs font-bold uppercase tracking-wider text-zinc-500 border-b border-white/5">
+            <div className="grid grid-cols-4 gap-0 text-xs font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-300 border-b border-white/5">
               <div className="p-4">Feature</div>
               <div className="p-4 text-center">Free</div>
               <div className="p-4 text-center text-primary">Pro</div>
@@ -272,9 +272,9 @@ export default function PricingPage() {
                     {val === true ? (
                       <Check className="h-4 w-4 text-emerald-400 mx-auto" />
                     ) : val === false ? (
-                      <XIcon className="h-4 w-4 text-zinc-600 mx-auto" />
+                      <XIcon className="h-4 w-4 text-zinc-400 mx-auto" />
                     ) : (
-                      <span className="text-zinc-400 font-light">{val}</span>
+                      <span className="text-zinc-400 dark:text-zinc-300 font-light">{val}</span>
                     )}
                   </div>
                 ))}
@@ -303,7 +303,7 @@ export default function PricingPage() {
                   className="w-full flex items-center justify-between p-5 text-left"
                 >
                   <span className="text-sm font-semibold text-white">{item.q}</span>
-                  <ChevronDown className={`h-4 w-4 text-zinc-500 transition-transform duration-300 shrink-0 ml-4 ${openFaq === idx ? "rotate-180" : ""}`} />
+                  <ChevronDown className={`h-4 w-4 text-zinc-400 dark:text-zinc-300 transition-transform duration-300 shrink-0 ml-4 ${openFaq === idx ? "rotate-180" : ""}`} />
                 </button>
                 {openFaq === idx && (
                   <div className="px-5 pb-5 pt-0">

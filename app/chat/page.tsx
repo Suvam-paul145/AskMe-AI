@@ -25,6 +25,149 @@ export default function ChatPage() {
   // Mode Selection States: auto (Auto-Detect), ask, learning, agent
   const [activeMode, setActiveMode] = useState<"auto" | "ask" | "learning" | "agent">("auto");
 
+  // Conversational Voice Mode Interface States
+  const [showVoiceOverlay, setShowVoiceOverlay] = useState(false);
+  const [voiceState, setVoiceState] = useState<"connecting" | "ready" | "listening" | "speaking" | "ended">("connecting");
+  const [speechTranscript, setSpeechTranscript] = useState("");
+  
+  const recognitionRef = useRef<any>(null);
+
+  // Cleanup speech resources on unmount
+  useEffect(() => {
+    return () => {
+      if (typeof window !== "undefined") {
+        if (recognitionRef.current) {
+          recognitionRef.current.abort();
+        }
+        if (window.speechSynthesis) {
+          window.speechSynthesis.cancel();
+        }
+      }
+    };
+  }, []);
+
+  // Initialize Speech Recognition
+  const startSpeechRecognition = () => {
+    if (typeof window === "undefined") return;
+    
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert("Speech recognition is not supported in this browser. Please use Chrome or Edge.");
+      return;
+    }
+
+    // Cancel synthesis to prevent feedback loop
+    if (window.speechSynthesis) {
+      window.speechSynthesis.cancel();
+    }
+
+    const rec = new SpeechRecognition();
+    rec.continuous = false;
+    rec.interimResults = false;
+    rec.lang = "en-US";
+
+    rec.onstart = () => {
+      setVoiceState("listening");
+    };
+
+    rec.onresult = async (event: any) => {
+      const resultText = event.results[0][0].transcript;
+      setSpeechTranscript(resultText);
+      setVoiceState("speaking");
+      
+      if (activeDoc) {
+        setIsAiReplying(true);
+        // Force the prompt to return an extremely short, simple story-based answer for voice mode
+        const voicePrompt = `${resultText} (IMPORTANT voice instruction: Reply with a highly concise, simple story-like answer under 3 sentences for direct voice speaking).`;
+        
+        try {
+          const aiResponse = await sendMessage(activeDoc.id, voicePrompt, activeMode === "auto" ? detectIntent(resultText) : activeMode);
+          
+          // Read AI response back aloud!
+          speakText(aiResponse);
+        } catch (e) {
+          console.error("Speech send error:", e);
+          setVoiceState("ready");
+          setIsAiReplying(false);
+        }
+      }
+    };
+
+    rec.onerror = (e: any) => {
+      console.error("Speech recognition error:", e);
+      setVoiceState("ready");
+    };
+
+    rec.onend = () => {
+      // Allow speech synthesis transition or fallback
+    };
+
+    recognitionRef.current = rec;
+    rec.start();
+  };
+
+  // Read AI Text Aloud using Web Speech Synthesis
+  const speakText = (text: string) => {
+    if (typeof window === "undefined" || !window.speechSynthesis) return;
+
+    window.speechSynthesis.cancel();
+
+    // Remove markdown code fences and symbols for clean reading
+    const cleanText = text
+      .replace(/```[\s\S]*?```/g, "")
+      .replace(/[#*`_]/g, "")
+      .trim();
+
+    const utterance = new SpeechSynthesisUtterance(cleanText.slice(0, 320));
+    utterance.lang = "en-US";
+    
+    utterance.onstart = () => {
+      setVoiceState("speaking");
+      setIsAiReplying(false);
+    };
+
+    utterance.onend = () => {
+      setVoiceState("ready");
+      // Auto restart listening for a true hands-free talking loop!
+      setTimeout(() => {
+        if (showVoiceOverlay) {
+          startSpeechRecognition();
+        }
+      }, 400);
+    };
+
+    utterance.onerror = (e) => {
+      console.error("Speech synthesis error:", e);
+      setVoiceState("ready");
+    };
+
+    window.speechSynthesis.speak(utterance);
+  };
+
+  const endVoiceMode = () => {
+    if (typeof window !== "undefined") {
+      if (recognitionRef.current) {
+        recognitionRef.current.abort();
+      }
+      if (window.speechSynthesis) {
+        window.speechSynthesis.cancel();
+      }
+    }
+    setShowVoiceOverlay(false);
+    setVoiceState("connecting");
+    setSpeechTranscript("");
+  };
+
+  const launchVoiceMode = () => {
+    setShowVoiceOverlay(true);
+    setVoiceState("connecting");
+    
+    setTimeout(() => {
+      setVoiceState("ready");
+      startSpeechRecognition();
+    }, 1500);
+  };
+
   // Client-side text intent analyzer for auto-switching
   const detectIntent = (text: string): "ask" | "learning" | "agent" => {
     const t = text.toLowerCase().trim();
@@ -98,6 +241,105 @@ export default function ChatPage() {
         {/* LEFT COLUMN — AI DOUBT CHAT PANEL (col-span-8) */}
         <div className="lg:col-span-8 flex flex-col justify-between h-full bg-card/15 border border-border/80 rounded-3xl p-6 relative overflow-hidden">
           <div className="absolute top-0 right-0 w-[150px] h-[150px] radial-glow opacity-20 pointer-events-none" />
+
+          {/* ChatGPT-Style Immersive Voice Mode Overlay */}
+          {showVoiceOverlay && (
+            <div className="absolute inset-0 bg-[#040406]/95 backdrop-blur-xl z-30 flex flex-col items-center justify-center p-8 text-center space-y-8 animate-fade-in select-none">
+              
+              {/* Voice Mode Indicator */}
+              <div className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/10 px-3.5 py-1 text-xs font-semibold text-primary dark:text-purple-400">
+                <Bot className="h-3.5 w-3.5 animate-pulse" />
+                <span>AskMe AI Interactive Voice</span>
+              </div>
+
+              {/* Pulsing Audio Circles Visualizer */}
+              <div className="relative w-48 h-48 flex items-center justify-center">
+                {/* Outer ring */}
+                <div className={`absolute inset-0 rounded-full bg-primary/5 border border-primary/10 transition-all duration-1000 ${
+                  voiceState === "listening" ? "scale-110 animate-ping opacity-60" : voiceState === "speaking" ? "scale-125 animate-ping opacity-45" : "scale-100 opacity-20"
+                }`} />
+                
+                {/* Middle ring */}
+                <div className={`absolute w-36 h-36 rounded-full bg-primary/10 border border-primary/20 transition-all duration-500 ${
+                  voiceState === "listening" ? "scale-105 animate-pulse" : voiceState === "speaking" ? "scale-110 animate-pulse" : "scale-100 opacity-40"
+                }`} />
+
+                {/* Core */}
+                <div className="absolute w-24 h-24 rounded-full bg-gradient-to-tr from-primary to-purple-600 flex items-center justify-center shadow-xl border border-white/10 z-10">
+                  <Brain className={`h-10 w-10 text-white ${
+                    voiceState === "connecting" ? "animate-spin" : voiceState === "listening" ? "animate-pulse" : voiceState === "speaking" ? "animate-bounce" : ""
+                  }`} />
+                </div>
+              </div>
+
+              {/* Viewport Status Header */}
+              <div className="space-y-2">
+                <h3 className="text-xl font-extrabold text-white tracking-tight uppercase">
+                  {voiceState === "connecting" ? "Connecting to Voice" : 
+                   voiceState === "listening" ? "Listening..." : 
+                   voiceState === "speaking" ? "AI is Explaining" : "Start Talking"}
+                </h3>
+                <p className="text-xs text-zinc-400 font-light max-w-xs leading-normal">
+                  {voiceState === "connecting" ? "Establishing secure cognitive audio channels..." :
+                   voiceState === "listening" ? "Speak now! Ask anything about your revision material." :
+                   voiceState === "speaking" ? "Tuning response for optimal socratic audio retention..." :
+                   "Ready when you are. Press speak to resume conversation."}
+                </p>
+              </div>
+
+              {/* Dynamic Speech Text HUD */}
+              {(speechTranscript || isAiReplying) && (
+                <div className="bg-[#0d0d11]/80 border border-white/5 p-4 rounded-2xl max-w-md w-full backdrop-blur-md space-y-2 text-left">
+                  {speechTranscript && (
+                    <div className="text-[10px] text-zinc-300 font-mono leading-relaxed">
+                      <span className="text-primary font-bold mr-1">YOU:</span> &ldquo;{speechTranscript}&rdquo;
+                    </div>
+                  )}
+                  {isAiReplying && (
+                    <div className="text-[10px] text-primary font-mono animate-pulse flex items-center gap-1.5 pt-1.5 border-t border-white/5">
+                      <span className="h-1.5 w-1.5 rounded-full bg-primary animate-ping" />
+                      <span>COMPILING CONCISE RESPONSE STORY...</span>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Viewport Actions */}
+              <div className="flex items-center gap-4 z-40">
+                {voiceState !== "connecting" && (
+                  <button
+                    key="action-voice"
+                    type="button"
+                    onClick={() => {
+                      if (voiceState === "listening") {
+                        recognitionRef.current?.abort();
+                        setVoiceState("ready");
+                      } else {
+                        startSpeechRecognition();
+                      }
+                    }}
+                    className={`px-5 py-2.5 rounded-xl text-xs font-bold transition-all border ${
+                      voiceState === "listening" 
+                        ? "bg-rose-500/10 border-rose-500/20 text-rose-500" 
+                        : "bg-primary text-white border-primary/20 shadow-lg hover:bg-primary/95"
+                    }`}
+                  >
+                    {voiceState === "listening" ? "🔇 Mute Input" : "🎙️ Talk Now"}
+                  </button>
+                )}
+                
+                <button
+                  key="cancel-voice"
+                  type="button"
+                  onClick={endVoiceMode}
+                  className="px-5 py-2.5 rounded-xl border border-white/10 hover:border-white/20 bg-card hover:bg-muted text-xs font-semibold text-zinc-300 hover:text-white transition-all"
+                >
+                  Cancel Voice Mode
+                </button>
+              </div>
+
+            </div>
+          )}
 
           {/* Active doc HUD header */}
           {activeDoc && (
@@ -231,13 +473,9 @@ export default function ChatPage() {
             <form onSubmit={handleSend} className="flex gap-2">
               <button
                 type="button"
-                onClick={() => setVoiceActive(!voiceActive)}
-                className={`rounded-xl border p-3.5 transition-all ${
-                  voiceActive 
-                    ? "border-primary bg-primary/10 text-primary animate-pulse" 
-                    : "border-border bg-card hover:bg-muted text-muted-foreground"
-                }`}
-                title="Toggle Mic Input"
+                onClick={launchVoiceMode}
+                className="rounded-xl border border-border bg-card hover:bg-muted text-muted-foreground p-3.5 transition-all"
+                title="Launch Conversational Voice Mode"
               >
                 <Mic className="h-5 w-5" />
               </button>

@@ -240,7 +240,7 @@ function Custom3DGraph({ scene }: { scene: number }) {
 
         // Node Label (only if closer or hovered)
         if (scene >= 3 && node.scale > 0.75) {
-          ctx.fillStyle = theme === "light" ? "rgba(0, 0, 0, 0.55)" : "rgba(255, 255, 255, 0.45)";
+          ctx.fillStyle = theme === "light" ? "rgba(0, 0, 0, 0.85)" : "rgba(255, 255, 255, 0.85)";
           ctx.font = `${Math.round(9 * node.scale)}px sans-serif`;
           ctx.textAlign = "center";
           ctx.fillText(node.label, node.px, node.py + radius + 12);

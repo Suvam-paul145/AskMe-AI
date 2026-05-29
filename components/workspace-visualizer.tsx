@@ -636,10 +636,10 @@ export default function WorkspaceVisualizer({
       )}
 
       {/* Helpful Hint banner */}
-      <div className="mt-3.5 bg-white/5 border border-white/5 p-4.5 rounded-2xl flex items-start gap-2.5 text-[10px] text-zinc-400 max-w-lg leading-relaxed font-light">
+      <div className="mt-3.5 bg-zinc-50 dark:bg-white/5 border border-zinc-200 dark:border-white/5 p-4.5 rounded-2xl flex items-start gap-2.5 text-[10px] text-zinc-600 dark:text-zinc-400 max-w-lg leading-relaxed font-light">
         <HelpCircle className="h-4.5 w-4.5 text-primary shrink-0 mt-0.5" />
         <div className="space-y-0.5">
-          <span className="font-bold text-zinc-300">How to Interact:</span>
+          <span className="font-bold text-zinc-800 dark:text-zinc-300">How to Interact:</span>
           <p>Click-drag nodes to stretch the graph. Click **document nodes** to toggle attachment to the doubt-solving chat. Dashed lines represent conceptual connections found across separate materials.</p>
         </div>
       </div>

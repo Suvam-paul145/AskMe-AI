@@ -507,7 +507,7 @@ export function FlowchartRenderer({ code }: { code: string }) {
         <button
           type="button"
           onClick={handleResetLayout}
-          className="rounded-lg border border-white/5 bg-[#09090b]/60 hover:bg-[#09090b]/90 px-2.5 py-1 text-[9px] font-bold text-zinc-400 hover:text-white transition-all uppercase tracking-wider"
+          className="rounded-lg border border-zinc-200 dark:border-white/5 bg-zinc-100 dark:bg-[#09090b]/60 hover:bg-zinc-200 dark:hover:bg-[#09090b]/90 px-2.5 py-1 text-[9px] font-bold text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-all uppercase tracking-wider"
         >
           Reset Layout
         </button>
@@ -517,7 +517,7 @@ export function FlowchartRenderer({ code }: { code: string }) {
       <div className="w-full flex flex-col lg:flex-row gap-4 items-stretch z-10">
         <div 
           ref={containerRef}
-          className="flex-1 relative aspect-[16/9] overflow-hidden select-none rounded-2xl bg-zinc-950/40 border border-white/5 cursor-grab active:cursor-grabbing"
+          className="flex-1 relative aspect-[16/9] overflow-hidden select-none rounded-2xl bg-zinc-100/50 dark:bg-zinc-950/40 border border-zinc-200 dark:border-white/5 cursor-grab active:cursor-grabbing"
         >
         <svg
           ref={svgRef}
@@ -735,7 +735,7 @@ export function FlowchartRenderer({ code }: { code: string }) {
         </svg>
 
         {/* Floating Figma/CAD Style viewport controls HUD */}
-        <div className="absolute bottom-3 right-3 flex items-center gap-1 bg-[#09090b]/90 border border-white/5 backdrop-blur-md px-2 py-1 rounded-xl z-20 shadow-lg select-none">
+        <div className="absolute bottom-3 right-3 flex items-center gap-1 bg-white/90 dark:bg-[#09090b]/90 border border-zinc-200 dark:border-white/5 backdrop-blur-md px-2 py-1 rounded-xl z-20 shadow-lg select-none">
           <button
             type="button"
             onClick={() => setZoom(z => Math.max(z / 1.15, 0.4))}
@@ -768,7 +768,7 @@ export function FlowchartRenderer({ code }: { code: string }) {
       </div>
 
       {/* Interactive Side details HUD Panel */}
-      <div className="w-full lg:w-[200px] shrink-0 bg-zinc-950/60 border border-white/5 rounded-2xl p-4 flex flex-col justify-between backdrop-blur-md relative overflow-hidden transition-all duration-300">
+      <div className="w-full lg:w-[200px] shrink-0 bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200 dark:border-white/5 rounded-2xl p-4 flex flex-col justify-between backdrop-blur-md relative overflow-hidden transition-all duration-300">
           {hoveredNode ? (
             (() => {
               const details = getConceptDetails(hoveredNode.label);
@@ -777,13 +777,13 @@ export function FlowchartRenderer({ code }: { code: string }) {
                 <>
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
-                      <span className="text-[8px] uppercase tracking-widest font-mono text-zinc-400 dark:text-zinc-300 font-bold">
+                      <span className="text-[8px] uppercase tracking-widest font-mono text-zinc-500 dark:text-zinc-300 font-bold">
                         {details.stage}
                       </span>
                       <span className="h-1.5 w-1.5 rounded-full animate-pulse" style={{ backgroundColor: style.stroke }} />
                     </div>
                     
-                    <h4 className="text-sm font-bold text-white leading-tight">
+                    <h4 className="text-sm font-bold text-zinc-800 dark:text-white leading-tight">
                       {hoveredNode.label}
                     </h4>
 
@@ -791,12 +791,12 @@ export function FlowchartRenderer({ code }: { code: string }) {
                       {details.category}
                     </div>
 
-                    <p className="text-[10px] text-zinc-300 dark:text-zinc-300 leading-relaxed font-light mt-2 transition-all duration-300">
+                    <p className="text-[10px] text-zinc-600 dark:text-zinc-300 leading-relaxed font-light mt-2 transition-all duration-300">
                       {details.desc}
                     </p>
                   </div>
                   
-                  <div className="text-[8px] text-zinc-400 dark:text-zinc-400 font-light pt-3 border-t border-white/5">
+                  <div className="text-[8px] text-zinc-500 dark:text-zinc-400 font-light pt-3 border-t border-zinc-200 dark:border-white/5">
                     💡 Try dragging this node to customize the layout.
                   </div>
                 </>
@@ -806,22 +806,22 @@ export function FlowchartRenderer({ code }: { code: string }) {
             <>
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-[8px] uppercase tracking-widest font-mono text-zinc-400 dark:text-zinc-400 font-bold">
+                  <span className="text-[8px] uppercase tracking-widest font-mono text-zinc-500 dark:text-zinc-400 font-bold">
                     Interactive HUD
                   </span>
                   <span className="h-1.5 w-1.5 rounded-full bg-primary/40 animate-ping" />
                 </div>
                 
-                <h4 className="text-sm font-bold text-white/80 leading-tight">
+                <h4 className="text-sm font-bold text-zinc-800 dark:text-white/80 leading-tight">
                   Study Assistant
                 </h4>
 
-                <p className="text-[10px] text-zinc-300 dark:text-zinc-300 leading-relaxed font-light mt-2">
+                <p className="text-[10px] text-zinc-600 dark:text-zinc-300 leading-relaxed font-light mt-2">
                   Hover over any node in the interactive learning flowchart to reveal key concepts, relationships, and study explanations in real-time.
                 </p>
               </div>
 
-              <div className="text-[8px] text-zinc-400 dark:text-zinc-400 font-light pt-3 border-t border-white/5">
+              <div className="text-[8px] text-zinc-500 dark:text-zinc-400 font-light pt-3 border-t border-zinc-200 dark:border-white/5">
                 💡 Drag nodes or use scroll to zoom/pan the diagram.
               </div>
             </>
@@ -830,7 +830,7 @@ export function FlowchartRenderer({ code }: { code: string }) {
       </div>
 
       {/* Helpful Hint banner */}
-      <span className="mt-3.5 text-[9px] text-zinc-300 dark:text-zinc-300 font-light z-10">
+      <span className="mt-3.5 text-[9px] text-zinc-500 dark:text-zinc-400 font-light z-10">
         💡 Drag nodes above to organize overlays. Stages are color-coded: Ingestion/Docs (Green), Vector Data (Blue), Inputs/Query (Orange), and Model Answers (Pink).
       </span>
     </div>

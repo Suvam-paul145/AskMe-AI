@@ -222,14 +222,14 @@ export default function FeaturesPage() {
                     onClick={() => setSelectedEngine(idx)}
                     className={`flex items-center gap-4 text-left p-4 rounded-2xl border transition-all duration-300 tactile-card ${
                       isSelected 
-                        ? "border-primary/40 bg-primary/5 text-white shadow-xl shadow-primary/5" 
-                        : "border-white/5 bg-[#0d0d11]/40 text-zinc-400 hover:text-white"
+                        ? "border-primary/40 bg-primary/5 text-zinc-900 dark:text-white shadow-xl shadow-primary/5" 
+                        : "border-zinc-200 dark:border-white/5 bg-zinc-50/50 dark:bg-[#0d0d11]/40 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 hover:bg-zinc-100 dark:hover:bg-[#0d0d11]"
                     }`}
                   >
                     <div className={`p-2.5 rounded-xl border relative ${
                       isSelected 
                         ? "bg-primary text-white border-primary/20 shadow-md shadow-primary/20" 
-                        : "bg-white/5 text-zinc-400 border-white/5"
+                        : "bg-zinc-100 dark:bg-white/5 text-zinc-500 dark:text-zinc-400 border-zinc-200 dark:border-white/5"
                     }`}>
                       <Icon className="h-5 w-5" />
                       {engine.featured && (
@@ -258,20 +258,20 @@ export default function FeaturesPage() {
               return (
                 <div className="space-y-8">
                   {/* Title Bar */}
-                  <div className="flex items-center justify-between border-b border-white/5 pb-6">
+                  <div className="flex items-center justify-between border-b border-zinc-200 dark:border-white/5 pb-6">
                     <div className="flex items-center gap-5">
                       <div className="p-3.5 bg-primary text-white rounded-2xl shadow-xl shadow-primary/10 border border-primary/20">
                         <Icon className="h-7 w-7" />
                       </div>
                       <div>
-                        <h2 className="text-2xl font-extrabold tracking-tight uppercase text-white">{activeEngine.title}</h2>
+                        <h2 className="text-2xl font-extrabold tracking-tight uppercase text-zinc-800 dark:text-white">{activeEngine.title}</h2>
                         <span className="text-[10px] font-bold text-primary dark:text-purple-400 font-mono tracking-widest uppercase mt-0.5 block">{activeEngine.metric}</span>
                       </div>
                     </div>
                   </div>
 
                   {/* Description */}
-                  <p className="text-zinc-400 leading-relaxed font-light text-sm">
+                  <p className="text-zinc-600 dark:text-zinc-400 leading-relaxed font-light text-sm">
                     {activeEngine.description}
                   </p>
 
@@ -279,16 +279,16 @@ export default function FeaturesPage() {
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <h4 className="text-[10px] uppercase font-bold tracking-widest text-zinc-500 font-mono">Platform Benchmarks</h4>
-                      <span className="text-[8px] text-zinc-600 font-mono">Based on beta user sessions</span>
+                      <span className="text-[8px] text-zinc-500 dark:text-zinc-600 font-mono">Based on beta user sessions</span>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
-                      <div className="rounded-2xl border border-white/5 bg-[#040406]/60 p-4 font-mono">
+                      <div className="rounded-2xl border border-zinc-200 dark:border-white/5 bg-zinc-50/60 dark:bg-[#040406]/60 p-4 font-mono">
                         <div className="text-[9px] uppercase font-bold text-zinc-500 tracking-wider">Calibration Index</div>
-                        <div className="text-lg font-bold text-white mt-1">{activeEngine.efficiency}</div>
+                        <div className="text-lg font-bold text-zinc-800 dark:text-white mt-1">{activeEngine.efficiency}</div>
                       </div>
-                      <div className="rounded-2xl border border-white/5 bg-[#040406]/60 p-4 font-mono">
+                      <div className="rounded-2xl border border-zinc-200 dark:border-white/5 bg-zinc-50/60 dark:bg-[#040406]/60 p-4 font-mono">
                         <div className="text-[9px] uppercase font-bold text-zinc-500 tracking-wider">Cognitive Load Delta</div>
-                        <div className="text-lg font-bold text-emerald-400 mt-1">{activeEngine.entropy}</div>
+                        <div className="text-lg font-bold text-emerald-500 dark:text-emerald-400 mt-1">{activeEngine.entropy}</div>
                       </div>
                     </div>
                   </div>
@@ -298,7 +298,7 @@ export default function FeaturesPage() {
                     <h4 className="text-[10px] uppercase font-bold tracking-widest text-zinc-500 font-mono">System Capabilities</h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       {activeEngine.highlights.map((h, i) => (
-                        <div key={i} className="flex items-center gap-2.5 text-xs text-zinc-300 font-light">
+                        <div key={i} className="flex items-center gap-2.5 text-xs text-zinc-600 dark:text-zinc-300 font-light">
                           <CheckCircle className="h-4 w-4 text-primary dark:text-purple-400 shrink-0" />
                           <span>{h}</span>
                         </div>
@@ -315,8 +315,8 @@ export default function FeaturesPage() {
                   </Link>
 
                   {/* Telemetry Simulator Box */}
-                  <div className="bg-[#040406] border border-white/5 p-4 rounded-2xl space-y-3 font-mono">
-                    <div className="flex items-center justify-between text-[10px] font-bold text-zinc-500">
+                  <div className="bg-zinc-950 dark:bg-[#040406] border border-zinc-800 dark:border-white/5 p-4 rounded-2xl space-y-3 font-mono">
+                    <div className="flex items-center justify-between text-[10px] font-bold text-zinc-400">
                       <div className="flex items-center gap-2">
                         <Terminal className="h-4 w-4 text-primary" />
                         <span>TELEMETRY SYNC INTERFACE</span>

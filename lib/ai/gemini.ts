@@ -96,7 +96,8 @@ export async function generateChatResponse(
  */
 export async function generateChatResponseStream(
   question: string,
-  contextChunks: { content: string; similarity: number }[]
+  contextChunks: { content: string; similarity: number }[],
+  mode?: string
 ) {
   const context = contextChunks
     .map(
@@ -105,10 +106,19 @@ export async function generateChatResponseStream(
     )
     .join("\n\n---\n\n");
 
-  const prompt = RAG_ANSWER_PROMPT.replace("{context}", context).replace(
+  let prompt = RAG_ANSWER_PROMPT.replace("{context}", context).replace(
     "{question}",
     question
   );
+
+  // Inject Mode-Specific Prompt Instructions
+  if (mode === "ask") {
+    prompt += `\n\n[MODE DIRECTIVE: ASK MODE] The user is asking a quick, direct question. Answer their question directly, comprehensively, and clearly. Keep explanations concise and highly focused.`;
+  } else if (mode === "learning") {
+    prompt += `\n\n[MODE DIRECTIVE: LEARNING MODE] The user wants to learn a concept deeply. Act as an encouraging socratic academic tutor. Break down complex ideas into manageable steps, define variables, list key formulas, and use practical examples. Make sure to generate a Mermaid flowchart code block (\`\`\`mermaid\n...\n\`\`\`) to visually map out relationships if it helps explain the concept structurally!`;
+  } else if (mode === "agent") {
+    prompt += `\n\n[MODE DIRECTIVE: AGENT MODE] Act as a highly personalized, guiding cognitive mentor. Guide the student specifically based on their recent performance and their document's context. Proactively suggest revision steps, mention spacing review intervals, ask diagnostic questions, and direct them to focus on areas of potential weakness. Maintain a highly supportive, coaching tone.`;
+  }
 
   return model.generateContentStream(prompt);
 }

@@ -108,7 +108,8 @@ export async function POST(request: NextRequest) {
                 relevantChunks.map((c) => ({
                   content: c.content,
                   similarity: c.similarity,
-                }))
+                })),
+                mode
               );
               for await (const chunk of resultStream.stream) {
                 const chunkText = chunk.text();

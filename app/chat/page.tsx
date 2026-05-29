@@ -16,11 +16,33 @@ import {
 } from "lucide-react";
 
 export default function ChatPage() {
-  const { documents, selectedDocId, chatThreads, sendMessage, loadChatHistory } = useStore();
+  const { documents, selectedDocId, chatThreads, sendMessage, loadChatHistory, profile } = useStore();
   const [inputText, setInputText] = useState("");
   const [isAiReplying, setIsAiReplying] = useState(false);
   const [voiceActive, setVoiceActive] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Mode Selection States: auto (Auto-Detect), ask, learning, agent
+  const [activeMode, setActiveMode] = useState<"auto" | "ask" | "learning" | "agent">("auto");
+
+  // Client-side text intent analyzer for auto-switching
+  const detectIntent = (text: string): "ask" | "learning" | "agent" => {
+    const t = text.toLowerCase().trim();
+    if (!t) return "ask"; // Default
+    
+    // Agent mode: diagnostics, guide requests, weak topics, performance analysis
+    if (t.match(/guide|perform|progress|score|diagnos|how am i|my level|weak|strength|improve|help me study/)) {
+      return "agent";
+    }
+    
+    // Learning mode: socratic teaching, socratic, explaining, diagrams, quizzes, math definitions
+    if (t.match(/explain|teach|learn|what is|why does|how does|define|concept|formula|quiz|diagram|flowchart/)) {
+      return "learning";
+    }
+    
+    // Ask mode: general random questions
+    return "ask";
+  };
 
   // Active doc references
   const activeDoc = documents.find(d => d.id === selectedDocId) || documents[0];
@@ -52,8 +74,11 @@ export default function ChatPage() {
     setInputText("");
     setIsAiReplying(true);
 
+    // Resolve mode based on user lock or intent auto-detection
+    const resolvedMode = activeMode === "auto" ? detectIntent(userText) : activeMode;
+
     try {
-      await sendMessage(activeDoc.id, userText);
+      await sendMessage(activeDoc.id, userText, resolvedMode);
       // Update context panel based on interaction
       setMemoryStrength(prev => Math.min(100, prev + 3));
       setRevisionUrgency("Low (Calibrated)");
@@ -76,12 +101,35 @@ export default function ChatPage() {
 
           {/* Active doc HUD header */}
           {activeDoc && (
-            <div className="flex items-center justify-between border-b border-border/80 pb-4 text-xs font-semibold text-zinc-500">
-              <span className="flex items-center gap-1.5">
+            <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-border/80 pb-4 gap-4 z-10">
+              <span className="flex items-center gap-1.5 text-xs font-semibold text-zinc-500">
                 <Bot className="h-4 w-4 text-primary animate-pulse" />
-                Active Context: <strong className="text-foreground truncate max-w-[180px]">{activeDoc.title}</strong>
+                Active Context: <strong className="text-foreground truncate max-w-[150px]">{activeDoc.title}</strong>
               </span>
-              <span className="text-[10px] bg-primary/10 border border-primary/20 text-primary dark:text-purple-400 px-2.5 py-0.5 rounded-full font-bold">RAG Active</span>
+              
+              {/* Premium segmented mode selector */}
+              <div className="flex flex-wrap items-center gap-1.5 bg-[#09090b]/80 border border-white/5 p-1 rounded-2xl">
+                {[
+                  { id: "auto", label: "Auto-Detect", desc: "AI switches modes based on query keywords" },
+                  { id: "ask", label: "Ask", desc: "Fast random questions & doubt solver" },
+                  { id: "learning", label: "Learning", desc: "Socratic concept breakdowns & visual maps" },
+                  { id: "agent", label: "Agent", desc: "Guides revision based on study performance" }
+                ].map((m) => (
+                  <button
+                    key={m.id}
+                    type="button"
+                    onClick={() => setActiveMode(m.id as typeof activeMode)}
+                    className={`px-3 py-1.5 rounded-xl text-[10px] font-bold transition-all relative ${
+                      activeMode === m.id
+                        ? "bg-primary text-white shadow-md border border-primary/20"
+                        : "text-zinc-500 hover:text-white hover:bg-white/5 border border-transparent"
+                    }`}
+                    title={m.desc}
+                  >
+                    {m.label}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
 
@@ -139,6 +187,47 @@ export default function ChatPage() {
 
           {/* Form and Quick suggestions */}
           <div className="space-y-4 pt-4 border-t border-border/80">
+            
+            {/* Dynamic Auto-Selected Mode Badge */}
+            {activeMode === "auto" && inputText.trim() && (
+              <div className="flex items-center justify-between text-[9px] bg-primary/10 border border-primary/20 px-3 py-1.5 rounded-xl text-primary animate-pulse">
+                <span className="font-bold uppercase tracking-wider flex items-center gap-1">
+                  <Sparkles className="h-3 w-3" /> Auto-Intent Analyzer Active
+                </span>
+                <span className="font-light">
+                  Auto-selected: <strong className="uppercase font-extrabold">{detectIntent(inputText)} Mode</strong>
+                </span>
+              </div>
+            )}
+
+            {/* Mode-Specific Quick Suggestions Chips */}
+            <div className="flex flex-wrap gap-1.5 text-[9px] select-none">
+              {(
+                activeMode === "ask" || (activeMode === "auto" && detectIntent(inputText) === "ask") ? [
+                  "Explain Coulomb's Law directly",
+                  "Quick summary of this document",
+                  "What is pgvector similarity score?"
+                ] : activeMode === "learning" || (activeMode === "auto" && detectIntent(inputText) === "learning") ? [
+                  "Draw a Mermaid concept map of database indexes",
+                  "Teach me ACID compliance step-by-step",
+                  "Compare RDBMS vs Document Stores"
+                ] : [
+                  "Guide me on my weak topics based on document performance",
+                  "What should I study next to improve my score?",
+                  "Generate a personalized cognitive revision plan"
+                ]
+              ).map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => setInputText(s)}
+                  className="px-2.5 py-1 rounded-lg border border-white/5 bg-[#0d0d11]/40 hover:bg-[#0d0d11]/90 text-zinc-400 hover:text-zinc-200 transition-all font-light"
+                >
+                  💡 &ldquo;{s}&rdquo;
+                </button>
+              ))}
+            </div>
+
             <form onSubmit={handleSend} className="flex gap-2">
               <button
                 type="button"
@@ -173,12 +262,43 @@ export default function ChatPage() {
 
         </div>
 
-        {/* RIGHT COLUMN — COGNITIVE CONTEXT PANEL (col-span-4) */}
-        <div className="lg:col-span-4 space-y-6 overflow-y-auto pr-2 max-h-[500px]">
+        <div className="lg:col-span-4 space-y-6 overflow-y-auto pr-2 max-h-[500px] z-10">
           <h2 className="text-xs uppercase font-bold tracking-wider text-muted-foreground flex items-center gap-1.5">
             <Cpu className="h-4.5 w-4.5 text-primary" />
             Active Cognition HUD
           </h2>
+
+          {/* Dynamic Mode HUD Card */}
+          <div className="border border-border bg-card/25 p-5 rounded-2xl glass-card space-y-3 relative overflow-hidden">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                <Cpu className="h-4 w-4 text-primary animate-pulse" />
+                {activeMode === "auto" ? "Intelligent Auto-Mode" : activeMode === "ask" ? "Ask Mode" : activeMode === "learning" ? "Learning Mode" : "Agent Guidance Mode"}
+              </h3>
+              <span className="text-[8px] uppercase tracking-wider bg-primary/10 text-primary dark:text-purple-400 font-bold px-2 py-0.5 rounded-full border border-primary/20">
+                {activeMode === "auto" ? `Auto: ${detectIntent(inputText)}` : "Manual Lock"}
+              </span>
+            </div>
+            
+            <p className="text-[10px] text-muted-foreground leading-relaxed">
+              {activeMode === "ask" || (activeMode === "auto" && detectIntent(inputText) === "ask") 
+                ? "Calibrated to answer random questions, direct concept queries, and offer fast comprehensive doubt solving using RAG vector similarity."
+                : activeMode === "learning" || (activeMode === "auto" && detectIntent(inputText) === "learning")
+                ? "Calibrated for socratic tutoring. Instructed to build highly structured explanations, outline math variables, and output visual concept diagrams using Mermaid flowcharts."
+                : `Adaptive revision guide active. Monitoring user archetype "${profile.archetype || 'Student'}", analytics constraints, and weak topics to custom-guide cognitive revision pathways.`}
+            </p>
+            
+            <div className="grid grid-cols-2 gap-2 pt-2 text-[9px] font-mono text-zinc-400">
+              <div className="flex items-center gap-1">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                <span>RAG Similarity</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                <span>Gemini 3.5 Active</span>
+              </div>
+            </div>
+          </div>
 
           {/* Document Summary */}
           {activeDoc?.summary && (

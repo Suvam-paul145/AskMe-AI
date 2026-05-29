@@ -12,6 +12,15 @@ function Custom3DGraph({ scene }: { scene: number }) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [hoveredNode, setHoveredNode] = useState<string | null>(null);
   const { theme } = useStore();
+  const [shouldRender, setShouldRender] = useState(false);
+
+  useEffect(() => {
+    // Defer graph initialization to keep first input paint extremely fast
+    const timer = setTimeout(() => {
+      setShouldRender(true);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, []);
 
   // 3D Nodes Definition
   const nodes = useRef([
@@ -260,6 +269,14 @@ function Custom3DGraph({ scene }: { scene: number }) {
     };
   }, [scene, theme]);
 
+  if (!shouldRender) {
+    return (
+      <div className="w-full h-full flex items-center justify-center text-zinc-600 dark:text-zinc-500 font-mono text-[9px] uppercase tracking-wider select-none animate-pulse">
+        Initializing 3D Neural Nodes...
+      </div>
+    );
+  }
+
   return (
     <div className="w-full h-full relative select-none">
       <canvas ref={canvasRef} className="w-full h-full block touch-none" />
@@ -341,6 +358,140 @@ function AnimatedCounter({ value }: { value: string }) {
   );
 }
 
+// --- CONVERSATIONAL CONVERSION PREVIEW SANDBOX ---
+interface SandboxMessage {
+  sender: "user" | "ai";
+  text: string;
+  timestamp: string;
+}
+
+function ConversionChatSandbox() {
+  const [messages, setMessages] = useState<SandboxMessage[]>([]);
+  const [inputText, setInputText] = useState("");
+  const [isAiReplying, setIsAiReplying] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
+
+  // Load chats from localStorage on mount
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("ephemeral_chats");
+      if (stored) {
+        setMessages(JSON.parse(stored));
+      } else {
+        const welcome: SandboxMessage = {
+          sender: "ai",
+          text: "Welcome to the Cognitive Sandbox! I am your socratic study tutor. Ask me any question, or paste text here to see how my reasoning models break down concepts.",
+          timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+        };
+        setMessages([welcome]);
+        localStorage.setItem("ephemeral_chats", JSON.stringify([welcome]));
+      }
+    }
+  }, []);
+
+  const handleSend = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!inputText.trim() || isAiReplying) return;
+
+    const userText = inputText;
+    setInputText("");
+    
+    const userMsg: SandboxMessage = {
+      sender: "user",
+      text: userText,
+      timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+    };
+
+    const newMsgs = [...messages, userMsg];
+    setMessages(newMsgs);
+    localStorage.setItem("ephemeral_chats", JSON.stringify(newMsgs));
+    setIsAiReplying(true);
+
+    // Dynamic Socratic Answers
+    let answer = "";
+    const lower = userText.toLowerCase();
+    if (lower.includes("coulomb")) {
+      answer = "Coulomb's Law quantifies the electrostatic force between two stationary, electrically charged particles. Let's think: what happens to the force if we double the distance between the charges? Since force is inversely proportional to the square of the distance (F ∝ 1/r²), the force drops to a quarter. Fascinating, isn't it?";
+    } else if (lower.includes("dna") || lower.includes("replication")) {
+      answer = "DNA replication is the biological process of producing two identical replicas of DNA from one original molecule. Why is it semi-conservative? Because each new double helix contains one original strand and one newly synthesized strand. How does this maintain extreme fidelity during cell division?";
+    } else {
+      answer = `You asked: "${userText}". In socratic guidance, we look at core semantic nodes. In the full AskMe AI workspace, your document text is converted into 768-dimensional dense vector embeddings using pgvector. We then match your question using cosine distance algorithms. To get the full experience and generate interactive quizzes on this topic, upload your syllabus file now!`;
+    }
+
+    // Simulate real-time streaming
+    setTimeout(() => {
+      setIsAiReplying(false);
+      const aiMsg: SandboxMessage = {
+        sender: "ai",
+        text: answer,
+        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+      };
+      const finalMsgs = [...newMsgs, aiMsg];
+      setMessages(finalMsgs);
+      localStorage.setItem("ephemeral_chats", JSON.stringify(finalMsgs));
+    }, 1500);
+  };
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, isAiReplying]);
+
+  return (
+    <div className="border border-white/5 bg-[#0d0d11]/70 backdrop-blur-md rounded-2xl p-4 w-full max-w-md mx-auto flex flex-col h-[280px] shadow-2xl relative select-none">
+      {/* HUD Header */}
+      <div className="flex items-center justify-between border-b border-white/5 pb-2 mb-3">
+        <span className="text-[9px] font-bold text-primary dark:text-purple-400 uppercase tracking-widest flex items-center gap-1">
+          <Sparkles className="h-3 w-3 animate-pulse" /> Sandbox Console (Offline-Safe)
+        </span>
+        <span className="text-[8px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-full font-bold font-mono">
+          Local Storage
+        </span>
+      </div>
+
+      {/* Messages */}
+      <div className="flex-1 overflow-y-auto space-y-3 pr-1.5 scrollbar-thin">
+        {messages.map((m, i) => (
+          <div key={i} className={`flex flex-col gap-0.5 max-w-[85%] ${m.sender === "user" ? "ml-auto items-end" : "mr-auto items-start"}`}>
+            <div className={`p-2.5 rounded-xl text-[10px] leading-relaxed ${
+              m.sender === "user" ? "bg-primary text-white" : "bg-white/5 border border-white/5 text-zinc-300"
+            }`}>
+              {m.text}
+            </div>
+            <span className="text-[7px] text-zinc-500 px-1 font-mono">{m.timestamp}</span>
+          </div>
+        ))}
+        {isAiReplying && (
+          <div className="mr-auto items-start max-w-[70%] w-full animate-pulse">
+            <div className="bg-white/5 border border-white/5 rounded-xl p-2.5 w-full flex items-center gap-2">
+              <span className="h-1.5 w-1.5 rounded-full bg-primary animate-ping" />
+              <span className="text-[8px] text-primary dark:text-purple-400 font-bold uppercase font-mono">Formulating socratic prompt...</span>
+            </div>
+          </div>
+        )}
+        <div ref={messagesEndRef} />
+      </div>
+
+      {/* Input */}
+      <form onSubmit={handleSend} className="flex gap-1.5 mt-3 pt-2 border-t border-white/5">
+        <input
+          type="text"
+          value={inputText}
+          onChange={(e) => setInputText(e.target.value)}
+          placeholder="Ask Sandbox (e.g. DNA, Coulomb)..."
+          className="flex-1 rounded-lg border border-white/5 bg-white/5 px-2.5 py-1.5 text-[10px] text-white focus:outline-none focus:border-primary/50"
+        />
+        <button
+          type="submit"
+          disabled={isAiReplying}
+          className="bg-primary hover:bg-primary/95 text-white rounded-lg px-3 py-1.5 text-[10px] font-bold shadow-md flex items-center justify-center shrink-0 disabled:opacity-50"
+        >
+          Send
+        </button>
+      </form>
+    </div>
+  );
+}
+
 // --- MAIN CINEMATIC LANDING SCREEN ---
 export default function Home() {
   const [activeScene, setActiveScene] = useState(1);
@@ -408,20 +559,26 @@ export default function Home() {
 
       {/* SCENE 2: AWAKENING */}
       <section className="relative z-10 min-h-screen flex items-center px-6 md:px-12 max-w-7xl mx-auto">
-        <div className="max-w-xl space-y-6">
-          <div className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/10 px-3.5 py-1 text-xs font-semibold text-primary dark:text-purple-400">
-            <Sparkles className="h-3 w-3" />
-            <span>Scene 02: Ingestion</span>
+        <div className="w-full grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+          <div className="lg:col-span-7 space-y-6">
+            <div className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/10 px-3.5 py-1 text-xs font-semibold text-primary dark:text-purple-400">
+              <Sparkles className="h-3 w-3" />
+              <span>Scene 02: Ingestion</span>
+            </div>
+
+            <h2 className="text-5xl md:text-6xl font-extrabold tracking-tighter leading-none cinematic-title">
+              The Spark of <br />
+              <span className="text-primary dark:text-purple-400">Organization.</span>
+            </h2>
+
+            <p className="text-sm md:text-base text-muted-foreground leading-relaxed">
+              AskMe AI ingests raw textbooks, notes, and diagrams, converting chaotic information streams into a clean semantic vector space. Try the cognitive sandbox on the right to see socratic retrieval in action!
+            </p>
           </div>
 
-          <h2 className="text-5xl md:text-6xl font-extrabold tracking-tighter leading-none cinematic-title">
-            The Spark of <br />
-            <span className="text-primary dark:text-purple-400">Organization.</span>
-          </h2>
-
-          <p className="text-sm md:text-base text-muted-foreground leading-relaxed">
-            AskMe CLOS ingests raw textbooks and slides, aligning chaotic strings into clean semantic concept coordinates.
-          </p>
+          <div className="lg:col-span-5 w-full">
+            <ConversionChatSandbox />
+          </div>
         </div>
       </section>
 

@@ -379,10 +379,39 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }));
 
     try {
+      let temperature = 0.7;
+      let maxTokens = 2048;
+      let geminiKey = "";
+      let groqKey = "";
+      let openrouterKey = "";
+      let openaiKey = "";
+
+      if (typeof window !== "undefined") {
+        temperature = parseFloat(localStorage.getItem("settings_temperature") || "0.7");
+        maxTokens = parseInt(localStorage.getItem("settings_max_tokens") || "2048", 10);
+        geminiKey = localStorage.getItem("settings_gemini_key") || "";
+        groqKey = localStorage.getItem("settings_groq_key") || "";
+        openrouterKey = localStorage.getItem("settings_openrouter_key") || "";
+        openaiKey = localStorage.getItem("settings_openai_key") || "";
+      }
+
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message, documentId: docId, documentIds: attachedDocIds, mode }),
+        body: JSON.stringify({ 
+          message, 
+          documentId: docId, 
+          documentIds: attachedDocIds, 
+          mode,
+          settings: {
+            temperature,
+            maxTokens,
+            geminiKey,
+            groqKey,
+            openrouterKey,
+            openaiKey
+          }
+        }),
       });
 
       if (!res.ok) {

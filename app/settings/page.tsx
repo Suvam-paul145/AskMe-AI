@@ -5,7 +5,7 @@ import Navbar from "@/components/navbar";
 import Footer from "@/components/footer";
 import { useStore } from "@/lib/store";
 import AvatarDisplay, { AVATAR_PRESETS } from "@/components/avatar-display";
-import { ShieldAlert, Sparkles, User, RefreshCw, Sun, Moon, Cpu, Sliders, Mail, Upload } from "lucide-react";
+import { ShieldAlert, Sparkles, User, RefreshCw, Sun, Moon, Cpu, Sliders, Mail, Upload, Eye, EyeOff } from "lucide-react";
 
 export default function SettingsPage() {
   const { theme, toggleTheme, profile, updateProfile, signOut } = useStore();
@@ -24,6 +24,30 @@ export default function SettingsPage() {
   const [resetting, setResetting] = useState(false);
   const [personality, setPersonality] = useState("socratic"); // socratic | direct | holographic
   const [uploading, setUploading] = useState(false);
+
+  // Custom credentials and sliders
+  const [geminiKey, setGeminiKey] = useState("");
+  const [groqKey, setGroqKey] = useState("");
+  const [openrouterKey, setOpenrouterKey] = useState("");
+  const [openaiKey, setOpenaiKey] = useState("");
+  const [temp, setTemp] = useState(0.7);
+  const [maxTokens, setMaxTokens] = useState(2048);
+
+  const [showGemini, setShowGemini] = useState(false);
+  const [showGroq, setShowGroq] = useState(false);
+  const [showOpenRouter, setShowOpenRouter] = useState(false);
+  const [showOpenAI, setShowOpenAI] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setGeminiKey(localStorage.getItem("settings_gemini_key") || "");
+      setGroqKey(localStorage.getItem("settings_groq_key") || "");
+      setOpenrouterKey(localStorage.getItem("settings_openrouter_key") || "");
+      setOpenaiKey(localStorage.getItem("settings_openai_key") || "");
+      setTemp(parseFloat(localStorage.getItem("settings_temperature") || "0.7"));
+      setMaxTokens(parseInt(localStorage.getItem("settings_max_tokens") || "2048", 10));
+    }
+  }, []);
 
   useEffect(() => {
     if (profile) {
@@ -50,6 +74,16 @@ export default function SettingsPage() {
       ai_personality: personality,
       archetype: pace === "intense" ? "The Cram Strategist" : "The Intuitive Analyst"
     });
+
+    if (typeof window !== "undefined") {
+      localStorage.setItem("settings_gemini_key", geminiKey);
+      localStorage.setItem("settings_groq_key", groqKey);
+      localStorage.setItem("settings_openrouter_key", openrouterKey);
+      localStorage.setItem("settings_openai_key", openaiKey);
+      localStorage.setItem("settings_temperature", temp.toString());
+      localStorage.setItem("settings_max_tokens", maxTokens.toString());
+    }
+
     alert("Study preferences successfully saved!");
   };
 
@@ -308,6 +342,135 @@ export default function SettingsPage() {
                     <Moon className="h-4.5 w-4.5 text-indigo-400" />
                     <span>Dark mode</span>
                   </button>
+                </div>
+              </div>
+
+              {/* Custom API Credentials & LLM Settings */}
+              <div className="border-t border-white/5 pt-6 space-y-6">
+                <span className="text-[9px] font-bold text-zinc-400 dark:text-zinc-300 uppercase tracking-wider block">API Credentials & Parameter Calibration</span>
+
+                {/* Gemini Key */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="text-[10px] text-zinc-400 font-semibold uppercase">Gemini API Key Override</label>
+                    <button
+                      type="button"
+                      onClick={() => setShowGemini(!showGemini)}
+                      className="text-zinc-400 hover:text-white p-1"
+                    >
+                      {showGemini ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                    </button>
+                  </div>
+                  <input
+                    type={showGemini ? "text" : "password"}
+                    value={geminiKey}
+                    onChange={(e) => setGeminiKey(e.target.value)}
+                    placeholder="Enter custom Gemini Key..."
+                    className="w-full rounded-xl border border-white/5 bg-[#09090b]/60 px-4 py-3 text-xs text-white focus:border-primary focus:outline-none font-mono"
+                  />
+                </div>
+
+                {/* Groq Key */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="text-[10px] text-zinc-400 font-semibold uppercase">Groq API Key Override</label>
+                    <button
+                      type="button"
+                      onClick={() => setShowGroq(!showGroq)}
+                      className="text-zinc-400 hover:text-white p-1"
+                    >
+                      {showGroq ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                    </button>
+                  </div>
+                  <input
+                    type={showGroq ? "text" : "password"}
+                    value={groqKey}
+                    onChange={(e) => setGroqKey(e.target.value)}
+                    placeholder="Enter custom Groq Key..."
+                    className="w-full rounded-xl border border-white/5 bg-[#09090b]/60 px-4 py-3 text-xs text-white focus:border-primary focus:outline-none font-mono"
+                  />
+                </div>
+
+                {/* OpenRouter Key */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="text-[10px] text-zinc-400 font-semibold uppercase">OpenRouter API Key Override</label>
+                    <button
+                      type="button"
+                      onClick={() => setShowOpenRouter(!showOpenRouter)}
+                      className="text-zinc-400 hover:text-white p-1"
+                    >
+                      {showOpenRouter ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                    </button>
+                  </div>
+                  <input
+                    type={showOpenRouter ? "text" : "password"}
+                    value={openrouterKey}
+                    onChange={(e) => setOpenrouterKey(e.target.value)}
+                    placeholder="Enter custom OpenRouter Key..."
+                    className="w-full rounded-xl border border-white/5 bg-[#09090b]/60 px-4 py-3 text-xs text-white focus:border-primary focus:outline-none font-mono"
+                  />
+                </div>
+
+                {/* OpenAI Key */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="text-[10px] text-zinc-400 font-semibold uppercase">OpenAI API Key Override</label>
+                    <button
+                      type="button"
+                      onClick={() => setShowOpenAI(!showOpenAI)}
+                      className="text-zinc-400 hover:text-white p-1"
+                    >
+                      {showOpenAI ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                    </button>
+                  </div>
+                  <input
+                    type={showOpenAI ? "text" : "password"}
+                    value={openaiKey}
+                    onChange={(e) => setOpenaiKey(e.target.value)}
+                    placeholder="Enter custom OpenAI Key..."
+                    className="w-full rounded-xl border border-white/5 bg-[#09090b]/60 px-4 py-3 text-xs text-white focus:border-primary focus:outline-none font-mono"
+                  />
+                </div>
+
+                {/* Temperature slider */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-xs font-semibold">
+                    <label className="text-zinc-400 uppercase text-[10px]">Temperature Calibration (τ)</label>
+                    <span className="font-mono text-primary font-bold">{temp.toFixed(2)}</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="0.0"
+                    max="2.0"
+                    step="0.05"
+                    value={temp}
+                    onChange={(e) => setTemp(parseFloat(e.target.value))}
+                    className="w-full accent-primary bg-zinc-800"
+                  />
+                  {temp >= 1.5 && (
+                    <div className="flex items-start gap-2 rounded-xl bg-amber-500/10 border border-amber-500/20 p-3 text-[10px] text-amber-500 leading-normal animate-pulse">
+                      <ShieldAlert className="h-4 w-4 shrink-0 mt-0.5" />
+                      <span>At temperatures of 1.5 or above, socratic answers can become highly creative, unpredictable, or erratic. Perfect for brainstorming, but less reliable for technical definitions.</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Max Tokens slider */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-xs font-semibold">
+                    <label className="text-zinc-400 uppercase text-[10px]">Max Response Tokens (t)</label>
+                    <span className="font-mono text-primary font-bold">{maxTokens} tokens</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="256"
+                    max="8192"
+                    step="128"
+                    value={maxTokens}
+                    onChange={(e) => setMaxTokens(parseInt(e.target.value, 10))}
+                    className="w-full accent-primary bg-zinc-800"
+                  />
                 </div>
               </div>
 

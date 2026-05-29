@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import Navbar from "@/components/navbar";
 import { useStore } from "@/lib/store";
+import { optimizeUploadImage } from "@/lib/security/imageProcessor";
 import { 
   Send, 
   Bot, 
@@ -37,7 +38,11 @@ export default function ChatPage() {
     setUploadStage("Preparing upload...");
 
     try {
-      const doc = await uploadDocument(file, (stage, progress) => {
+      setUploadStage("Compressing image client-side...");
+      const optimizedFile = await optimizeUploadImage(file);
+      
+      setUploadStage("Uploading document...");
+      const doc = await uploadDocument(optimizedFile as File, (stage, progress) => {
         setUploadStage(stage);
       });
       if (doc) {
@@ -223,6 +228,25 @@ export default function ChatPage() {
     return activeDoc ? (chatThreads[activeDoc.id] || []) : [];
   }, [activeDoc, chatThreads]);
 
+  const [visibleCount, setVisibleCount] = useState(15);
+
+  // Reset visible messages count on document change and pull templates prompt if exists
+  useEffect(() => {
+    setVisibleCount(15);
+    if (typeof window !== "undefined") {
+      const preloaded = localStorage.getItem("preloaded_prompt");
+      if (preloaded) {
+        setInputText(preloaded);
+        localStorage.removeItem("preloaded_prompt");
+      }
+    }
+  }, [selectedDocId]);
+
+  const hasMoreMessages = activeThread.length > visibleCount;
+  const visibleMessages = useMemo(() => {
+    return activeThread.slice(-visibleCount);
+  }, [activeThread, visibleCount]);
+
   // Load chat history when active doc changes
   useEffect(() => {
     if (activeDoc?.id) {
@@ -230,10 +254,11 @@ export default function ChatPage() {
     }
   }, [activeDoc?.id, loadChatHistory]);
 
-  // Auto-scroll to bottom
+  // Auto-scroll to bottom only when a new message is added at the bottom
+  const lastMsgId = activeThread.length > 0 ? activeThread[activeThread.length - 1].id : "";
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [activeThread]);
+  }, [lastMsgId]);
 
   // Dynamic context panel state
   const [memoryStrength, setMemoryStrength] = useState<number>(75);
@@ -429,28 +454,42 @@ export default function ChatPage() {
                 )}
               </div>
             ) : (
-              activeThread.map((msg) => (
-                <div 
-                  key={msg.id}
-                  className={`flex flex-col gap-1 max-w-[80%] ${
-                    msg.sender === "user" ? "ml-auto items-end" : "mr-auto items-start"
-                  }`}
-                >
-                  <div className={`rounded-2xl p-4 text-sm leading-relaxed ${
-                    msg.sender === "user" 
-                      ? "bg-primary text-white font-medium" 
-                      : "bg-card/90 border border-border text-foreground glass-card shadow-sm"
-                  }`}>
-                    {msg.text}
+              <div className="space-y-4 flex flex-col">
+                {hasMoreMessages && (
+                  <div className="flex justify-center pb-2 select-none">
+                    <button
+                      type="button"
+                      onClick={() => setVisibleCount(prev => prev + 15)}
+                      className="text-[10px] font-bold text-primary dark:text-purple-400 bg-primary/10 border border-primary/20 px-3.5 py-1.5 rounded-xl hover:bg-primary/20 transition-all cursor-pointer"
+                    >
+                      💬 Load Previous Messages ({activeThread.length - visibleCount} more)
+                    </button>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[9px] text-zinc-400 dark:text-zinc-300 px-1">{msg.timestamp}</span>
-                    {msg.sources && msg.sources.length > 0 && (
-                      <span className="text-[8px] text-primary/60 font-bold uppercase">📎 {msg.sources.length} sources</span>
-                    )}
+                )}
+                
+                {visibleMessages.map((msg) => (
+                  <div 
+                    key={msg.id}
+                    className={`flex flex-col gap-1 max-w-[80%] ${
+                      msg.sender === "user" ? "ml-auto items-end" : "mr-auto items-start"
+                    }`}
+                  >
+                    <div className={`rounded-2xl p-4 text-sm leading-relaxed ${
+                      msg.sender === "user" 
+                        ? "bg-primary text-white font-medium" 
+                        : "bg-card/90 border border-border text-foreground glass-card shadow-sm"
+                    }`}>
+                      {msg.text}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[9px] text-zinc-400 dark:text-zinc-300 px-1">{msg.timestamp}</span>
+                      {msg.sources && msg.sources.length > 0 && (
+                        <span className="text-[8px] text-primary/60 font-bold uppercase">📎 {msg.sources.length} sources</span>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))
+                ))}
+              </div>
             )}
 
             {/* AI thinking loader */}

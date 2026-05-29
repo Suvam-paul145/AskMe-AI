@@ -472,7 +472,15 @@ export async function generateChatResponse(
 export async function generateChatResponseStream(
   question: string,
   contextChunks: { content: string; similarity: number }[],
-  mode?: string
+  mode?: string,
+  settings?: {
+    temperature?: number;
+    maxTokens?: number;
+    geminiKey?: string;
+    groqKey?: string;
+    openrouterKey?: string;
+    openaiKey?: string;
+  }
 ) {
   const context = contextChunks
     .map(
@@ -495,11 +503,44 @@ export async function generateChatResponseStream(
     prompt += `\n\n[MODE DIRECTIVE: AGENT MODE] Act as a highly personalized, guiding cognitive mentor. Guide the student specifically based on their recent performance and their document's context. Proactively suggest revision steps, mention spacing review intervals, ask diagnostic questions, and direct them to focus on areas of potential weakness. Maintain a highly supportive, coaching tone.`;
   }
 
-  const provider = getTextProvider();
-  if (provider !== "gemini") {
-    console.log(`[AI Engine] Bypassing Gemini as requested by config. Using custom provider stream: ${provider}`);
+  // Check if we use a dynamic custom provider override
+  const primaryProvider = getTextProvider();
+  
+  // Custom headers override with user-provided keys if supplied
+  const activeGroqKey = settings?.groqKey || process.env.GROQ_API_KEY;
+  const activeOpenRouterKey = settings?.openrouterKey || process.env.OPENROUTER_API_KEY;
+  const activeOpenAIKey = settings?.openaiKey || process.env.OPENAI_API_KEY;
+  const activeTemperature = settings?.temperature !== undefined ? settings.temperature : 0.7;
+
+  if (primaryProvider !== "gemini") {
+    console.log(`[AI Engine] Bypassing Gemini as requested by config. Using custom provider stream: ${primaryProvider}`);
     try {
-      const fullText = await generateTextFallback(prompt);
+      // Direct request using custom credentials if present
+      let fullText = "";
+      if (primaryProvider === "groq" && activeGroqKey) {
+        const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${activeGroqKey}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            model: "llama-3.3-70b-versatile",
+            messages: [{ role: "user", content: prompt }],
+            temperature: activeTemperature,
+            max_tokens: settings?.maxTokens ?? 2048
+          })
+        });
+        if (response.ok) {
+          const json = await response.json();
+          fullText = json.choices[0]?.message?.content || "";
+        }
+      }
+
+      if (!fullText) {
+        fullText = await generateTextFallback(prompt);
+      }
+
       return {
         stream: {
           async *[Symbol.asyncIterator]() {
@@ -515,14 +556,24 @@ export async function generateChatResponseStream(
     }
   }
 
+  // Dynamic Gemini config initialization
+  const activeGeminiKey = settings?.geminiKey || process.env.GEMINI_API_KEY || "";
+  const dynamicGenAI = activeGeminiKey ? new GoogleGenerativeAI(activeGeminiKey) : genAI;
+  const dynamicModel = dynamicGenAI.getGenerativeModel({
+    model: "gemini-3.5-flash",
+    generationConfig: {
+      temperature: activeTemperature,
+      maxOutputTokens: settings?.maxTokens ?? 2048
+    }
+  });
+
   try {
-    return await model.generateContentStream(prompt);
+    return await dynamicModel.generateContentStream(prompt);
   } catch (err) {
     console.error("[Gemini API] Failed to initiate stream, trying OpenRouter/OpenAI fallback...", err);
     try {
       const fullText = await generateTextFallback(prompt);
       
-      // Return a mock AsyncIterable stream helper containing the full fallback reply text
       return {
         stream: {
           async *[Symbol.asyncIterator]() {

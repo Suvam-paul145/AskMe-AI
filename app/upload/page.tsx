@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Navbar from "@/components/navbar";
 import Footer from "@/components/footer";
 import { useStore } from "@/lib/store";
+import { optimizeUploadImage } from "@/lib/security/imageProcessor";
 import { Upload, CheckCircle2, AlertCircle, RefreshCw, Cpu, Database } from "lucide-react";
 
 export default function UploadPage() {
@@ -58,7 +59,11 @@ export default function UploadPage() {
     setLogHistory([]);
 
     try {
-      await uploadDocument(file, (stageMsg: string, prog: number) => {
+      setStage("Compressing image client-side...");
+      setLogHistory((prev) => [...prev, `[${new Date().toLocaleTimeString()}] Optimizing upload payload...`]);
+      const optimizedFile = await optimizeUploadImage(file);
+
+      await uploadDocument(optimizedFile as File, (stageMsg: string, prog: number) => {
         setStage(stageMsg);
         setProgress(prog);
         setLogHistory((prev) => [...prev, `[${new Date().toLocaleTimeString()}] ${stageMsg}`]);

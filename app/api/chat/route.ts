@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { message, documentId, documentIds, mode } = body;
+    const { message, documentId, documentIds, mode, settings } = body;
 
     if (!message || !documentId) {
       return NextResponse.json(
@@ -128,7 +128,8 @@ export async function POST(request: NextRequest) {
                   content: c.content,
                   similarity: c.similarity,
                 })),
-                mode
+                mode,
+                settings
               );
               for await (const chunk of resultStream.stream) {
                 const chunkText = chunk.text();

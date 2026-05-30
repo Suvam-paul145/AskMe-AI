@@ -52,6 +52,7 @@ RULES:
    - Do not output code block syntax for the image URL; render it as a standard markdown image.
 6. **Tone**: Keep your tone academic, precise, encouraging, and detailed. Explain like a skilled tutor.
 7. **COMPLETENESS IS MANDATORY**: You MUST provide a COMPLETE and EXHAUSTIVE answer to the student's question. If the student asks about multiple topics (e.g., "all three laws of motion"), you MUST cover EVERY SINGLE ONE of them in full detail with explanations, examples, formulas, and diagrams. NEVER stop mid-answer, NEVER truncate your response, and NEVER leave any part of the question unanswered. If the question has multiple parts, address ALL parts thoroughly. A partial or incomplete answer is UNACCEPTABLE.
+8. **Suggested Follow-Up Questions**: After completing your FULL answer, add a horizontal rule (---), then on a NEW line write exactly \`[NEXT_QUESTIONS]\`, followed by exactly 2 natural follow-up questions the student would most likely ask next. Number them 1. and 2. These should deepen understanding of the discussed topic and be specific to the content just explained.
 
 CONTEXT FROM STUDENT'S STUDY MATERIAL:
 {context}
@@ -59,7 +60,7 @@ CONTEXT FROM STUDENT'S STUDY MATERIAL:
 STUDENT'S QUESTION:
 {question}
 
-Provide a COMPLETE, clear, highly structured, and helpful answer. Cover every aspect the student asked about — do not stop until you have fully addressed the entire question:`;
+Provide a COMPLETE, clear, highly structured, and helpful answer. Cover every aspect the student asked about — do not stop until you have fully addressed the entire question. End with two suggested follow-up questions:`;
 
 export const QUIZ_PROMPT = `You are an expert quiz generator for students. Given the following study material text, generate a quiz in valid JSON format.
 

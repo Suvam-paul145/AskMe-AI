@@ -380,7 +380,20 @@ export function FlowchartRenderer({ code }: { code: string }) {
   }, [zoom]);
 
   if (nodes.length === 0) {
-    return <pre className="bg-zinc-950 p-3 rounded-lg text-xs font-mono border border-white/5 overflow-x-auto">{code}</pre>;
+    return (
+      <div className="w-full max-w-full bg-[#0d0d11]/80 border border-white/5 rounded-3xl p-4 my-4 animate-pulse">
+        <div className="flex items-center gap-2 mb-3">
+          <div className="h-1.5 w-1.5 rounded-full bg-primary animate-ping" />
+          <span className="text-[10px] uppercase font-bold tracking-[0.2em] text-primary/60">Building Interactive Flow...</span>
+        </div>
+        <div className="aspect-[16/9] rounded-2xl bg-zinc-950/40 border border-white/5 flex items-center justify-center min-h-[160px]">
+          <div className="text-center space-y-2">
+            <div className="h-7 w-7 rounded-full border-2 border-primary/20 border-t-primary animate-spin mx-auto" />
+            <span className="text-[9px] text-zinc-500 uppercase tracking-wider font-bold block">Rendering diagram...</span>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   const handleMouseDown = (e: React.MouseEvent, nodeId: string) => {
@@ -1071,6 +1084,48 @@ function formatMath(text: string): string {
   return formatted;
 }
 
+// --- IMAGE WITH LOADING SKELETON PLACEHOLDER ---
+// Each image instance independently manages its loading state.
+// Multiple images in one response load in PARALLEL (browser HTTP/2 multiplexing),
+// each showing its own skeleton until ready.
+function ImageWithSkeleton({ src, alt }: { src: string; alt: string }) {
+  const [status, setStatus] = React.useState<'loading' | 'loaded' | 'error'>('loading');
+
+  return (
+    <div className="relative w-full my-3">
+      {/* Skeleton placeholder frame while image generates in the background */}
+      {status === 'loading' && (
+        <div className="w-full aspect-[3/2] rounded-2xl border border-white/5 bg-[#0d0d11]/80 animate-pulse flex items-center justify-center relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/[0.02] to-transparent" style={{ animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite' }} />
+          <div className="text-center space-y-2.5 relative z-10">
+            <div className="h-8 w-8 rounded-full border-2 border-primary/30 border-t-primary animate-spin mx-auto" />
+            <span className="text-[9px] text-zinc-500 uppercase tracking-wider font-bold block">Generating visual...</span>
+            <span className="text-[8px] text-zinc-600 block">Image loading in background</span>
+          </div>
+        </div>
+      )}
+      {/* Error fallback */}
+      {status === 'error' && (
+        <div className="w-full aspect-[3/2] rounded-2xl border border-rose-500/10 bg-rose-500/5 flex items-center justify-center">
+          <span className="text-[10px] text-zinc-400 font-light">Image could not be loaded</span>
+        </div>
+      )}
+      {/* Actual image — always rendered to start loading immediately, hidden until ready */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={src}
+        alt={alt}
+        onLoad={() => setStatus('loaded')}
+        onError={() => setStatus('error')}
+        loading="eager"
+        className={`max-w-full w-full h-auto rounded-2xl border border-white/5 shadow-md block spatial-shadow object-contain transition-opacity duration-700 ${
+          status === 'loaded' ? 'opacity-100' : 'w-0 h-0 opacity-0 absolute overflow-hidden'
+        }`}
+      />
+    </div>
+  );
+}
+
 // Helper to replace inline formatting: **bold**, *italic*, `code`, $math$, and ![image](url)
 function parseInline(text: string): React.ReactNode[] {
   if (!text) return [];
@@ -1085,15 +1140,7 @@ function parseInline(text: string): React.ReactNode[] {
       if (match) {
         const alt = match[1];
         const url = match[2];
-        return (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            key={idx}
-            src={url}
-            alt={alt}
-            className="max-w-full w-full h-auto rounded-2xl border border-white/5 my-3 shadow-md block spatial-shadow object-contain"
-          />
-        );
+        return <ImageWithSkeleton key={idx} src={url} alt={alt} />;
       }
     }
     if (part.startsWith("$$") && part.endsWith("$$")) {

@@ -380,7 +380,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
     try {
       let temperature = 0.7;
-      let maxTokens = 8192;
+      let maxTokens = 16384;
       let geminiKey = "";
       let groqKey = "";
       let openrouterKey = "";
@@ -388,7 +388,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
       if (typeof window !== "undefined") {
         temperature = parseFloat(localStorage.getItem("settings_temperature") || "0.7");
-        maxTokens = parseInt(localStorage.getItem("settings_max_tokens") || "8192", 10);
+        maxTokens = parseInt(localStorage.getItem("settings_max_tokens") || "16384", 10);
         geminiKey = localStorage.getItem("settings_gemini_key") || "";
         groqKey = localStorage.getItem("settings_groq_key") || "";
         openrouterKey = localStorage.getItem("settings_openrouter_key") || "";

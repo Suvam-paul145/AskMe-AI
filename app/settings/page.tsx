@@ -31,7 +31,7 @@ export default function SettingsPage() {
   const [openrouterKey, setOpenrouterKey] = useState("");
   const [openaiKey, setOpenaiKey] = useState("");
   const [temp, setTemp] = useState(0.7);
-  const [maxTokens, setMaxTokens] = useState(8192);
+  const [maxTokens, setMaxTokens] = useState(16384);
 
   const [showGemini, setShowGemini] = useState(false);
   const [showGroq, setShowGroq] = useState(false);
@@ -45,7 +45,7 @@ export default function SettingsPage() {
       setOpenrouterKey(localStorage.getItem("settings_openrouter_key") || "");
       setOpenaiKey(localStorage.getItem("settings_openai_key") || "");
       setTemp(parseFloat(localStorage.getItem("settings_temperature") || "0.7"));
-      setMaxTokens(parseInt(localStorage.getItem("settings_max_tokens") || "8192", 10));
+      setMaxTokens(parseInt(localStorage.getItem("settings_max_tokens") || "16384", 10));
     }
   }, []);
 
@@ -465,7 +465,7 @@ export default function SettingsPage() {
                   <input
                     type="range"
                     min="256"
-                    max="16384"
+                    max="30000"
                     step="128"
                     value={maxTokens}
                     onChange={(e) => setMaxTokens(parseInt(e.target.value, 10))}

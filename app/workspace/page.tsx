@@ -30,6 +30,25 @@ import Link from "next/link";
 import { MarkdownRenderer } from "@/components/markdown-renderer";
 import WorkspaceVisualizer from "@/components/workspace-visualizer";
 
+// --- Helper: Extract suggested follow-up questions from AI response ---
+function extractSuggestedQuestions(text: string): { cleanText: string; questions: string[] } {
+  if (!text) return { cleanText: text, questions: [] };
+  const marker = '[NEXT_QUESTIONS]';
+  const idx = text.indexOf(marker);
+  if (idx === -1) return { cleanText: text, questions: [] };
+
+  // Strip the questions block and any trailing --- separator from the visible answer
+  const cleanText = text.substring(0, idx).replace(/\n---\s*$/, '').trim();
+  const questionsBlock = text.substring(idx + marker.length).trim();
+  const questions = questionsBlock
+    .split('\n')
+    .map(line => line.replace(/^\d+\.\s*/, '').trim())
+    .filter(q => q.length > 5)
+    .slice(0, 2);
+
+  return { cleanText, questions };
+}
+
 export default function WorkspacePage() {
   const { 
     documents, 
@@ -527,7 +546,7 @@ export default function WorkspacePage() {
                           {msg.sender === "user" ? (
                             msg.text
                           ) : (
-                            <MarkdownRenderer content={msg.text} />
+                            <MarkdownRenderer content={extractSuggestedQuestions(msg.text).cleanText} />
                           )}
                         </div>
                         <div className="flex items-center gap-2">
@@ -564,6 +583,33 @@ export default function WorkspacePage() {
                         </div>
                       </div>
                     )}
+                    {/* Suggested follow-up questions */}
+                    {!isAiReplying && activeThread.length > 0 && (() => {
+                      const lastAiMsg = [...activeThread].reverse().find(m => m.sender === "ai");
+                      if (!lastAiMsg?.text) return null;
+                      const { questions } = extractSuggestedQuestions(lastAiMsg.text);
+                      if (questions.length === 0) return null;
+                      return (
+                        <div className="flex flex-col gap-2 pt-2 pb-1 animate-drift">
+                          <span className="text-[9px] text-zinc-500 uppercase tracking-wider font-bold flex items-center gap-1.5">
+                            <Sparkles className="h-3 w-3 text-primary/60" />
+                            Quick follow-ups
+                          </span>
+                          <div className="flex flex-wrap gap-2">
+                            {questions.map((q, i) => (
+                              <button
+                                key={i}
+                                type="button"
+                                onClick={() => setChatInput(q)}
+                                className="text-[10px] text-left px-3.5 py-2.5 rounded-xl border border-primary/15 bg-primary/5 text-zinc-300 hover:text-white hover:border-primary/30 hover:bg-primary/10 transition-all duration-300 max-w-[90%] group"
+                              >
+                                <span className="opacity-70 group-hover:opacity-100 transition-opacity">💡</span> {q}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })()}
                     <div ref={messagesEndRef} />
                   </div>
 

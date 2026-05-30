@@ -528,7 +528,7 @@ export async function generateChatResponseStream(
             model: "llama-3.3-70b-versatile",
             messages: [{ role: "user", content: prompt }],
             temperature: activeTemperature,
-            max_tokens: settings?.maxTokens ?? 2048
+            max_tokens: settings?.maxTokens ?? 8192
           })
         });
         if (response.ok) {
@@ -563,7 +563,7 @@ export async function generateChatResponseStream(
     model: "gemini-3.5-flash",
     generationConfig: {
       temperature: activeTemperature,
-      maxOutputTokens: settings?.maxTokens ?? 2048
+      maxOutputTokens: settings?.maxTokens ?? 8192
     }
   });
 

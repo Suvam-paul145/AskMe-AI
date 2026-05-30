@@ -51,6 +51,7 @@ RULES:
    - Example markdown: \`![Detailed 3D rendering of chloroplast](https://image.pollinations.ai/prompt/detailed%20photographic%20rendering%20of%20a%20chloroplast%2C%203d%2C%20biology%20textbook%20style%2C%20highly%20detailed%20textbook%20schematic%2C%20professionally%20designed%20educational%20diagram%2C%208k%20resolution?width=600&height=400&nologo=true)\`
    - Do not output code block syntax for the image URL; render it as a standard markdown image.
 6. **Tone**: Keep your tone academic, precise, encouraging, and detailed. Explain like a skilled tutor.
+7. **COMPLETENESS IS MANDATORY**: You MUST provide a COMPLETE and EXHAUSTIVE answer to the student's question. If the student asks about multiple topics (e.g., "all three laws of motion"), you MUST cover EVERY SINGLE ONE of them in full detail with explanations, examples, formulas, and diagrams. NEVER stop mid-answer, NEVER truncate your response, and NEVER leave any part of the question unanswered. If the question has multiple parts, address ALL parts thoroughly. A partial or incomplete answer is UNACCEPTABLE.
 
 CONTEXT FROM STUDENT'S STUDY MATERIAL:
 {context}
@@ -58,7 +59,7 @@ CONTEXT FROM STUDENT'S STUDY MATERIAL:
 STUDENT'S QUESTION:
 {question}
 
-Provide a clear, highly structured, and helpful answer:`;
+Provide a COMPLETE, clear, highly structured, and helpful answer. Cover every aspect the student asked about — do not stop until you have fully addressed the entire question:`;
 
 export const QUIZ_PROMPT = `You are an expert quiz generator for students. Given the following study material text, generate a quiz in valid JSON format.
 

@@ -82,7 +82,7 @@ export async function POST(request: NextRequest) {
       message,
       targetDocIds,
       user.id,
-      5
+      8
     );
 
     const sources = relevantChunks

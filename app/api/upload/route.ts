@@ -190,6 +190,7 @@ export async function POST(request: NextRequest) {
     // Step 7: Create memory graph node
     const cleanTitle = file.name.replace(/\.[^/.]+$/, "");
     await admin.from("graph_nodes").insert({
+      id: document.id, // Match the document ID so updateNodeStrength can locate it
       user_id: user.id,
       label: cleanTitle,
       strength: 45,

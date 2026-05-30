@@ -5,7 +5,7 @@ import Navbar from "@/components/navbar";
 import Footer from "@/components/footer";
 import { useStore } from "@/lib/store";
 import AvatarDisplay, { AVATAR_PRESETS } from "@/components/avatar-display";
-import { ShieldAlert, Sparkles, User, RefreshCw, Sun, Moon, Cpu, Sliders, Mail, Upload, Eye, EyeOff } from "lucide-react";
+import { ShieldAlert, Sparkles, User, RefreshCw, Sun, Moon, Cpu, Sliders, Mail, Upload, Eye, EyeOff, Bell, Clock, Send, FileText, CheckCircle, XCircle, Loader2, X } from "lucide-react";
 
 export default function SettingsPage() {
   const { theme, toggleTheme, profile, updateProfile, signOut } = useStore();
@@ -24,6 +24,24 @@ export default function SettingsPage() {
   const [resetting, setResetting] = useState(false);
   const [personality, setPersonality] = useState("socratic"); // socratic | direct | holographic
   const [uploading, setUploading] = useState(false);
+
+  // Email & Notification states
+  const [reminderEmail, setReminderEmail] = useState("");
+  const [reminderFrequency, setReminderFrequency] = useState("daily");
+  const [reminderTime, setReminderTime] = useState("09:00");
+  const [reminderSending, setReminderSending] = useState(false);
+  const [reminderStatus, setReminderStatus] = useState<"idle" | "success" | "error">("idle");
+  const [reminderMsg, setReminderMsg] = useState("");
+
+  const [reportEmail, setReportEmail] = useState("");
+  const [reportSending, setReportSending] = useState(false);
+  const [reportStatus, setReportStatus] = useState<"idle" | "success" | "error">("idle");
+  const [reportMsg, setReportMsg] = useState("");
+
+  // Email preview modal states
+  const [previewHtml, setPreviewHtml] = useState("");
+  const [previewSubject, setPreviewSubject] = useState("");
+  const [showPreview, setShowPreview] = useState(false);
 
   // Custom credentials and sliders
   const [geminiKey, setGeminiKey] = useState("");
@@ -62,6 +80,10 @@ export default function SettingsPage() {
         }
         if (profile.ai_personality) {
           setPersonality(profile.ai_personality);
+        }
+        if (profile.email) {
+          setReminderEmail(profile.email);
+          setReportEmail(profile.email);
         }
       }, 0);
       return () => clearTimeout(timer);
@@ -136,6 +158,117 @@ export default function SettingsPage() {
       }, 1000);
     }
   };
+
+  // Send study reminder handler
+  const handleSendReminder = async () => {
+    if (!reminderEmail) {
+      setReminderStatus("error");
+      setReminderMsg("Please enter your email address.");
+      return;
+    }
+    setReminderSending(true);
+    setReminderStatus("idle");
+    setReminderMsg("");
+    try {
+      const timeFormatted = new Date(`2000-01-01T${reminderTime}`).toLocaleTimeString("en-US", {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: true,
+      });
+      const res = await fetch("/api/reminder/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: reminderEmail,
+          frequency: reminderFrequency,
+          time: timeFormatted,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setReminderStatus("success");
+        setReminderMsg(`Reminder scheduled for ${reminderEmail} (${reminderFrequency} at ${timeFormatted})`);
+        // Save schedule to localStorage
+        if (typeof window !== "undefined") {
+          localStorage.setItem("reminder_schedule", JSON.stringify({
+            email: reminderEmail,
+            frequency: reminderFrequency,
+            time: reminderTime,
+            active: true,
+          }));
+        }
+        // Show preview
+        if (data.html) {
+          setPreviewHtml(data.html);
+          setPreviewSubject(data.subject || "Study Reminder");
+          setShowPreview(true);
+        }
+      } else {
+        setReminderStatus("error");
+        setReminderMsg(data.error || "Failed to schedule reminder.");
+      }
+    } catch (err) {
+      setReminderStatus("error");
+      setReminderMsg("Network error. Please try again.");
+    } finally {
+      setReminderSending(false);
+    }
+  };
+
+  // Send weekly report handler
+  const handleSendReport = async () => {
+    if (!reportEmail) {
+      setReportStatus("error");
+      setReportMsg("Please enter your email address.");
+      return;
+    }
+    setReportSending(true);
+    setReportStatus("idle");
+    setReportMsg("");
+    try {
+      const res = await fetch("/api/report/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: reportEmail }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setReportStatus("success");
+        setReportMsg(`Weekly report compiled and sent to ${reportEmail}`);
+        // Show preview
+        if (data.html) {
+          setPreviewHtml(data.html);
+          setPreviewSubject(data.subject || "Weekly Progress Report");
+          setShowPreview(true);
+        }
+      } else {
+        setReportStatus("error");
+        setReportMsg(data.error || "Failed to generate report.");
+      }
+    } catch (err) {
+      setReportStatus("error");
+      setReportMsg("Network error. Please try again.");
+    } finally {
+      setReportSending(false);
+    }
+  };
+
+  // Load saved reminder schedule from localStorage
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setTimeout(() => {
+        const saved = localStorage.getItem("reminder_schedule");
+        if (saved) {
+          try {
+            const parsed = JSON.parse(saved);
+            if (parsed.email) setReminderEmail(parsed.email);
+            if (parsed.frequency) setReminderFrequency(parsed.frequency);
+            if (parsed.time) setReminderTime(parsed.time);
+          } catch { /* ignore */ }
+        }
+      }, 0);
+    }
+  }, []);
 
   return (
     <div className="flex flex-col min-h-screen bg-[#040406] text-white neural-overlay relative select-none">
@@ -487,6 +620,153 @@ export default function SettingsPage() {
           </div>
         </div>
 
+        {/* Email & Notifications Section */}
+        <div className="border border-white/5 bg-[#0d0d11]/80 p-6 rounded-3xl glass-card relative overflow-hidden matte-layer spatial-shadow-lg space-y-6">
+          <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-emerald-500/40 to-transparent" />
+
+          <div className="space-y-1">
+            <span className="text-[9px] font-bold text-zinc-400 dark:text-zinc-300 uppercase tracking-wider flex items-center gap-1">
+              <Bell className="h-3.5 w-3.5 text-emerald-400" />
+              <span>Email & Notification Center</span>
+            </span>
+            <p className="text-[10px] text-zinc-500 font-light leading-relaxed">
+              Schedule study reminders and generate weekly progress reports delivered to your inbox.
+            </p>
+          </div>
+
+          {/* Study Reminders */}
+          <div className="space-y-4 border-b border-white/5 pb-6">
+            <div className="flex items-center gap-2">
+              <Clock className="h-4 w-4 text-amber-400" />
+              <span className="text-[10px] font-bold text-zinc-300 uppercase tracking-wider">Scheduled Study Reminders</span>
+            </div>
+            <p className="text-[10px] text-zinc-500 font-light leading-relaxed">
+              Get personalized active-recall prompts based on your weakest topics. Reminders target concepts with the highest memory decay risk.
+            </p>
+
+            <div className="grid grid-cols-2 gap-3">
+              {/* Frequency selector */}
+              <div className="space-y-1.5">
+                <label htmlFor="reminder-frequency" className="text-[9px] text-zinc-400 font-semibold uppercase block">Frequency</label>
+                <select
+                  id="reminder-frequency"
+                  value={reminderFrequency}
+                  onChange={(e) => setReminderFrequency(e.target.value)}
+                  className="w-full rounded-xl border border-white/5 bg-[#09090b]/80 px-3 py-2.5 text-xs text-zinc-300 focus:border-primary focus:outline-none transition-all"
+                >
+                  <option value="daily">Daily</option>
+                  <option value="every_2_days">Every 2 Days</option>
+                  <option value="weekly">Weekly</option>
+                  <option value="biweekly">Bi-Weekly</option>
+                </select>
+              </div>
+
+              {/* Time picker */}
+              <div className="space-y-1.5">
+                <label htmlFor="reminder-time" className="text-[9px] text-zinc-400 font-semibold uppercase block">Preferred Time</label>
+                <input
+                  id="reminder-time"
+                  type="time"
+                  value={reminderTime}
+                  onChange={(e) => setReminderTime(e.target.value)}
+                  className="w-full rounded-xl border border-white/5 bg-[#09090b]/80 px-3 py-2.5 text-xs text-zinc-300 focus:border-primary focus:outline-none transition-all [color-scheme:dark]"
+                />
+              </div>
+            </div>
+
+            {/* Email input */}
+            <div className="space-y-1.5">
+              <label htmlFor="reminder-email" className="text-[9px] text-zinc-400 font-semibold uppercase block">Email Address</label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-500" />
+                <input
+                  id="reminder-email"
+                  type="email"
+                  value={reminderEmail}
+                  onChange={(e) => setReminderEmail(e.target.value)}
+                  placeholder="your.email@gmail.com"
+                  className="w-full rounded-xl border border-white/5 bg-[#09090b]/60 pl-9 pr-4 py-3 text-xs text-white focus:border-primary focus:outline-none transition-all placeholder-zinc-500 font-light"
+                />
+              </div>
+            </div>
+
+            {/* Status messages */}
+            {reminderStatus === "success" && (
+              <div className="flex items-start gap-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 p-3 text-[10px] text-emerald-400 leading-normal">
+                <CheckCircle className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+                <span>{reminderMsg}</span>
+              </div>
+            )}
+            {reminderStatus === "error" && (
+              <div className="flex items-start gap-2 rounded-xl bg-red-500/10 border border-red-500/20 p-3 text-[10px] text-red-400 leading-normal">
+                <XCircle className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+                <span>{reminderMsg}</span>
+              </div>
+            )}
+
+            <button
+              type="button"
+              onClick={handleSendReminder}
+              disabled={reminderSending}
+              className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 py-3 text-xs font-bold text-white shadow-md hover:from-amber-500/90 hover:to-orange-500/90 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {reminderSending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Bell className="h-4 w-4" />}
+              <span>{reminderSending ? "Scheduling..." : "Schedule Study Reminders"}</span>
+            </button>
+          </div>
+
+          {/* Weekly Progress Report */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <FileText className="h-4 w-4 text-blue-400" />
+              <span className="text-[10px] font-bold text-zinc-300 uppercase tracking-wider">Weekly Progress Report</span>
+            </div>
+            <p className="text-[10px] text-zinc-500 font-light leading-relaxed">
+              Generate a beautifully formatted cognitive progress report with XP, streaks, mastery levels, and personalized recommendations — and send it to your email.
+            </p>
+
+            {/* Email input */}
+            <div className="space-y-1.5">
+              <label htmlFor="report-email" className="text-[9px] text-zinc-400 font-semibold uppercase block">Send Report To</label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-500" />
+                <input
+                  id="report-email"
+                  type="email"
+                  value={reportEmail}
+                  onChange={(e) => setReportEmail(e.target.value)}
+                  placeholder="your.email@gmail.com"
+                  className="w-full rounded-xl border border-white/5 bg-[#09090b]/60 pl-9 pr-4 py-3 text-xs text-white focus:border-primary focus:outline-none transition-all placeholder-zinc-500 font-light"
+                />
+              </div>
+            </div>
+
+            {/* Status messages */}
+            {reportStatus === "success" && (
+              <div className="flex items-start gap-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 p-3 text-[10px] text-emerald-400 leading-normal">
+                <CheckCircle className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+                <span>{reportMsg}</span>
+              </div>
+            )}
+            {reportStatus === "error" && (
+              <div className="flex items-start gap-2 rounded-xl bg-red-500/10 border border-red-500/20 p-3 text-[10px] text-red-400 leading-normal">
+                <XCircle className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+                <span>{reportMsg}</span>
+              </div>
+            )}
+
+            <button
+              type="button"
+              onClick={handleSendReport}
+              disabled={reportSending}
+              className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-500 py-3 text-xs font-bold text-white shadow-md hover:from-blue-500/90 hover:to-indigo-500/90 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {reportSending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+              <span>{reportSending ? "Generating Report..." : "Generate & Send Weekly Report"}</span>
+            </button>
+          </div>
+        </div>
+
         {/* Danger zone reset */}
         <div className="border border-red-500/20 bg-red-500/5 p-6 rounded-3xl space-y-4 matte-layer">
           <div className="flex items-center gap-2 text-red-400">
@@ -507,6 +787,48 @@ export default function SettingsPage() {
         </div>
 
       </main>
+
+      {/* Email Preview Modal */}
+      {showPreview && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+          <div className="bg-[#0b0b0e] border border-white/10 rounded-2xl max-w-[650px] w-full max-h-[85vh] flex flex-col shadow-2xl overflow-hidden">
+            {/* Modal header */}
+            <div className="flex items-center justify-between px-5 py-3.5 border-b border-white/5">
+              <div className="space-y-0.5">
+                <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-wider block">Email Preview</span>
+                <span className="text-xs font-semibold text-zinc-200 block truncate max-w-[450px]">{previewSubject}</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowPreview(false)}
+                className="rounded-lg border border-white/5 bg-white/5 hover:bg-white/10 p-1.5 text-zinc-400 hover:text-white transition-colors"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            {/* Modal body — rendered HTML */}
+            <div className="flex-1 overflow-y-auto p-1">
+              <iframe
+                srcDoc={previewHtml}
+                title="Email Preview"
+                className="w-full h-full min-h-[500px] border-0 rounded-xl"
+                sandbox="allow-same-origin"
+              />
+            </div>
+            {/* Modal footer */}
+            <div className="flex items-center justify-between px-5 py-3 border-t border-white/5">
+              <span className="text-[9px] text-zinc-500 font-light">This is a preview of the email that would be sent.</span>
+              <button
+                type="button"
+                onClick={() => setShowPreview(false)}
+                className="rounded-xl bg-primary/10 border border-primary/20 hover:bg-primary/20 px-4 py-2 text-xs font-semibold text-primary transition-all"
+              >
+                Close Preview
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <Footer />
     </div>

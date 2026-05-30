@@ -1975,7 +1975,7 @@ function MarkdownTextBlock({ text }: { text: string }) {
     // Standard paragraph line
     pushList(idx);
     const content = parseInline(line);
-    elements.push(<p key={idx} className="mb-3 leading-relaxed font-normal text-zinc-800 dark:text-zinc-200">{content}</p>);
+    elements.push(<div key={idx} className="mb-3 leading-relaxed font-normal text-zinc-800 dark:text-zinc-200">{content}</div>);
   });
 
   // Push remaining list items
@@ -2233,9 +2233,21 @@ function ImageWithSkeleton({ src, alt }: { src: string; alt: string }) {
         setProgressMsg('FLUX model generating image...');
 
         // Generate image using Puter.js + FLUX model
-        const imageElement = await (window as any).puter.ai.txt2img(fluxPrompt, {
-          model: 'black-forest-labs/flux-1-schnell',  // Fast FLUX model
-        });
+        // Try flux-schnell first, then fallback to other models, and finally default model
+        let imageElement;
+        try {
+          imageElement = await (window as any).puter.ai.txt2img(fluxPrompt, {
+            model: 'flux-schnell',
+          });
+        } catch {
+          try {
+            imageElement = await (window as any).puter.ai.txt2img(fluxPrompt, {
+              model: 'black-forest-labs/flux-1.1-pro',
+            });
+          } catch {
+            imageElement = await (window as any).puter.ai.txt2img(fluxPrompt);
+          }
+        }
 
         // Extract the base64 data URL from the returned HTMLImageElement
         if (imageElement && imageElement.src) {
@@ -2245,7 +2257,7 @@ function ImageWithSkeleton({ src, alt }: { src: string; alt: string }) {
           throw new Error('No image data returned from FLUX model');
         }
       } catch (err) {
-        console.error('[FLUX Image Generation] Error:', err);
+        console.warn('[FLUX Image Generation] Puter failed, trying fallback...', err);
         setProgressMsg('FLUX failed, trying fallback...');
 
         // Fallback: Try Pollinations.ai with the same prompt

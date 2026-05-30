@@ -30,7 +30,7 @@ function LoginContent() {
     await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}${redirectTo}`,
+        redirectTo: `${window.location.origin}/api/auth/callback?next=${encodeURIComponent(redirectTo)}`,
       },
     });
   };
@@ -118,11 +118,31 @@ function LoginContent() {
 
         {/* Email Verification Banner */}
         {showVerificationMsg && (
-          <div className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-xl p-4 mb-4 text-center space-y-1">
-            <p className="text-sm font-semibold">📧 Check your inbox!</p>
-            <p className="text-[11px] font-light">
-              We sent a verification link to <strong>{email}</strong>. Click it to activate your account, then sign in.
-            </p>
+          <div className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-xl p-4 mb-4 text-center space-y-3">
+            <div>
+              <p className="text-sm font-semibold">📧 Check your inbox!</p>
+              <p className="text-[11px] font-light">
+                We sent a verification link to <strong>{email}</strong>. Click it to activate your account, then sign in.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                const domain = email.split("@")[1]?.toLowerCase();
+                if (domain === "gmail.com") {
+                  window.open("https://mail.google.com", "_blank");
+                } else if (domain === "outlook.com" || domain === "hotmail.com" || domain === "live.com") {
+                  window.open("https://outlook.live.com", "_blank");
+                } else if (domain === "yahoo.com") {
+                  window.open("https://mail.yahoo.com", "_blank");
+                } else {
+                  window.open("mailto:", "_self");
+                }
+              }}
+              className="inline-flex items-center gap-2 rounded-xl bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 px-4 py-2 text-xs font-bold hover:bg-emerald-500/30 transition-all cursor-pointer"
+            >
+              Open Email App
+            </button>
           </div>
         )}
 

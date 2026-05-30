@@ -42,8 +42,15 @@ RULES:
        A[Start Node] --> B[Intermediate Concept]
        A --> C[Alternative Concept]
        B --> D[Resulting Concept]
+       %% @details Start Node | Category Name | Stage Name | This is a detailed description of the Start Node concept.
+       %% @details Intermediate Concept | Category Name | Stage Name | This is a detailed description of the Intermediate Concept.
+       %% @simMode orbit
      \`\`\`
    - Keep node labels short (under 18 characters) and clear. Do not use special characters inside the label brackets.
+   - **Dynamic Details Comment Annotation (CRITICAL)**: To define precise category names, stages, and custom descriptions when a user hovers over a node, add detail comments inside the Mermaid block using the following annotation format:
+     \`%% @details <NodeIdOrLabel> | <CategoryName> | <StageName> | <Detailed Explanation of Concept>\`
+   - **Dynamic Physics Simulator Preset**: If the flowchart represents a physics concept, declare the active simulation preset inside the Mermaid block using:
+     \`%% @simMode <inertia | second | third | orbit | dynamic>\` (where \`inertia\` is Newton's 1st Law, \`second\` is 2nd Law F=ma, \`third\` is 3rd Law Action/Reaction, and \`orbit\` is Gravity).
 5. **Image Generation (FLUX AI)**: If the student asks you to generate, draw, create, or visualize an image or picture (such as "generate an image of a chloroplast", "draw a neural network", or "show me a picture of DNA"), you MUST generate a highly detailed FLUX-optimized image prompt and embed it as a markdown image using the \`flux://\` protocol.
    - **FLUX Prompt Engineering Rules (CRITICAL)**:
      * Describe the image as if directing a professional DSLR photographer

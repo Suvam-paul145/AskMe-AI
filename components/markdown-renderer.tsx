@@ -28,10 +28,18 @@ function extractNodeIdAndLabel(part: string): { id: string; label?: string } {
   return { id: part.trim() };
 }
 
-function parseMermaid(code: string): { nodes: FlowNode[]; links: FlowLink[]; direction: "TD" | "LR" } {
+function parseMermaid(code: string): { 
+  nodes: FlowNode[]; 
+  links: FlowLink[]; 
+  direction: "TD" | "LR";
+  nodeDetails: Record<string, { category: string; stage: string; desc: string }>;
+  simMode?: string;
+} {
   const nodes: FlowNode[] = [];
   const links: FlowLink[] = [];
   let direction: "TD" | "LR" = "TD";
+  const nodeDetails: Record<string, { category: string; stage: string; desc: string }> = {};
+  let simMode: string | undefined = undefined;
 
   const lines = code.split("\n");
   
@@ -49,7 +57,26 @@ function parseMermaid(code: string): { nodes: FlowNode[]; links: FlowLink[]; dir
 
   lines.forEach(line => {
     const trimmed = line.trim();
-    if (!trimmed || trimmed.startsWith("%%")) return;
+    if (!trimmed) return;
+
+    // Parse custom metadata comments starting with %%
+    if (trimmed.startsWith("%%")) {
+      const detailsMatch = trimmed.match(/^%%\s*@details\s+(.+?)\s*\|\s*(.+?)\s*\|\s*(.+?)\s*\|\s*(.+)$/i);
+      if (detailsMatch) {
+        const key = detailsMatch[1].toLowerCase().trim();
+        nodeDetails[key] = {
+          category: detailsMatch[2].trim(),
+          stage: detailsMatch[3].trim(),
+          desc: detailsMatch[4].trim()
+        };
+      }
+      
+      const simMatch = trimmed.match(/^%%\s*@simMode\s+([a-zA-Z0-9_-]+)/i);
+      if (simMatch) {
+        simMode = simMatch[1].toLowerCase().trim();
+      }
+      return;
+    }
 
     // Direction check
     if (trimmed.startsWith("graph ")) {
@@ -206,7 +233,7 @@ function parseMermaid(code: string): { nodes: FlowNode[]; links: FlowLink[]; dir
     });
   }
 
-  return { nodes, links, direction };
+  return { nodes, links, direction, nodeDetails, simMode };
 }
 
 // --- EDUCATIONAL CONCEPT EXPLANATION DICTIONARY ---
@@ -387,6 +414,9 @@ export function FlowchartRenderer({ code }: { code: string }) {
 
   // Auto-detect simulation topic from flowchart code
   const detectedMode = React.useMemo(() => {
+    if (parsed.simMode && ['inertia', 'second', 'third', 'orbit', 'dynamic'].includes(parsed.simMode)) {
+      return parsed.simMode as SimMode;
+    }
     const text = code.toLowerCase();
     
     // Check for specific physics concepts to ensure simulator relevance
@@ -403,7 +433,7 @@ export function FlowchartRenderer({ code }: { code: string }) {
       return "orbit";
     }
     return null; // Return null for standard concepts to avoid duplicating sandbox HUDs!
-  }, [code]);
+  }, [code, parsed.simMode]);
 
   if (nodes.length === 0) {
     return (
@@ -877,7 +907,12 @@ export function FlowchartRenderer({ code }: { code: string }) {
           <div className="w-full lg:w-[200px] shrink-0 bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200 dark:border-white/5 rounded-2xl p-3 flex flex-col justify-between backdrop-blur-md relative overflow-hidden overflow-y-auto transition-all duration-300 max-h-[200px] lg:max-h-none">
             {hoveredNode ? (
               (() => {
-                const details = getConceptDetails(hoveredNode.label);
+                const nodeIdKey = hoveredNode.id.toLowerCase().trim();
+                const nodeLabelKey = hoveredNode.label.toLowerCase().trim();
+                const details = parsed.nodeDetails[nodeIdKey] || 
+                                parsed.nodeDetails[nodeLabelKey] || 
+                                getConceptDetails(hoveredNode.label);
+                                
                 const style = getNodeStyle(hoveredNode.label);
                 return (
                   <>

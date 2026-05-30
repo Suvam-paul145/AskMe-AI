@@ -281,6 +281,37 @@ export default function WorkspacePage() {
     }
   }, [activeDoc?.id, loadChatHistory, loadQuiz]);
 
+  // Handle URL parameters for direct document and chat linking
+  useEffect(() => {
+    if (typeof window !== "undefined" && documents.length > 0) {
+      const params = new URLSearchParams(window.location.search);
+      const docIdParam = params.get("docId");
+      const queryParam = params.get("query");
+      const autoSendParam = params.get("autoSend");
+      
+      if (docIdParam) {
+        const matchedDoc = documents.find(d => d.id === docIdParam);
+        if (matchedDoc) {
+          setSelectedDocId(docIdParam);
+          
+          if (queryParam) {
+            setChatInput(queryParam);
+            setActiveTab("chat");
+            
+            if (autoSendParam === "true") {
+              // Automatically send the query as a chat message!
+              sendMessage(docIdParam, queryParam, undefined, [docIdParam]);
+            }
+            
+            // Clean the URL query parameters except docId to prevent triggers on refresh
+            const newUrl = window.location.pathname + `?docId=${docIdParam}`;
+            window.history.replaceState({}, "", newUrl);
+          }
+        }
+      }
+    }
+  }, [documents, setSelectedDocId, sendMessage]);
+
   // Auto-scroll chat to bottom
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });

@@ -492,7 +492,7 @@ export function FlowchartRenderer({ code }: { code: string }) {
   };
 
   return (
-    <div className="w-full bg-[#0d0d11]/80 border border-white/5 rounded-3xl p-5 my-5 flex flex-col glass-card relative overflow-hidden shadow-2xl matte-layer spatial-shadow-lg select-none">
+    <div className="w-full max-w-full bg-[#0d0d11]/80 border border-white/5 rounded-3xl p-4 my-4 flex flex-col glass-card relative overflow-hidden shadow-2xl matte-layer spatial-shadow-lg select-none">
       
       {/* Decorative glows inside container */}
       <div className="absolute top-0 right-0 w-[150px] h-[150px] bg-primary/5 rounded-full filter blur-2xl pointer-events-none" />
@@ -514,10 +514,11 @@ export function FlowchartRenderer({ code }: { code: string }) {
       </div>
 
       {/* Main Grid Layout for SVG and Info Side Panel */}
-      <div className="w-full flex flex-col lg:flex-row gap-4 items-stretch z-10">
+      <div className="w-full flex flex-col lg:flex-row gap-4 items-stretch z-10 min-h-0">
         <div 
           ref={containerRef}
-          className="flex-1 relative aspect-[16/9] overflow-hidden select-none rounded-2xl bg-zinc-100/50 dark:bg-zinc-950/40 border border-zinc-200 dark:border-white/5 cursor-grab active:cursor-grabbing"
+          className="flex-1 relative overflow-hidden select-none rounded-2xl bg-zinc-100/50 dark:bg-zinc-950/40 border border-zinc-200 dark:border-white/5 cursor-grab active:cursor-grabbing min-h-[200px] max-h-[360px]"
+          style={{ aspectRatio: '16/9' }}
         >
         <svg
           ref={svgRef}
@@ -768,7 +769,7 @@ export function FlowchartRenderer({ code }: { code: string }) {
       </div>
 
       {/* Interactive Side details HUD Panel */}
-      <div className="w-full lg:w-[200px] shrink-0 bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200 dark:border-white/5 rounded-2xl p-4 flex flex-col justify-between backdrop-blur-md relative overflow-hidden transition-all duration-300">
+      <div className="w-full lg:w-[200px] shrink-0 bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200 dark:border-white/5 rounded-2xl p-3 flex flex-col justify-between backdrop-blur-md relative overflow-hidden overflow-y-auto transition-all duration-300 max-h-[200px] lg:max-h-none">
           {hoveredNode ? (
             (() => {
               const details = getConceptDetails(hoveredNode.label);
@@ -1090,7 +1091,7 @@ function parseInline(text: string): React.ReactNode[] {
             key={idx}
             src={url}
             alt={alt}
-            className="max-w-md w-full h-auto rounded-2xl border border-white/5 my-3 shadow-md block spatial-shadow"
+            className="max-w-full w-full h-auto rounded-2xl border border-white/5 my-3 shadow-md block spatial-shadow object-contain"
           />
         );
       }

@@ -1,6 +1,7 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from "react";
+import { usePathname } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { User } from "@supabase/supabase-js";
 
@@ -247,6 +248,20 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [links, setLinks] = useState<GraphLink[]>([]);
   const [planner, setPlanner] = useState<PlannerItem[]>([]);
 
+  // Cache tracking states
+  const [hasLoadedDocuments, setHasLoadedDocuments] = useState(false);
+  const [hasLoadedProfile, setHasLoadedProfile] = useState(false);
+  const [hasLoadedGraph, setHasLoadedGraph] = useState(false);
+  const [hasLoadedPlanner, setHasLoadedPlanner] = useState(false);
+
+  // In-flight request promise references
+  const documentsPromiseRef = useRef<Promise<void> | null>(null);
+  const profilePromiseRef = useRef<Promise<void> | null>(null);
+  const graphPromiseRef = useRef<Promise<void> | null>(null);
+  const plannerPromiseRef = useRef<Promise<void> | null>(null);
+
+  const pathname = usePathname();
+
   // --- AUTH ---
   useEffect(() => {
     // Check initial session
@@ -305,35 +320,49 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     document.documentElement.className = newTheme;
   };
 
-  // --- DOCUMENTS ---
-  const refreshDocuments = useCallback(async () => {
-    try {
-      const res = await fetch("/api/documents");
-      if (res.ok) {
-        const data = await res.json();
-        const docs: DocumentNode[] = (data.documents || []).map((d: DBDocument) => ({
-          id: d.id,
-          title: d.title,
-          date: d.created_at?.split("T")[0] || "",
-          size: d.file_size || "—",
-          extractedText: d.extracted_text || "",
-          summary: d.summary || {
-            overview: "",
-            keyPoints: [],
-            formulas: [],
-            examTips: [],
-            confusedTopics: [],
-          },
-        }));
-        setDocuments(docs);
-        if (docs.length > 0 && !selectedDocId) {
-          setSelectedDocId(docs[0].id);
-        }
-      }
-    } catch (err) {
-      console.error("Failed to fetch documents:", err);
+  const refreshDocuments = useCallback(async (force = false) => {
+    if (!force && hasLoadedDocuments && documents.length > 0) {
+      return;
     }
-  }, [selectedDocId]);
+    if (documentsPromiseRef.current) {
+      return documentsPromiseRef.current;
+    }
+
+    const promise = (async () => {
+      try {
+        const res = await fetch("/api/documents");
+        if (res.ok) {
+          const data = await res.json();
+          const docs: DocumentNode[] = (data.documents || []).map((d: DBDocument) => ({
+            id: d.id,
+            title: d.title,
+            date: d.created_at?.split("T")[0] || "",
+            size: d.file_size || "—",
+            extractedText: d.extracted_text || "",
+            summary: d.summary || {
+              overview: "",
+              keyPoints: [],
+              formulas: [],
+              examTips: [],
+              confusedTopics: [],
+            },
+          }));
+          setDocuments(docs);
+          setHasLoadedDocuments(true);
+          if (docs.length > 0 && !selectedDocId) {
+            setSelectedDocId(docs[0].id);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch documents:", err);
+      } finally {
+        documentsPromiseRef.current = null;
+      }
+    })();
+
+    documentsPromiseRef.current = promise;
+    return promise;
+  }, [selectedDocId, hasLoadedDocuments, documents.length]);
 
   // --- CHAT ---
   const loadChatHistory = useCallback(async (docId: string) => {
@@ -566,42 +595,56 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   }, []);
 
-  // --- PROFILE ---
-  const refreshProfile = useCallback(async () => {
-    try {
-      const res = await fetch("/api/profile");
-      if (res.ok) {
-        const data = await res.json();
-        if (data.profile) {
-          const cogProfile = data.profile.cognitive_profile || {};
-          setProfile({
-            conceptual: cogProfile.conceptual ?? 50,
-            retention: cogProfile.retention ?? 50,
-            analytical: cogProfile.analytical ?? 50,
-            discipline: cogProfile.discipline ?? 50,
-            consistency: cogProfile.consistency ?? 50,
-            adaptability: cogProfile.adaptability ?? 50,
-            calibration: cogProfile.calibration ?? 50,
-            efficiency: cogProfile.efficiency ?? 50,
-            archetype: cogProfile.archetype || "New Learner",
-            description: cogProfile.description || "Your profile will evolve with study activity.",
-            avatar_url: data.profile.avatar_url || cogProfile.avatar_url || "",
-            email: data.profile.email || "",
-            full_name: data.profile.full_name || "",
-            ai_personality: data.profile.ai_personality || "socratic",
-            study_pace: data.profile.study_pace || "calibrated",
-          });
-          setXp(data.profile.xp || 0);
-          setStreak(data.profile.streak || 0);
-        }
-        if (data.weakTopics) {
-          setWeakTopics(data.weakTopics);
-        }
-      }
-    } catch (err) {
-      console.error("Failed to fetch profile:", err);
+  const refreshProfile = useCallback(async (force = false) => {
+    if (!force && hasLoadedProfile && profile.email) {
+      return;
     }
-  }, []);
+    if (profilePromiseRef.current) {
+      return profilePromiseRef.current;
+    }
+
+    const promise = (async () => {
+      try {
+        const res = await fetch("/api/profile");
+        if (res.ok) {
+          const data = await res.json();
+          if (data.profile) {
+            const cogProfile = data.profile.cognitive_profile || {};
+            setProfile({
+              conceptual: cogProfile.conceptual ?? 50,
+              retention: cogProfile.retention ?? 50,
+              analytical: cogProfile.analytical ?? 50,
+              discipline: cogProfile.discipline ?? 50,
+              consistency: cogProfile.consistency ?? 50,
+              adaptability: cogProfile.adaptability ?? 50,
+              calibration: cogProfile.calibration ?? 50,
+              efficiency: cogProfile.efficiency ?? 50,
+              archetype: cogProfile.archetype || "New Learner",
+              description: cogProfile.description || "Your profile will evolve with study activity.",
+              avatar_url: data.profile.avatar_url || cogProfile.avatar_url || "",
+              email: data.profile.email || "",
+              full_name: data.profile.full_name || "",
+              ai_personality: data.profile.ai_personality || "socratic",
+              study_pace: data.profile.study_pace || "calibrated",
+            });
+            setXp(data.profile.xp || 0);
+            setStreak(data.profile.streak || 0);
+            setHasLoadedProfile(true);
+          }
+          if (data.weakTopics) {
+            setWeakTopics(data.weakTopics);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch profile:", err);
+      } finally {
+        profilePromiseRef.current = null;
+      }
+    })();
+
+    profilePromiseRef.current = promise;
+    return promise;
+  }, [hasLoadedProfile, profile.email]);
 
   const updateProfile = useCallback((updates: Partial<CognitiveProfile>) => {
     setProfile((prev) => ({ ...prev, ...updates }));
@@ -660,19 +703,33 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       .catch(console.error);
   }, [profile]);
 
-  // --- GRAPH ---
-  const refreshGraph = useCallback(async () => {
-    try {
-      const res = await fetch("/api/graph");
-      if (res.ok) {
-        const data = await res.json();
-        setNodes(data.nodes || []);
-        setLinks(data.links || []);
-      }
-    } catch (err) {
-      console.error("Failed to fetch graph:", err);
+  const refreshGraph = useCallback(async (force = false) => {
+    if (!force && hasLoadedGraph && nodes.length > 0) {
+      return;
     }
-  }, []);
+    if (graphPromiseRef.current) {
+      return graphPromiseRef.current;
+    }
+
+    const promise = (async () => {
+      try {
+        const res = await fetch("/api/graph");
+        if (res.ok) {
+          const data = await res.json();
+          setNodes(data.nodes || []);
+          setLinks(data.links || []);
+          setHasLoadedGraph(true);
+        }
+      } catch (err) {
+        console.error("Failed to fetch graph:", err);
+      } finally {
+        graphPromiseRef.current = null;
+      }
+    })();
+
+    graphPromiseRef.current = promise;
+    return promise;
+  }, [hasLoadedGraph, nodes.length]);
 
   const updateNodeStrength = useCallback((nodeId: string, delta: number) => {
     setNodes((prev) =>
@@ -698,27 +755,41 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }).catch(console.error);
   }, []);
 
-  // --- PLANNER ---
-  const refreshPlanner = useCallback(async () => {
-    try {
-      const res = await fetch("/api/planner");
-      if (res.ok) {
-        const data = await res.json();
-        setPlanner(
-          (data.items || []).map((item: DBPlannerItem) => ({
-            id: item.id,
-            date: item.date || "",
-            title: item.title,
-            duration: item.duration,
-            completed: item.completed,
-            isUrgent: item.is_urgent,
-          }))
-        );
-      }
-    } catch (err) {
-      console.error("Failed to fetch planner:", err);
+  const refreshPlanner = useCallback(async (force = false) => {
+    if (!force && hasLoadedPlanner && planner.length > 0) {
+      return;
     }
-  }, []);
+    if (plannerPromiseRef.current) {
+      return plannerPromiseRef.current;
+    }
+
+    const promise = (async () => {
+      try {
+        const res = await fetch("/api/planner");
+        if (res.ok) {
+          const data = await res.json();
+          setPlanner(
+            (data.items || []).map((item: DBPlannerItem) => ({
+              id: item.id,
+              date: item.date || "",
+              title: item.title,
+              duration: item.duration,
+              completed: item.completed,
+              isUrgent: item.is_urgent,
+            }))
+          );
+          setHasLoadedPlanner(true);
+        }
+      } catch (err) {
+        console.error("Failed to fetch planner:", err);
+      } finally {
+        plannerPromiseRef.current = null;
+      }
+    })();
+
+    plannerPromiseRef.current = promise;
+    return promise;
+  }, [hasLoadedPlanner, planner.length]);
 
   const togglePlannerItem = useCallback((id: string) => {
     setPlanner((prev) =>
@@ -818,8 +889,8 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       onProgress?.("Syncing cognitive profile...", 90);
 
       // Refresh data
-      await refreshDocuments();
-      await refreshGraph();
+      await refreshDocuments(true);
+      await refreshGraph(true);
       setXp((prev) => prev + 50);
 
       onProgress?.("Ingestion complete!", 100);
@@ -852,7 +923,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         if (selectedDocId === id) {
           setSelectedDocId(null);
         }
-        await refreshGraph();
+        await refreshGraph(true);
         return true;
       }
       return false;
@@ -862,18 +933,12 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   }, [selectedDocId, refreshGraph]);
 
-  // Load data when user signs in
+  // Lazy load data based on routing and user session
   useEffect(() => {
     let timer: NodeJS.Timeout;
-    if (user) {
-      timer = setTimeout(() => {
-        refreshDocuments();
-        refreshProfile();
-        refreshGraph();
-        refreshPlanner();
-      }, 0);
-    } else {
-      // Reset state asynchronously to avoid synchronous setState warning inside effect
+
+    if (!user) {
+      // Reset state and clear cache flags asynchronously to avoid warnings
       timer = setTimeout(() => {
         setDocuments([]);
         setSelectedDocId(null);
@@ -885,10 +950,37 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         setStreak(0);
         setPlanner([]);
         setProfile(defaultProfile);
+        setNodes([]);
+        setLinks([]);
+        setHasLoadedDocuments(false);
+        setHasLoadedProfile(false);
+        setHasLoadedGraph(false);
+        setHasLoadedPlanner(false);
       }, 0);
+      return () => clearTimeout(timer);
     }
-    return () => clearTimeout(timer);
-  }, [user, refreshDocuments, refreshProfile, refreshGraph, refreshPlanner]);
+
+    // Always fetch profile first, as stats like streak and XP are globally displayed in Navbar on all pages
+    refreshProfile();
+
+    if (!pathname) return;
+
+    // Detect active page and fetch its respective resource lazily
+    if (pathname.startsWith("/workspace") || pathname.startsWith("/chat") || pathname.startsWith("/quiz") || pathname.startsWith("/upload")) {
+      refreshDocuments();
+    } else if (pathname.startsWith("/memory-graph")) {
+      refreshGraph();
+    } else if (pathname.startsWith("/planner")) {
+      refreshPlanner();
+    } else if (pathname.startsWith("/dashboard")) {
+      // Dashboard uses everything, so we load them all (loaded in parallel only when dashboard is active)
+      refreshDocuments();
+      refreshGraph();
+      refreshPlanner();
+    } else if (pathname.startsWith("/dna") || pathname.startsWith("/settings") || pathname.startsWith("/analytics")) {
+      refreshProfile();
+    }
+  }, [user, pathname, refreshProfile, refreshDocuments, refreshGraph, refreshPlanner]);
 
   return (
     <StoreContext.Provider

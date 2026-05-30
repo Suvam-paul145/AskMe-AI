@@ -22,6 +22,17 @@ interface PuterAI {
       stream?: boolean;
     }
   ): Promise<{ message: { content: string } }>;
+
+  txt2speech(
+    text: string,
+    options?: {
+      provider?: string;
+      model?: string;
+      voice?: string;
+      instructions?: string;
+      response_format?: string;
+    }
+  ): Promise<HTMLAudioElement>;
 }
 
 interface Puter {

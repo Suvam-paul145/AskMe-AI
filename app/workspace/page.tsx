@@ -86,6 +86,7 @@ export default function WorkspacePage() {
   const [isListening, setIsListening] = useState(false);
   const [currentlySpeakingId, setCurrentlySpeakingId] = useState<string | null>(null);
   const recognitionRef = useRef<any>(null);
+  const activeAudioRef = useRef<HTMLAudioElement | null>(null);
 
   // Voice Input (STT) SpeechRecognition Setup
   useEffect(() => {
@@ -126,6 +127,9 @@ export default function WorkspacePage() {
       if (typeof window !== "undefined" && window.speechSynthesis) {
         window.speechSynthesis.cancel();
       }
+      if (activeAudioRef.current) {
+        activeAudioRef.current.pause();
+      }
     };
   }, []);
 
@@ -143,18 +147,22 @@ export default function WorkspacePage() {
   };
 
   const speakText = (text: string, messageId: string) => {
-    if (typeof window === "undefined" || !window.speechSynthesis) {
-      alert("Text-to-speech is not supported in this browser.");
-      return;
+    if (activeAudioRef.current) {
+      activeAudioRef.current.pause();
+      activeAudioRef.current = null;
     }
 
     if (currentlySpeakingId === messageId) {
-      window.speechSynthesis.cancel();
+      if (typeof window !== "undefined" && window.speechSynthesis) {
+        window.speechSynthesis.cancel();
+      }
       setCurrentlySpeakingId(null);
       return;
     }
 
-    window.speechSynthesis.cancel();
+    if (typeof window !== "undefined" && window.speechSynthesis) {
+      window.speechSynthesis.cancel();
+    }
 
     // Strip markdown formatting, code snippets, sources, images for a very clean, simple voice reading
     const cleanText = text
@@ -164,16 +172,64 @@ export default function WorkspacePage() {
       .replace(/\[Source \d+\]/g, "")
       .replace(/!\[.*?\]\(.*?\)/g, "[Visual image generated]");
 
-    const utterance = new SpeechSynthesisUtterance(cleanText);
-    utterance.onend = () => {
-      setCurrentlySpeakingId(null);
-    };
-    utterance.onerror = () => {
-      setCurrentlySpeakingId(null);
+    setCurrentlySpeakingId(messageId);
+
+    const playNativeFallback = () => {
+      if (typeof window !== "undefined" && window.speechSynthesis) {
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(cleanText);
+        utterance.onend = () => {
+          setCurrentlySpeakingId(null);
+        };
+        utterance.onerror = () => {
+          setCurrentlySpeakingId(null);
+        };
+        window.speechSynthesis.speak(utterance);
+      } else {
+        setCurrentlySpeakingId(null);
+      }
     };
 
-    setCurrentlySpeakingId(messageId);
-    window.speechSynthesis.speak(utterance);
+    // Try Puter.js premium neural TTS
+    const tryNeuralTts = async () => {
+      try {
+        let attempts = 0;
+        // Wait up to 2 seconds for puter to load
+        while (typeof (window as any).puter === 'undefined' && attempts < 10) {
+          await new Promise(resolve => setTimeout(resolve, 200));
+          attempts++;
+        }
+
+        const puterSdk = (window as any).puter;
+        if (typeof puterSdk === 'undefined' || !puterSdk.ai || !puterSdk.ai.txt2speech) {
+          throw new Error('Puter.js neural TTS not available');
+        }
+
+        // Request OpenAI 'fable' storytelling voice via Puter.js
+        const audio = await puterSdk.ai.txt2speech(cleanText, {
+          provider: 'openai',
+          voice: 'fable'
+        });
+
+        // Ensure we only play if the user is still speaking this message
+        audio.onended = () => {
+          setCurrentlySpeakingId(null);
+        };
+        audio.onerror = (e: any) => {
+          console.warn("Neural TTS playback error:", e);
+          setCurrentlySpeakingId(null);
+        };
+
+        activeAudioRef.current = audio;
+        audio.play();
+
+      } catch (err) {
+        console.warn("Puter.js Neural TTS failed, falling back to native TTS:", err);
+        playNativeFallback();
+      }
+    };
+
+    tryNeuralTts();
   };
 
   // Initialize attachedDocIds with the selectedDocId on load

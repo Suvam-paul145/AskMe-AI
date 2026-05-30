@@ -66,6 +66,7 @@ export default function ChatPage() {
   const [speechTranscript, setSpeechTranscript] = useState("");
   
   const recognitionRef = useRef<any>(null);
+  const activeAudioRef = useRef<HTMLAudioElement | null>(null);
 
   // Cleanup speech resources on unmount
   useEffect(() => {
@@ -76,6 +77,9 @@ export default function ChatPage() {
         }
         if (window.speechSynthesis) {
           window.speechSynthesis.cancel();
+        }
+        if (activeAudioRef.current) {
+          activeAudioRef.current.pause();
         }
       }
     };
@@ -113,7 +117,7 @@ export default function ChatPage() {
       if (activeDoc) {
         setIsAiReplying(true);
         // Force the prompt to return an extremely short, simple story-based answer for voice mode
-        const voicePrompt = `${resultText} (IMPORTANT voice instruction: Reply with a highly concise, simple story-like answer under 3 sentences for direct voice speaking).`;
+        const voicePrompt = `${resultText} (IMPORTANT voice instruction: Reply as a warm, highly natural, humorous human storyteller. Break down the concept with a funny analogy or quick storytelling style under 3 sentences for direct voice speaking. Never use robotic words).`;
         
         try {
           const aiResponse = await sendMessage(activeDoc.id, voicePrompt, activeMode === "auto" ? detectIntent(resultText) : activeMode);
@@ -141,11 +145,16 @@ export default function ChatPage() {
     rec.start();
   };
 
-  // Read AI Text Aloud using Web Speech Synthesis
+  // Read AI Text Aloud using Puter.js Neural TTS or Web Speech Synthesis Fallback
   const speakText = (text: string) => {
-    if (typeof window === "undefined" || !window.speechSynthesis) return;
+    if (activeAudioRef.current) {
+      activeAudioRef.current.pause();
+      activeAudioRef.current = null;
+    }
 
-    window.speechSynthesis.cancel();
+    if (typeof window !== "undefined" && window.speechSynthesis) {
+      window.speechSynthesis.cancel();
+    }
 
     // Remove markdown code fences and symbols for clean reading
     const cleanText = text
@@ -153,30 +162,87 @@ export default function ChatPage() {
       .replace(/[#*`_]/g, "")
       .trim();
 
-    const utterance = new SpeechSynthesisUtterance(cleanText.slice(0, 320));
-    utterance.lang = "en-US";
-    
-    utterance.onstart = () => {
-      setVoiceState("speaking");
-      setIsAiReplying(false);
+    setVoiceState("speaking");
+    setIsAiReplying(false);
+
+    const playNativeFallback = () => {
+      if (typeof window !== "undefined" && window.speechSynthesis) {
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(cleanText.slice(0, 320));
+        utterance.lang = "en-US";
+        
+        utterance.onstart = () => {
+          setVoiceState("speaking");
+          setIsAiReplying(false);
+        };
+
+        utterance.onend = () => {
+          setVoiceState("ready");
+          // Auto restart listening for a true hands-free talking loop!
+          setTimeout(() => {
+            if (showVoiceOverlay) {
+              startSpeechRecognition();
+            }
+          }, 400);
+        };
+
+        utterance.onerror = (e) => {
+          console.error("Speech synthesis error:", e);
+          setVoiceState("ready");
+        };
+
+        window.speechSynthesis.speak(utterance);
+      } else {
+        setVoiceState("ready");
+      }
     };
 
-    utterance.onend = () => {
-      setVoiceState("ready");
-      // Auto restart listening for a true hands-free talking loop!
-      setTimeout(() => {
-        if (showVoiceOverlay) {
-          startSpeechRecognition();
+    // Try Puter.js premium neural TTS
+    const tryNeuralTts = async () => {
+      try {
+        let attempts = 0;
+        // Wait up to 2 seconds for puter to load
+        while (typeof (window as any).puter === 'undefined' && attempts < 10) {
+          await new Promise(resolve => setTimeout(resolve, 200));
+          attempts++;
         }
-      }, 400);
+
+        const puterSdk = (window as any).puter;
+        if (typeof puterSdk === 'undefined' || !puterSdk.ai || !puterSdk.ai.txt2speech) {
+          throw new Error('Puter.js neural TTS not available');
+        }
+
+        // Request OpenAI 'fable' storytelling voice via Puter.js
+        const audio = await puterSdk.ai.txt2speech(cleanText, {
+          provider: 'openai',
+          voice: 'fable'
+        });
+
+        audio.onended = () => {
+          setVoiceState("ready");
+          // Auto restart listening for a true hands-free talking loop!
+          setTimeout(() => {
+            if (showVoiceOverlay) {
+              startSpeechRecognition();
+            }
+          }, 400);
+        };
+
+        audio.onerror = (e: any) => {
+          console.warn("Neural TTS playback error:", e);
+          setVoiceState("ready");
+        };
+
+        activeAudioRef.current = audio;
+        audio.play();
+
+      } catch (err) {
+        console.warn("Puter.js Neural TTS failed, falling back to native TTS:", err);
+        playNativeFallback();
+      }
     };
 
-    utterance.onerror = (e) => {
-      console.error("Speech synthesis error:", e);
-      setVoiceState("ready");
-    };
-
-    window.speechSynthesis.speak(utterance);
+    tryNeuralTts();
   };
 
   const endVoiceMode = () => {
@@ -186,6 +252,9 @@ export default function ChatPage() {
       }
       if (window.speechSynthesis) {
         window.speechSynthesis.cancel();
+      }
+      if (activeAudioRef.current) {
+        activeAudioRef.current.pause();
       }
     }
     setShowVoiceOverlay(false);

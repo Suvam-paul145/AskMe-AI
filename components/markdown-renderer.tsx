@@ -388,19 +388,21 @@ export function FlowchartRenderer({ code }: { code: string }) {
   // Auto-detect simulation topic from flowchart code
   const detectedMode = React.useMemo(() => {
     const text = code.toLowerCase();
+    
+    // Check for specific physics concepts to ensure simulator relevance
     if (text.includes("first law") || text.includes("inertia") || text.includes("friction") || text.includes("aristotle")) {
       return "inertia";
     }
-    if (text.includes("second law") || text.includes("f = ma") || text.includes("f=ma") || text.includes("force")) {
+    if (text.includes("second law") || text.includes("f = ma") || text.includes("f=ma") || text.includes("acceleration") || text.includes("momentum")) {
       return "second";
     }
-    if (text.includes("third law") || text.includes("action") || text.includes("reaction") || text.includes("opposite")) {
+    if (text.includes("third law") || text.includes("action and reaction") || text.includes("action & reaction") || (text.includes("action") && text.includes("reaction")) || text.includes("opposite force")) {
       return "third";
     }
-    if (text.includes("orbit") || text.includes("gravit") || text.includes("kepler") || text.includes("mass")) {
+    if (text.includes("orbit") || text.includes("gravity") || text.includes("gravitational") || text.includes("kepler")) {
       return "orbit";
     }
-    return "second"; // default preset
+    return null; // Return null for standard concepts to avoid duplicating sandbox HUDs!
   }, [code]);
 
   if (nodes.length === 0) {
@@ -542,31 +544,33 @@ export function FlowchartRenderer({ code }: { code: string }) {
             Interactive Learning Flow
           </span>
 
-          {/* Elegant tab controllers */}
-          <div className="flex bg-zinc-900/60 p-0.5 rounded-lg border border-white/5 self-start">
-            <button
-              type="button"
-              onClick={() => setActiveTab('flow')}
-              className={`px-3 py-1 rounded-md text-[9px] font-bold uppercase tracking-wider transition-all ${
-                activeTab === 'flow'
-                  ? 'bg-primary text-white shadow-md'
-                  : 'text-zinc-400 hover:text-white hover:bg-white/5'
-              }`}
-            >
-              🗺️ Concept Flowchart
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab('simulation')}
-              className={`px-3 py-1 rounded-md text-[9px] font-bold uppercase tracking-wider transition-all flex items-center gap-1 ${
-                activeTab === 'simulation'
-                  ? 'bg-primary text-white shadow-md'
-                  : 'text-zinc-400 hover:text-white hover:bg-white/5'
-              }`}
-            >
-              ⚡ Live Physics Sandbox
-            </button>
-          </div>
+          {/* Elegant tab controllers (Only rendered if physics detectedMode is active) */}
+          {detectedMode && (
+            <div className="flex bg-zinc-900/60 p-0.5 rounded-lg border border-white/5 self-start">
+              <button
+                type="button"
+                onClick={() => setActiveTab('flow')}
+                className={`px-3 py-1 rounded-md text-[9px] font-bold uppercase tracking-wider transition-all ${
+                  activeTab === 'flow'
+                    ? 'bg-primary text-white shadow-md'
+                    : 'text-zinc-400 hover:text-white hover:bg-white/5'
+                }`}
+              >
+                🗺️ Concept Flowchart
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('simulation')}
+                className={`px-3 py-1 rounded-md text-[9px] font-bold uppercase tracking-wider transition-all flex items-center gap-1 ${
+                  activeTab === 'simulation'
+                    ? 'bg-primary text-white shadow-md'
+                    : 'text-zinc-400 hover:text-white hover:bg-white/5'
+                }`}
+              >
+                ⚡ Live Physics Sandbox
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Viewport controls (Only rendered when in flowchart diagram mode) */}
@@ -931,7 +935,7 @@ export function FlowchartRenderer({ code }: { code: string }) {
           </div>
         </div>
       ) : (
-        <PhysicsSimulator defaultMode={detectedMode} flowNodes={nodes} flowLinks={links} />
+        <PhysicsSimulator defaultMode={detectedMode || 'second'} flowNodes={nodes} flowLinks={links} />
       )}
 
       {/* Helpful Hint banner */}
@@ -965,6 +969,10 @@ function PhysicsSimulator({
   const { theme } = useStore();
   const isLight = theme === "light";
   const [mode, setMode] = React.useState<SimMode>(defaultMode);
+
+  React.useEffect(() => {
+    setMode(defaultMode);
+  }, [defaultMode]);
   const [isRunning, setIsRunning] = React.useState(true);
   const [tickerMsg, setTickerMsg] = React.useState('');
 
@@ -1634,66 +1642,7 @@ function PhysicsSimulator({
             </button>
           </div>
 
-          <div className="space-y-1.5">
-            <label className="text-[7.5px] uppercase tracking-widest font-mono text-zinc-500 font-bold">Select Preset</label>
-            <div className="grid grid-cols-2 lg:grid-cols-1 gap-1">
-              <button
-                type="button"
-                onClick={() => { setMode('inertia'); handlePushPuck('right'); }}
-                className={`px-2 py-1 text-[8.5px] font-bold text-left rounded transition-all border ${
-                  mode === 'inertia'
-                    ? 'bg-primary text-white border-primary shadow-sm'
-                    : 'bg-transparent border-zinc-200 dark:border-white/5 text-zinc-600 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-white/5'
-                }`}
-              >
-                1st Law: Inertia
-              </button>
-              <button
-                type="button"
-                onClick={() => { setMode('second'); handleResetCart(); }}
-                className={`px-2 py-1 text-[8.5px] font-bold text-left rounded transition-all border ${
-                  mode === 'second'
-                    ? 'bg-primary text-white border-primary shadow-sm'
-                    : 'bg-transparent border-zinc-200 dark:border-white/5 text-zinc-600 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-white/5'
-                }`}
-              >
-                2nd Law: F = ma
-              </button>
-              <button
-                type="button"
-                onClick={() => { setMode('third'); handleAstronautPush(); }}
-                className={`px-2 py-1 text-[8.5px] font-bold text-left rounded transition-all border ${
-                  mode === 'third'
-                    ? 'bg-primary text-white border-primary shadow-sm'
-                    : 'bg-transparent border-zinc-200 dark:border-white/5 text-zinc-600 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-white/5'
-                }`}
-              >
-                3rd Law: Action
-              </button>
-              <button
-                type="button"
-                onClick={() => setMode('orbit')}
-                className={`px-2 py-1 text-[8.5px] font-bold text-left rounded transition-all border ${
-                  mode === 'orbit'
-                    ? 'bg-primary text-white border-primary shadow-sm'
-                    : 'bg-transparent border-zinc-200 dark:border-white/5 text-zinc-600 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-white/5'
-                }`}
-              >
-                Orbit & Gravity
-              </button>
-              <button
-                type="button"
-                onClick={() => { setMode('dynamic'); handleResetSignalFlow(); }}
-                className={`px-2 py-1 text-[8.5px] font-bold text-left rounded transition-all border ${
-                  mode === 'dynamic'
-                    ? 'bg-primary text-white border-primary shadow-sm'
-                    : 'bg-transparent border-zinc-200 dark:border-white/5 text-zinc-600 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-white/5'
-                }`}
-              >
-                Concept Flow Lab
-              </button>
-            </div>
-          </div>
+
 
           {/* DYNAMIC PARAMETER SLIDERS BASED ON SELECTED MODE */}
           <div className="space-y-3.5 border-t border-zinc-200 dark:border-white/5 pt-3">
@@ -2072,7 +2021,7 @@ function parseLaTeXToReact(str: string): React.ReactNode {
 
                 return (
                   <span key={index} className="inline-flex flex-col items-center justify-center align-middle mx-1 text-center select-all">
-                    <span className="text-[10px] sm:text-xs leading-none pb-1 border-b border-zinc-500/30 w-full text-center">
+                    <span className="text-[10px] sm:text-xs leading-none pb-1 border-b border-zinc-500 dark:border-zinc-400 w-full text-center">
                       {numNode}
                     </span>
                     <span className="text-[10px] sm:text-xs leading-none pt-1 w-full text-center">
@@ -2247,19 +2196,19 @@ function ImageWithSkeleton({ src, alt }: { src: string; alt: string }) {
       try {
         // Wait for Puter.js SDK to be available (loaded async via script tag)
         let attempts = 0;
-        while (typeof puter === 'undefined' && attempts < 30) {
+        while (typeof (window as any).puter === 'undefined' && attempts < 30) {
           await new Promise(r => setTimeout(r, 200));
           attempts++;
         }
 
-        if (typeof puter === 'undefined') {
+        if (typeof (window as any).puter === 'undefined') {
           throw new Error('Puter.js SDK not loaded');
         }
 
         setProgressMsg('FLUX model generating image...');
 
         // Generate image using Puter.js + FLUX model
-        const imageElement = await puter.ai.txt2img(fluxPrompt, {
+        const imageElement = await (window as any).puter.ai.txt2img(fluxPrompt, {
           model: 'black-forest-labs/flux-1-schnell',  // Fast FLUX model
         });
 

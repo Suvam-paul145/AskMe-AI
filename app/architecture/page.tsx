@@ -22,10 +22,16 @@ const steps = [
     id: 1,
     title: "Document Ingestion",
     subtitle: "Parsing & Cleansing",
-    description: "Ingests raw text and PDF payloads. Simulates local client OCR models to normalize layouts and clean header/footer noise.",
+    description: "Ingests raw text and PDF payloads. Uses pdf-parse to extract structured layout data and strip header/footer noise.",
     icon: FileText,
     color: "from-blue-500/20 to-blue-600/20 text-blue-400 border-blue-500/30",
-    details: "Outputs pure unicode string representations optimized for chunk parsing algorithms."
+    details: "Outputs pure unicode string representations optimized for chunk parsing algorithms.",
+    logLines: [
+      "PDF buffer received: 2.3MB payload",
+      "pdf-parse text extraction: 47 pages detected",
+      "Header/footer noise stripped: 312 tokens removed",
+      "Unicode normalization complete: 18,422 clean tokens"
+    ]
   },
   {
     id: 2,
@@ -34,7 +40,13 @@ const steps = [
     description: "Splits raw document text into semantic windows of 500 characters with 100-character overlaps to maintain context boundaries.",
     icon: Layers,
     color: "from-cyan-500/20 to-cyan-600/20 text-cyan-400 border-cyan-500/30",
-    details: "Preserves sentences, markdown lists, and math equations without cutting them in half."
+    details: "Preserves sentences, markdown lists, and math equations without cutting them in half.",
+    logLines: [
+      "18,422 tokens → chunk segmentation initiated",
+      "Sentence boundary detection: active",
+      "94 chunks generated (avg 195 chars each)",
+      "Overlap windows applied: context continuity ensured"
+    ]
   },
   {
     id: 3,
@@ -43,7 +55,13 @@ const steps = [
     description: "Converts text chunks into 768-dimensional vector math weights representing conceptual semantics using Google Gemini Embeddings API.",
     icon: Binary,
     color: "from-purple-500/20 to-purple-600/20 text-purple-400 border-purple-500/30",
-    details: "Maps words with similar meanings to close coordinates in the embedding space."
+    details: "Maps words with similar meanings to close coordinates in the embedding space.",
+    logLines: [
+      "Gemini embedding API: 94 chunk payloads queued",
+      "API call dispatched: batch size 94",
+      "768-dim vectors generated for all chunks",
+      "Avg embedding latency: 847ms for 94 chunks"
+    ]
   },
   {
     id: 4,
@@ -52,7 +70,13 @@ const steps = [
     description: "Saves high-dimensional arrays in a local vector index model (pgvector in production) to support rapid cosine similarity searches.",
     icon: Database,
     color: "from-indigo-500/20 to-indigo-600/20 text-indigo-400 border-indigo-500/30",
-    details: "Allows O(1) query lookups for highly relevant documentation fragments."
+    details: "Allows O(1) query lookups for highly relevant documentation fragments.",
+    logLines: [
+      "Supabase pgvector connection established",
+      "IVFFlat index verified: active",
+      "94 vectors inserted to document_chunks",
+      "Index rebuilt: ready for similarity queries"
+    ]
   },
   {
     id: 5,
@@ -61,7 +85,13 @@ const steps = [
     description: "Takes student queries, creates a temporary embedding, and runs a cosine vector match against the vector db to fetch the top 3 chunks.",
     icon: MessageSquare,
     color: "from-pink-500/20 to-pink-600/20 text-pink-400 border-pink-500/30",
-    details: "Filters out irrelevant sections, ensuring the LLM is only loaded with correct context."
+    details: "Filters out irrelevant sections, ensuring the LLM is only loaded with correct context.",
+    logLines: [
+      "Student query received: 23 tokens",
+      "Query embedding generated: 768-dim vector",
+      "pgvector cosine scan: 94 vectors compared",
+      "Top-5 retrieved (scores: 0.91, 0.88, 0.85, 0.82, 0.79)"
+    ]
   },
   {
     id: 6,
@@ -70,22 +100,41 @@ const steps = [
     description: "Merges the original student question with retrieved knowledge chunks. Feeds it to Gemini 3.5 Flash for a precise doubt resolution.",
     icon: Bot,
     color: "from-emerald-500/20 to-emerald-600/20 text-emerald-400 border-emerald-500/30",
-    details: "Provides factual answers, cites source text coordinates, and generates mock flashcards."
+    details: "Provides factual answers, cites source text coordinates, and generates mock flashcards.",
+    logLines: [
+      "Context assembled: 5 chunks → 1,847 tokens",
+      "RAG grounding prompt injected",
+      "Gemini 2.0 Flash API dispatched",
+      "Grounded response generated: 312 tokens. Latency: 1.8s"
+    ]
   }
 ];
 
 export default function ArchitecturePage() {
   const [activeStep, setActiveStep] = useState(0);
-  const [simulationLogs, setSimulationLogs] = useState<string[]>(() => {
-    const step = steps[0];
-    return [
-      `[PIPELINE] Initializing node step 0${step.id}: ${step.title}`,
-      `[RESOLVER] Mapping dependencies for ${step.subtitle}`,
-      `[DATAFLOW] Executed telemetry diagnostic: ${step.details}`,
-      `[STATUS] Step 0${step.id} fully sync'd.`
-    ].map(log => `[${new Date().toLocaleTimeString()}] ${log}`);
-  });
+  const [simulationLogs, setSimulationLogs] = useState<string[]>([]);
+  const [mounted, setMounted] = useState(false);
   const logsContainerRef = useRef<HTMLDivElement | null>(null);
+
+  // Avoid hydration mismatch
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Update logs when activeStep changes
+  useEffect(() => {
+    if (!mounted) return;
+    const step = steps[activeStep];
+    const base = new Date();
+    const fmt = (offsetMs: number) => {
+      const d = new Date(base.getTime() + offsetMs);
+      return d.toLocaleTimeString([], { hour12: false });
+    };
+
+    setSimulationLogs(
+      step.logLines.map((line, i) => `[${fmt(i * 1200)}] ${line}`)
+    );
+  }, [activeStep, mounted]);
 
   // Scroll logs window to bottom
   useEffect(() => {
@@ -105,7 +154,7 @@ export default function ArchitecturePage() {
       <main className="flex-1 mx-auto max-w-7xl w-full px-4 py-16 sm:px-6 lg:px-8 relative z-10">
         
         {/* Header */}
-        <div className="text-center max-w-3xl mx-auto mb-20 space-y-6">
+        <div className="text-center max-w-3xl mx-auto mb-16 space-y-6">
           <div className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/10 px-3.5 py-1 text-[10px] font-bold text-primary dark:text-purple-400 uppercase tracking-widest biometric-glow">
             <Sparkles className="h-3.5 w-3.5 animate-pulse" />
             <span>Architecture Specification</span>
@@ -117,9 +166,45 @@ export default function ArchitecturePage() {
               Mapped in Dimensions.
             </span>
           </h1>
-          <p className="text-sm text-zinc-400 max-w-lg mx-auto font-light leading-relaxed">
-            Technical blueprint detailing how AskMe AI parses notebooks, computes embeddings, and synthesizes active recall environments.
+          <p className="text-xs text-zinc-400 max-w-xl mx-auto font-light leading-relaxed">
+            This diagram visualizes the server-side RAG pipeline that powers AskMe AI.
+            Documents are parsed with pdf-parse, chunked server-side, and embedded via
+            Gemini text-embedding-004 (768-dim vectors). All vectors are stored in
+            Supabase pgvector with IVFFlat indexing for sub-100ms cosine similarity queries.
+            Student queries follow the same embedding path before retrieval and LLM synthesis.
           </p>
+        </div>
+
+        {/* Visual Pipeline Flow Diagram */}
+        <div className="bg-[#0d0d11]/50 border border-white/5 p-6 rounded-3xl mb-10 relative overflow-hidden matte-layer spatial-shadow-lg">
+          <div className="text-[10px] uppercase font-bold tracking-widest text-zinc-500 font-mono mb-4">Pipeline Flow Map</div>
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4 md:gap-2">
+            {steps.map((step, idx) => {
+              const isActive = activeStep === idx;
+              const Icon = step.icon;
+              return (
+                <React.Fragment key={step.id}>
+                  <button
+                    onClick={() => setActiveStep(idx)}
+                    className={`flex flex-col items-center gap-2 p-3 rounded-2xl border transition-all duration-300 w-full md:w-36 text-center cursor-pointer ${
+                      isActive 
+                        ? "border-primary bg-primary/10 shadow-[0_0_15px_rgba(139,92,246,0.15)] scale-[1.02]" 
+                        : "border-white/5 bg-[#0d0d11]/80 text-zinc-400 hover:text-white hover:border-white/10"
+                    }`}
+                  >
+                    <div className={`p-2 rounded-xl border ${isActive ? "bg-primary text-white border-primary/20" : "bg-white/5 text-zinc-500 border-white/5"}`}>
+                      <Icon className="h-5 w-5" />
+                    </div>
+                    <span className="text-[10px] font-mono font-bold text-primary dark:text-purple-400">0{step.id}</span>
+                    <span className="text-[10px] font-bold uppercase tracking-wider truncate w-full">{step.title}</span>
+                  </button>
+                  {idx < steps.length - 1 && (
+                    <div className="text-zinc-650 hidden md:block animate-pulse font-mono select-none">→</div>
+                  )}
+                </React.Fragment>
+              );
+            })}
+          </div>
         </div>
 
         {/* Pipeline Interface Layout */}
@@ -134,20 +219,7 @@ export default function ArchitecturePage() {
                 return (
                   <button
                     key={step.id}
-                    onClick={() => {
-                      setActiveStep(idx);
-                      const s = steps[idx];
-                      const logPool = [
-                        `[PIPELINE] Initializing node step 0${s.id}: ${s.title}`,
-                        `[RESOLVER] Mapping dependencies for ${s.subtitle}`,
-                        `[DATAFLOW] Executed telemetry diagnostic: ${s.details}`,
-                        `[STATUS] Step 0${s.id} fully sync'd.`
-                      ];
-                      setSimulationLogs(prev => [
-                        ...prev,
-                        ...logPool.map(log => `[${new Date().toLocaleTimeString()}] ${log}`)
-                      ].slice(-30));
-                    }}
+                    onClick={() => setActiveStep(idx)}
                     className={`w-full flex items-center gap-4 text-left p-4 rounded-2xl border transition-all duration-300 tactile-card ${
                       isActive 
                         ? "border-primary/40 bg-primary/5 text-white" 
@@ -257,7 +329,7 @@ export default function ArchitecturePage() {
                   </div>
                 ))}
                 {simulationLogs.length === 0 && (
-                  <div className="text-zinc-600 italic">Logs system initialized. Click a step to simulate telemetry.</div>
+                  <div className="text-zinc-650 italic">Logs system initialized. Click a step to simulate telemetry.</div>
                 )}
               </div>
             </div>

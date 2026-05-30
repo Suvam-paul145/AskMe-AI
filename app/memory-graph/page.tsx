@@ -329,6 +329,27 @@ export default function MemoryGraphPage() {
                 onSelectNode={handleSelectNode} 
               />
 
+              {/* Node Legend Overlay */}
+              <div className="absolute bottom-4 right-4 bg-black/75 backdrop-blur rounded-xl p-3 text-[10px] space-y-1.5 border border-white/10 select-none z-10 pointer-events-none">
+                <p className="font-bold text-white uppercase tracking-wider text-[9px] mb-1">Node States</p>
+                <div className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-blue-400" />
+                  <span className="text-zinc-400">Mastered (85–100%)</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-purple-400" />
+                  <span className="text-zinc-400">Learning (60–84%)</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-rose-400" />
+                  <span className="text-zinc-400">Decaying / Weak (&lt;60%)</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-zinc-500" />
+                  <span className="text-zinc-400">Unknown</span>
+                </div>
+              </div>
+
               {/* Forecast Mode HUD indicator overlay */}
               {forecastMode && (
                 <div className="absolute top-4 left-4 bg-rose-500/10 border border-rose-500/20 text-rose-400 text-[9px] font-bold uppercase tracking-wider px-3.5 py-1.5 rounded-full flex items-center gap-1.5 animate-pulse biometric-glow">

@@ -30,18 +30,23 @@ export default function AboutPage() {
   const milestones = [
     {
       date: "Q3 2025",
-      title: "Core OCR & Parser R&D",
-      description: "Engineered high-fidelity math formula scanners and text cleaning pipelines."
+      title: "Research & System Design",
+      description: "Designed the RAG pipeline architecture. Selected Supabase pgvector as vector store and prototyped Gemini text-embedding-004 chunking experiments."
     },
     {
       date: "Q4 2025",
-      title: "Beta Simulation Alpha testing",
-      description: "Deployed local client memory graph tracking models to 500 test students."
+      title: "Core Engine Build",
+      description: "Built the document ingestion pipeline, quiz generation engine, memory graph data model, and Learning DNA schema. First full internal end-to-end demo."
     },
     {
       date: "Q1 2026",
-      title: "AskMe CLOS Launch",
-      description: "Released the unified Cognitive Learning Operating System supporting full dark/light theme dynamics."
+      title: "Cognitive Learning OS Launch",
+      description: "Launched AskMe AI on Vercel. Full RAG chat, adaptive quizzes, 3D memory graph, Learning DNA profiling, and study planner all live."
+    },
+    {
+      date: "Q2 2026",
+      title: "Open Source & Community",
+      description: "Published on GitHub under MIT license. Accepting contributors and building the first external user community."
     }
   ];
 
@@ -133,6 +138,29 @@ export default function AboutPage() {
             ))}
           </div>
         </div>
+
+        {/* Built By Section */}
+        <section className="mt-20 max-w-4xl mx-auto border-t border-white/5 pt-16">
+          <div className="text-center space-y-2 mb-10">
+            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-white cinematic-title">Built By</h2>
+            <p className="text-xs text-zinc-400 font-light">The mind behind the Cognitive Learning Operating System.</p>
+          </div>
+          <div className="flex items-center gap-6 p-6 bg-white/5 border border-white/10 rounded-3xl max-w-sm mx-auto shadow-2xl relative overflow-hidden matte-layer">
+            <div className="absolute inset-x-0 h-1/2 w-full scanner-sweep pointer-events-none opacity-20" />
+            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-violet-500 to-blue-600 flex items-center justify-center text-2xl font-bold text-white shrink-0 shadow-lg shadow-violet-500/10">
+              S
+            </div>
+            <div>
+              <p className="font-semibold text-base text-white">Suvam Paul</p>
+              <p className="text-xs text-zinc-400 mt-0.5">B.Tech CSE · JIS College of Engineering</p>
+              <div className="flex gap-3 mt-2.5">
+                <a href="https://github.com/Suvam-paul145" target="_blank" rel="noopener noreferrer" className="text-xs text-primary dark:text-purple-400 font-bold hover:underline">
+                  GitHub Profile →
+                </a>
+              </div>
+            </div>
+          </div>
+        </section>
 
       </main>
 

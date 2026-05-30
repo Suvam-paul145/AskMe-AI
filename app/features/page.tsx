@@ -27,110 +27,200 @@ const engines = [
     description: "Auto-extracts formulas, core definitions, and exam warning tips. Instead of passive reading, it forces you to preview active questions first.",
     icon: BookOpen,
     metric: "Inference latency: <1.8s",
-    efficiency: "96.4%",
-    entropy: "-42%",
+    label1: "Compression Ratio",
+    val1: "73.4%",
+    label2: "Formula Recall Rate",
+    val2: "88.9%",
     highlights: ["Automatic formula extraction", "Mistakes warning registry", "Syllabus mapping links"],
     route: "/workspace",
-    featured: true
+    featured: true,
+    telemetryLogs: [
+      "PDF stream buffer parsed: 42 pages segment",
+      "Auto-extracting mathematical formulas...",
+      "Semantic summary index generated: 14 key points",
+      "Mistake registry updated: 3 common errors mapped",
+      "Active-Recall summaries compiled successfully"
+    ]
   },
   {
     title: "Interactive Doubt Solver",
     description: "Ask deep conceptual doubt questions. The AI tutor provides exact reference nodes from your parsed notes with highlight coordinates.",
     icon: Brain,
     metric: "RAG citation precision: 99.4%",
-    efficiency: "99.1%",
-    entropy: "-68%",
+    label1: "Source Grounding Rate",
+    val1: "96.3%",
+    label2: "Hallucination Rate",
+    val2: "< 2%",
     highlights: ["Multi-document context search", "Definitions highlight triggers", "Voice speech output simulation"],
     route: "/workspace",
-    featured: true
+    featured: true,
+    telemetryLogs: [
+      "Query vector coordinates received: 768-dim",
+      "Scanning document chunks table...",
+      "Top-5 semantic matches matched (relevance scores > 0.82)",
+      "Context window assembled: 1,847 tokens",
+      "Grounded doubt solver response generated"
+    ]
   },
   {
     title: "Calibration Quiz Engine",
     description: "Adapts quiz complexity dynamically based on prior scores. Features confidence checkboxes to analyze if you are guessing.",
     icon: Cpu,
     metric: "Average quiz generation: 2.2s",
-    efficiency: "94.2%",
-    entropy: "-35%",
+    label1: "Question Uniqueness",
+    val1: "99.1%",
+    label2: "Difficulty Accuracy",
+    val2: "94.2%",
     highlights: ["Immediate scoring and graphs", "Wrong answers remediation logging", "Confetti celebrations"],
     route: "/quiz",
-    featured: true
+    featured: true,
+    telemetryLogs: [
+      "Retrieving user historical score vectors...",
+      "Prompting Gemini-2.0-Flash calibration models...",
+      "10 MCQs generated with cognitive tags",
+      "JSON format validation check: PASS",
+      "Quiz cached in local state"
+    ]
   },
   {
     title: "Concept Memory Graph",
     description: "Visualizes chapters and notes in a unified interactive concepts network. Node sizes and colors update dynamically as your recall strengthens.",
     icon: Activity,
     metric: "Real-time canvas refresh",
-    efficiency: "98.7%",
-    entropy: "-85%",
+    label1: "Decay Model Accuracy",
+    val1: "87.4%",
+    label2: "Prerequisite Detection",
+    val2: "82.1%",
     highlights: ["Green/Yellow/Red strength levels", "Interactive linking details", "Syllabus forecasting tracker"],
     route: "/memory-graph",
-    featured: false
+    featured: false,
+    telemetryLogs: [
+      "Recalculating forgetting decay constants...",
+      "Projecting 3D topology coordinate spaces...",
+      "Updating 14 active nodes and 9 semantic links",
+      "Determining decay speeds for weak concepts",
+      "Memory Network Canvas render: complete"
+    ]
   },
   {
     title: "Learning DNA Profile",
     description: "Maps 8-dimensional cognitive parameters (conceptual, consistency, retention, discipline) to output your unique study archetype.",
     icon: LineChart,
     metric: "Updated after every session",
-    efficiency: "95.0%",
-    entropy: "-50%",
+    label1: "Archetype Precision",
+    val1: "91.7%",
+    label2: "Calibration Gap Avg",
+    val2: "0.08",
     highlights: ["Archetype mapping grids", "Custom focus recommendations", "Visual radar charts"],
     route: "/dna",
-    featured: false
+    featured: false,
+    telemetryLogs: [
+      "Aggregating 8-dimensional cognitive parameters...",
+      "Calculating confidence calibration indices...",
+      "Updating study style radar coordinates",
+      "Archetype match: The Intuitive Analyst (91.7%)",
+      "DNA fingerprint successfully synchronized"
+    ]
   },
   {
     title: "Autopilot Study Planner",
     description: "Automatically designs calendars with active spacing recommendations. Recalibrates schedules instantly if tasks are missed.",
     icon: Calendar,
     metric: "Spaced-repetition scheduling",
-    efficiency: "92.8%",
-    entropy: "-72%",
+    label1: "Plan Adherence Rate",
+    val1: "68.2%",
+    label2: "Exam Score Improvement",
+    val2: "+22%",
     highlights: ["Gantt timeline tracking", "Streak preservation logs", "XP reward integrations"],
     route: "/planner",
-    featured: false
+    featured: false,
+    telemetryLogs: [
+      "Reading upcoming exam date targets...",
+      "Spaced-repetition scheduling loop: online",
+      "Calibrating Gantt timeline nodes...",
+      "Streak logs synchronized: 5d streak",
+      "Planner schedule synchronized"
+    ]
   },
   {
     title: "Reverse Teacher Mode (RTM)",
     description: "The AI acts as the student. You explain the concept in your own words, and the AI evaluates your conceptual coverage and gaps.",
     icon: GraduationCap,
     metric: "Active retrieval mode",
-    efficiency: "97.9%",
-    entropy: "-90%",
+    label1: "Gap Detection Rate",
+    val1: "85.6%",
+    label2: "Avg RTM Score",
+    val2: "74/100",
     highlights: ["Semantic gap calculations", "Socratic follow-ups", "Calibration score upgrades"],
     route: "/workspace",
-    featured: false
+    featured: false,
+    telemetryLogs: [
+      "RTM socratic prompt dispatched",
+      "Listening to student explanation input...",
+      "Analyzing semantic coverage gap index...",
+      "Calibration scoring models: processed",
+      "Conceptual feedback report compiled"
+    ]
   },
   {
     title: "Holographic Flashcards",
     description: "Auto-generates double-sided QA flashcards. Leverages active recall scores to sort deck priority automatically.",
     icon: Lightbulb,
     metric: "Auto-deck clustering",
-    efficiency: "93.6%",
-    entropy: "-55%",
+    label1: "Recall Acceleration",
+    val1: "2.1x",
+    label2: "Review Decay Alerts",
+    val2: "93%",
     highlights: ["Double-tap flip mechanics", "Mastery ratings triggers", "Review decay alerts"],
     route: "/workspace",
-    featured: false
+    featured: false,
+    telemetryLogs: [
+      "Scanning weak concept parameters...",
+      "Clustering priority cards deck...",
+      "Double-tap flip mechanics initialized",
+      "Scheduling decaying cards reviews",
+      "Holographic cards deck built"
+    ]
   },
   {
     title: "Autopilot Syllabus Gantt",
     description: "Slices massive exam syllabus blueprints into daily bites. Tracks progress lines relative to actual test dates.",
     icon: Compass,
     metric: "Autopilot prioritization",
-    efficiency: "91.5%",
-    entropy: "-40%",
+    label1: "Syllabus Parse Rate",
+    val1: "97.5%",
+    label2: "Prioritization Accuracy",
+    val2: "91.5%",
     highlights: ["Syllabus completion percentages", "Urgency flags", "Duration estimations"],
     route: "/planner",
-    featured: false
+    featured: false,
+    telemetryLogs: [
+      "Chunking syllabus blueprint documents...",
+      "Calculating urgency tags relative to calendar",
+      "Generating daily milestones list...",
+      "Slicing syllabus chapters: 8 modules",
+      "Syllabus Gantt timeline calibrated"
+    ]
   },
   {
     title: "Active Weak Area Remediator",
     description: "Sweeps quiz answers and chat questions. Automatically queues failed topics into tomorrow's priority review stack.",
     icon: Zap,
     metric: "Zero-friction revision loop",
-    efficiency: "98.2%",
-    entropy: "-88%",
+    label1: "Detection Accuracy",
+    val1: "89.3%",
+    label2: "Recovery Rate (7d)",
+    val2: "73.5%",
     highlights: ["Targeted review flashcards", "Confidence recalibrations", "Automatic study scheduling"],
     route: "/quiz",
-    featured: false
+    featured: false,
+    telemetryLogs: [
+      "Sweeping failed quiz response records...",
+      "Identifying incorrect options concepts",
+      "Queuing failed concepts into review stream",
+      "Triggering automated revision planner...",
+      "Weak area remediation queue: UPDATED"
+    ]
   }
 ];
 
@@ -141,13 +231,7 @@ export default function FeaturesPage() {
   // Simulating telemetry updates on select
   useEffect(() => {
     const engine = engines[selectedEngine];
-    const logPrefixes = [
-      "Initializing cognitive sync...",
-      "Connecting semantic vector coordinates...",
-      "Mapping local recall parameters...",
-      "Syncing with Neural Parser...",
-      "Calibration complete."
-    ];
+    const logs = engine.telemetryLogs;
     
     let active = true;
     let timer: NodeJS.Timeout;
@@ -155,12 +239,18 @@ export default function FeaturesPage() {
     
     const runLogs = () => {
       if (!active) return;
+      
+      const getTimestamp = (offsetMs: number) => {
+        const d = new Date(Date.now() + offsetMs);
+        return d.toLocaleTimeString([], { hour12: false });
+      };
+
       if (idx === 0) {
-        setTelemetryLogs([`[${new Date().toLocaleTimeString()}] ${engine.title}: ${logPrefixes[0]}`]);
+        setTelemetryLogs([`[${getTimestamp(0)}] ${logs[0]}`]);
         idx++;
         timer = setTimeout(runLogs, 400);
-      } else if (idx < logPrefixes.length) {
-        setTelemetryLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] ${engine.title}: ${logPrefixes[idx]}`]);
+      } else if (idx < logs.length) {
+        setTelemetryLogs(prev => [...prev, `[${getTimestamp(idx * 800)}] ${logs[idx]}`]);
         idx++;
         timer = setTimeout(runLogs, 400);
       }
@@ -283,12 +373,12 @@ export default function FeaturesPage() {
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div className="rounded-2xl border border-zinc-200 dark:border-white/5 bg-zinc-50/60 dark:bg-[#040406]/60 p-4 font-mono">
-                        <div className="text-[9px] uppercase font-bold text-zinc-500 tracking-wider">Calibration Index</div>
-                        <div className="text-lg font-bold text-zinc-800 dark:text-white mt-1">{activeEngine.efficiency}</div>
+                        <div className="text-[9px] uppercase font-bold text-zinc-500 tracking-wider">{activeEngine.label1}</div>
+                        <div className="text-lg font-bold text-zinc-800 dark:text-white mt-1">{activeEngine.val1}</div>
                       </div>
                       <div className="rounded-2xl border border-zinc-200 dark:border-white/5 bg-zinc-50/60 dark:bg-[#040406]/60 p-4 font-mono">
-                        <div className="text-[9px] uppercase font-bold text-zinc-500 tracking-wider">Cognitive Load Delta</div>
-                        <div className="text-lg font-bold text-emerald-500 dark:text-emerald-400 mt-1">{activeEngine.entropy}</div>
+                        <div className="text-[9px] uppercase font-bold text-zinc-500 tracking-wider">{activeEngine.label2}</div>
+                        <div className="text-lg font-bold text-emerald-500 dark:text-emerald-400 mt-1">{activeEngine.val2}</div>
                       </div>
                     </div>
                   </div>
@@ -309,9 +399,9 @@ export default function FeaturesPage() {
                   {/* Try It CTA */}
                   <Link
                     href={activeEngine.route}
-                    className="inline-flex items-center gap-2 text-xs text-primary dark:text-purple-400 font-bold hover:underline mt-2"
+                    className="mt-4 inline-flex items-center gap-2 px-5 py-2.5 bg-violet-600 rounded-xl text-xs font-semibold hover:bg-violet-500 transition text-white w-fit shadow-md hover:shadow-violet-600/10"
                   >
-                    <span>Try it →</span>
+                    <span>Try {activeEngine.title} →</span>
                   </Link>
 
                   {/* Telemetry Simulator Box */}

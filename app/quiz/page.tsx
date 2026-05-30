@@ -125,6 +125,8 @@ function QuizContent() {
 
       // Submit the full quiz attempt to the server for AI analysis
       const allAnswers = [...answersHistory, { questionIndex: currentQuestionIdx, selectedOption: selectedOption! }];
+      const finalScore = score + (selectedOption === currentQuestion.correctAnswer ? 1 : 0);
+      const scorePct = Math.round((finalScore / docQuestions.length) * 100);
 
       // Get the quiz ID from the store for API call (quiz ID is the prefix of question IDs)
       const quizId = docQuestions[0]?.id?.split("-q")[0] || docId;
@@ -135,12 +137,15 @@ function QuizContent() {
         }
       });
 
-      // Trigger Confetti Celebration!
-      confetti({
-        particleCount: 150,
-        spread: 80,
-        origin: { y: 0.6 }
-      });
+      // Trigger Confetti Celebration for high scores (>= 80%)!
+      if (scorePct >= 80) {
+        confetti({
+          particleCount: 150,
+          spread: 90,
+          origin: { y: 0.6 },
+          colors: ['#7C3AED', '#2563EB', '#10B981', '#F59E0B'],
+        });
+      }
     }
   }
 
@@ -248,20 +253,25 @@ function QuizContent() {
               <button
                 onClick={handleSubmitAnswer}
                 disabled={selectedOption === null}
-                className="rounded-xl bg-primary px-6 py-3 text-xs font-bold text-white shadow-md hover:bg-primary/95 disabled:opacity-40 transition-all duration-300 glowing-border"
+                className="rounded-xl bg-primary px-6 py-3 text-xs font-bold text-white shadow-md hover:bg-primary/95 disabled:opacity-40 transition-all duration-300 glowing-border cursor-pointer"
               >
                 Submit Answer
               </button>
             ) : (
               <button
                 onClick={handleNextQuestion}
-                className="rounded-xl bg-primary px-6 py-3 text-xs font-bold text-white shadow-md hover:bg-primary/95 transition-all flex items-center gap-1.5 glowing-border duration-300"
+                className="rounded-xl bg-primary px-6 py-3 text-xs font-bold text-white shadow-md hover:bg-primary/95 transition-all flex items-center gap-1.5 glowing-border duration-300 cursor-pointer"
               >
                 <span>{currentQuestionIdx + 1 === docQuestions.length ? "Finish Assessment" : "Next Question"}</span>
                 <ArrowRight className="h-4 w-4" />
               </button>
             )}
           </div>
+
+          {/* Keyboard navigation hints */}
+          <p className="text-[10px] text-zinc-550 text-center font-light leading-relaxed mt-4 select-none">
+            Press <kbd className="px-1.5 py-0.5 rounded bg-white/5 border border-white/10 text-white font-mono text-[9px]">1</kbd>–<kbd className="px-1.5 py-0.5 rounded bg-white/5 border border-white/10 text-white font-mono text-[9px]">4</kbd> to select · <kbd className="px-1.5 py-0.5 rounded bg-white/5 border border-white/10 text-white font-mono text-[9px]">Enter</kbd> to confirm / proceed
+          </p>
         </div>
       ) : (
         // Results complete screen

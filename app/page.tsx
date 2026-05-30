@@ -702,33 +702,90 @@ export default function Home() {
             {
               name: "Priya Sharma",
               role: "B.Tech CSE, 3rd Year",
+              context: "Class 12 · Physics aspirant",
               quote: "AskMe AI turned my chaotic PDF notes into organized quizzes. My exam scores jumped 25% in just two weeks!",
-              color: "from-purple-500 to-indigo-500"
+              gradient: "bg-gradient-to-br from-violet-500 to-purple-700"
             },
             {
               name: "Arjun Mehta",
               role: "NEET Aspirant",
+              context: "MBBS aspirant · Biology focus",
               quote: "The Memory Graph helped me visualize exactly which biology concepts I was weak on. It's like having a personal tutor 24/7.",
-              color: "from-blue-500 to-cyan-500"
+              gradient: "bg-gradient-to-br from-blue-500 to-cyan-600"
             },
             {
               name: "Sarah Chen",
               role: "MSc Physics, Research Scholar",
+              context: "Academic Researcher · Theory analysis",
               quote: "The RAG chat is incredibly accurate — it finds exactly the right paragraph from 200-page textbooks in seconds.",
-              color: "from-emerald-500 to-teal-500"
+              gradient: "bg-gradient-to-br from-emerald-500 to-teal-600"
             }
           ].map((t) => (
-            <div key={t.name} className="rounded-3xl border border-white/5 bg-[#0d0d11]/50 p-6 space-y-4 hover:border-white/10 transition-all">
-              <Quote className="h-5 w-5 text-zinc-400" />
-              <p className="text-xs text-zinc-300 leading-relaxed font-light italic">&ldquo;{t.quote}&rdquo;</p>
-              <div className="flex items-center gap-3 pt-2 border-t border-white/5">
-                <div className={`h-9 w-9 rounded-full bg-gradient-to-br ${t.color} flex items-center justify-center text-white text-xs font-bold`}>
+            <div key={t.name} className="rounded-3xl border border-white/5 bg-[#0d0d11]/50 p-6 space-y-4 hover:border-white/10 transition-all flex flex-col justify-between">
+              <div>
+                <Quote className="h-5 w-5 text-zinc-400 mb-2" />
+                <p className="text-xs text-zinc-300 leading-relaxed font-light italic">&ldquo;{t.quote}&rdquo;</p>
+              </div>
+              <div className="flex items-center gap-3 pt-4 border-t border-white/5">
+                <div className={`h-9 w-9 rounded-full ${t.gradient} flex items-center justify-center text-white text-xs font-bold shrink-0`}>
                   {t.name.charAt(0)}
                 </div>
                 <div>
                   <p className="text-xs font-semibold text-white">{t.name}</p>
-                  <p className="text-[10px] text-zinc-400">{t.role}</p>
+                  <div className="flex text-amber-400 text-[10px] mt-0.5">★★★★★</div>
+                  <p className="text-[9px] text-zinc-500 mt-0.5">{t.role} · {t.context}</p>
                 </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* PRODUCT PREVIEW SHOWCASE */}
+      <section className="relative z-10 py-24 px-6 md:px-12 max-w-7xl mx-auto border-t border-white/5">
+        <div className="text-center max-w-2xl mx-auto mb-16 space-y-3">
+          <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight cinematic-title">
+            See It In Action
+          </h2>
+          <p className="text-sm text-muted-foreground font-light">
+            An immersive interface designed to optimize and adapt to your unique memory pathways.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {[
+            {
+              src: "/screenshots/dashboard.png",
+              alt: "Dashboard view",
+              title: "Cognitive Dashboard",
+              desc: "Track daily sync progress, streak counters, focus calibrations, and decay predictions in one unified control panel."
+            },
+            {
+              src: "/screenshots/quiz.png",
+              alt: "Adaptive quiz",
+              title: "Calibration Quiz Engine",
+              desc: "Test active recall with dynamic complexity shifts, confidence tracking, remedial logging, and detailed explanations."
+            },
+            {
+              src: "/screenshots/memory-graph.png",
+              alt: "3D Memory Graph",
+              title: "3D Topological Memory Map",
+              desc: "Rotate and navigate an interactive network of knowledge nodes to visualize study strength, forgotten spots, and connection paths."
+            }
+          ].map((item) => (
+            <div key={item.title} className="rounded-3xl border border-white/5 bg-[#0d0d11]/50 overflow-hidden hover:border-primary/20 transition-all duration-500 group flex flex-col justify-between">
+              <div className="aspect-[16/10] w-full overflow-hidden border-b border-white/5 bg-zinc-950/60 relative">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img 
+                  src={item.src} 
+                  alt={item.alt} 
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 opacity-90 group-hover:opacity-100" 
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none" />
+              </div>
+              <div className="p-6 space-y-2">
+                <h3 className="text-sm font-bold text-white uppercase tracking-wider">{item.title}</h3>
+                <p className="text-xs text-zinc-400 dark:text-zinc-350 leading-relaxed font-light">{item.desc}</p>
               </div>
             </div>
           ))}
@@ -752,13 +809,19 @@ export default function Home() {
             Clarity attained. Knowledge compiled. Transition into an environment constructed for human cognitive evolution.
           </p>
 
-          <div className="pt-6 flex flex-col sm:flex-row items-start gap-4">
+          <div className="pt-6 flex flex-col sm:flex-row items-start gap-4 flex-wrap">
             <Link
               href="/upload"
               className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3.5 text-sm font-bold text-white shadow-lg hover:bg-primary/95 transition-all glowing-border"
             >
               <Upload className="h-4.5 w-4.5" />
               Start Free — Upload Your Notes
+            </Link>
+            <Link
+              href="/workspace/demo"
+              className="inline-flex items-center justify-center gap-2 rounded-xl border border-primary/20 bg-primary/10 px-6 py-3.5 text-sm font-semibold text-primary hover:bg-primary/15 transition-all"
+            >
+              🎮 Try Live Demo (No Login)
             </Link>
             <Link
               href="/features"

@@ -164,6 +164,11 @@ export default function UploadPage() {
                   </div>
                 </label>
               </div>
+              <p className="text-[10px] text-zinc-550 mt-3 text-center font-light leading-relaxed">
+                Supported formats: PDF · TXT · PNG · JPEG · WEBP &nbsp;·&nbsp; Max file size: 10MB
+                <br />
+                Cognitive Starter plan: up to 3 active documents
+              </p>
 
               {error && (
                 <div className="bg-rose-500/5 border border-rose-500/10 text-rose-400 rounded-xl p-3.5 flex items-center gap-2.5 text-[10px] font-semibold">

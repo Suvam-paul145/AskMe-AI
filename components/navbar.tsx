@@ -109,7 +109,7 @@ export default function Navbar() {
           {/* Action buttons & Stats */}
           <div className="hidden md:flex items-center gap-4">
             {/* User Stats Widget — only for authenticated users */}
-            {mounted && isAuthenticated ? (
+            {mounted && isAuthenticated && user ? (
               <div className="flex items-center gap-3 rounded-full border border-zinc-200 dark:border-white/10 bg-zinc-50 dark:bg-[#0d0d11] px-4 py-1.5 text-xs font-semibold shadow-sm">
                 <div className="flex items-center gap-1 text-orange-500" title="Daily Study Streak">
                   <Flame className="h-4 w-4 fill-current animate-pulse" />
@@ -138,7 +138,7 @@ export default function Navbar() {
             </button>
 
             {/* Authenticated: Settings + Avatar Dropdown */}
-            {mounted && isAuthenticated ? (
+            {mounted && isAuthenticated && user ? (
               <>
                 <Link
                   href="/settings"
@@ -251,7 +251,7 @@ export default function Navbar() {
       {mobileMenuOpen && (
         <div className="md:hidden border-t border-zinc-200 dark:border-white/10 bg-white dark:bg-[#040406] px-4 py-3 space-y-2 animate-float">
           {/* Stats Bar — only for authenticated users */}
-          {isAuthenticated && (
+          {mounted && isAuthenticated && user && (
             <div className="flex items-center justify-around rounded-xl border border-zinc-200 dark:border-white/10 bg-zinc-50 dark:bg-[#0d0d11] p-2.5 text-xs font-semibold shadow-sm mb-3">
               <div className="flex items-center gap-1.5 text-orange-500">
                 <Flame className="h-4.5 w-4.5 fill-current" />
@@ -286,7 +286,7 @@ export default function Navbar() {
           </div>
 
           <div className="border-t border-zinc-200 dark:border-white/10 pt-3 mt-3 space-y-2">
-            {isAuthenticated ? (
+            {mounted && isAuthenticated && user ? (
               <>
                 <Link
                   href="/settings"

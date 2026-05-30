@@ -258,10 +258,48 @@ function Custom3DCanvasDashboard({
 
 // --- CONSCIOUS STUDENT DASHBOARD ---
 export default function DashboardPage() {
-  const { streak, dailyGoalProgress, weakTopics, nodes, setSelectedDocId } = useStore();
+  const { streak, dailyGoalProgress, weakTopics, nodes, setSelectedDocId, documents } = useStore();
   const [selectedNode, setSelectedNode] = useState<GraphNode | null>(null);
   const activeNode = selectedNode || nodes[0];
   const router = useRouter();
+
+  if (documents.length === 0) {
+    return (
+      <div className="flex flex-col min-h-screen bg-[#040406] text-white neural-overlay relative select-none">
+        <Navbar />
+        <div className="absolute top-10 left-10 w-[350px] h-[350px] bg-primary/5 rounded-full filter blur-[100px] pointer-events-none animate-breathe" />
+        <div className="absolute bottom-20 right-10 w-[300px] h-[300px] bg-[#6366f1]/5 rounded-full filter blur-[80px] pointer-events-none" />
+
+        <main className="flex-1 mx-auto max-w-7xl w-full px-4 py-8 sm:px-6 lg:px-8 flex flex-col justify-center items-center relative z-10">
+          <div className="flex flex-col items-center justify-center text-center gap-6 max-w-md p-8 bg-[#0d0d11]/80 border border-white/5 rounded-3xl glass-card relative overflow-hidden shadow-2xl matte-layer">
+            <div className="absolute inset-x-0 h-1/2 w-full scanner-sweep pointer-events-none opacity-20" />
+            <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center text-primary dark:text-purple-400 border border-primary/20 shadow-[0_0_15px_rgba(139,92,246,0.2)] animate-pulse">
+              <Brain className="h-8 w-8" />
+            </div>
+            <h1 className="text-2xl font-extrabold text-white cinematic-title uppercase tracking-wide">Your Cognitive OS is Ready</h1>
+            <p className="text-xs text-zinc-400 leading-relaxed font-light">
+              Upload your first study document to activate your AI tutor, concept memory graph, and Learning DNA profile.
+            </p>
+            <div className="flex flex-col gap-3.5 w-full">
+              <Link 
+                href="/upload" 
+                className="py-3.5 bg-primary text-white rounded-xl font-bold text-xs hover:bg-primary/95 transition-all text-center glowing-border cursor-pointer shadow-md animate-drift"
+              >
+                📄 Upload First Document
+              </Link>
+              <Link 
+                href="/workspace/demo" 
+                className="py-3.5 bg-white/5 border border-white/10 text-zinc-350 hover:text-white hover:bg-white/10 rounded-xl font-bold text-xs transition-all text-center cursor-pointer"
+              >
+                🎮 Try Live Demo First
+              </Link>
+            </div>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   const handleStudyNode = (nodeId: string) => {
     setSelectedDocId(nodeId);

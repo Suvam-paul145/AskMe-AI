@@ -5,6 +5,7 @@ import Navbar from "@/components/navbar";
 import Footer from "@/components/footer";
 import { Check, X as XIcon, Brain, Shield, Rocket, Sparkles, ChevronDown } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 const faqItems = [
   {
@@ -44,8 +45,10 @@ const comparisonFeatures = [
 ];
 
 export default function PricingPage() {
+  const router = useRouter();
   const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("monthly");
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const plans = [
     {
@@ -227,16 +230,31 @@ export default function PricingPage() {
                 </div>
 
                 <div className="mt-8 pt-4">
-                  <Link
-                    href={plan.ctaLink}
-                    className={`block text-center rounded-xl py-3.5 text-xs font-bold shadow-md transition-all duration-300 ${
-                      plan.accent
-                        ? "bg-primary text-white hover:bg-primary/90 glowing-border"
-                        : "border border-white/5 bg-[#0d0d11]/80 text-zinc-300 hover:text-white hover:bg-[#121217]"
-                    }`}
-                  >
-                    {plan.cta}
-                  </Link>
+                  {plan.name === "Cognitive Pro" ? (
+                    <button
+                      onClick={() => {
+                        setToastMessage("Pro plan launches soon! All features are free during beta. Creating your account now...");
+                        setTimeout(() => {
+                          setToastMessage(null);
+                          router.push("/login?message=Create a free account to access all Pro features during beta");
+                        }, 2000);
+                      }}
+                      className="w-full text-center rounded-xl py-3.5 text-xs font-bold shadow-md transition-all duration-300 bg-primary text-white hover:bg-primary/90 glowing-border cursor-pointer block"
+                    >
+                      {plan.cta}
+                    </button>
+                  ) : (
+                    <Link
+                      href={plan.ctaLink}
+                      className={`block text-center rounded-xl py-3.5 text-xs font-bold shadow-md transition-all duration-300 ${
+                        plan.accent
+                          ? "bg-primary text-white hover:bg-primary/90 glowing-border"
+                          : "border border-white/5 bg-[#0d0d11]/80 text-zinc-300 hover:text-white hover:bg-[#121217]"
+                      }`}
+                    >
+                      {plan.cta}
+                    </Link>
+                  )}
                   {plan.accent && (
                     <p className="text-[9px] text-center text-zinc-400 dark:text-zinc-300 mt-2 font-light">
                       🎉 Free during beta — no credit card required
@@ -318,6 +336,13 @@ export default function PricingPage() {
       </main>
 
       <Footer />
+
+      {toastMessage && (
+        <div className="fixed bottom-5 right-5 z-50 bg-[#0d0d11]/90 border border-primary/30 rounded-2xl p-4 text-xs font-semibold text-white shadow-[0_0_20px_rgba(139,92,246,0.3)] animate-float max-w-sm">
+          <p className="text-primary dark:text-purple-400 font-bold uppercase tracking-wider text-[9px] mb-1">System Notification</p>
+          <p className="font-light">{toastMessage}</p>
+        </div>
+      )}
     </div>
   );
 }

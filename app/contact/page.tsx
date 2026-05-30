@@ -1,28 +1,153 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import Navbar from "@/components/navbar";
 import Footer from "@/components/footer";
-import { Send, CheckCircle, HelpCircle, Mail, MessageSquare, Sparkles } from "lucide-react";
+import { Send, CheckCircle, HelpCircle, Mail, MessageSquare, Sparkles, RefreshCw } from "lucide-react";
 
-export default function ContactPage() {
+function ContactFormContent() {
+  const searchParams = useSearchParams();
+  const reasonParam = searchParams.get("reason");
+  const roleParam = searchParams.get("role");
+
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     topic: "general",
     message: ""
   });
+  
+  const [sending, setSending] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    if (reasonParam === "job") {
+      setFormData(prev => ({
+        ...prev,
+        topic: "job",
+        message: roleParam ? `Applying for the role of: ${roleParam}.\n\n` : ""
+      }));
+    }
+  }, [reasonParam, roleParam]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (formData.name && formData.email && formData.message) {
-      setSubmitted(true);
-      setFormData({ name: "", email: "", topic: "general", message: "" });
-      setTimeout(() => setSubmitted(false), 6000);
+      setSending(true);
+      try {
+        const topicLabel = 
+          formData.topic === "job" ? "Careers application" : 
+          formData.topic === "support" ? "Technical Support" : 
+          formData.topic === "sales" ? "Pro / Institutional Licensing" : 
+          "General Inquiry";
+
+        const res = await fetch("/api/contact", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: formData.name,
+            email: formData.email,
+            reason: topicLabel,
+            message: formData.message
+          })
+        });
+
+        if (res.ok) {
+          setSubmitted(true);
+          setFormData({ name: "", email: "", topic: "general", message: "" });
+          setTimeout(() => setSubmitted(false), 6000);
+        }
+      } catch (err) {
+        console.error("Submission failed:", err);
+      } finally {
+        setSending(false);
+      }
     }
   };
 
+  return (
+    <form onSubmit={handleSubmit} className="space-y-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <label htmlFor="name" className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider">Your Name</label>
+          <input
+            type="text"
+            id="name"
+            required
+            value={formData.name}
+            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            placeholder="Enter name"
+            className="w-full rounded-xl border border-white/5 bg-[#09090b]/60 px-4 py-3.5 text-xs text-white focus:border-primary focus:outline-none transition-all placeholder-zinc-700 font-light"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <label htmlFor="email" className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider">Email Address</label>
+          <input
+            type="email"
+            id="email"
+            required
+            value={formData.email}
+            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+            placeholder="student@askme-ai.com"
+            className="w-full rounded-xl border border-white/5 bg-[#09090b]/60 px-4 py-3.5 text-xs text-white focus:border-primary focus:outline-none transition-all placeholder-zinc-700 font-light"
+          />
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <label htmlFor="topic" className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider">Reason for Sync</label>
+        <select
+          id="topic"
+          value={formData.topic}
+          onChange={(e) => setFormData({ ...formData, topic: e.target.value })}
+          className="w-full rounded-xl border border-white/5 bg-[#09090b]/80 px-4 py-3 text-xs text-zinc-355 focus:border-primary focus:outline-none transition-all"
+        >
+          <option value="general">General Inquiry</option>
+          <option value="support">Technical Support</option>
+          <option value="sales">Pro / Institutional Licensing</option>
+          <option value="job">Careers application</option>
+        </select>
+      </div>
+
+      <div className="space-y-2">
+        <label htmlFor="message" className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider">Your Transmission</label>
+        <textarea
+          id="message"
+          required
+          rows={4}
+          value={formData.message}
+          onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+          placeholder="Explain your request..."
+          className="w-full rounded-xl border border-white/5 bg-[#09090b]/60 px-4 py-3.5 text-xs text-white focus:border-primary focus:outline-none transition-all resize-none placeholder-zinc-750 font-light leading-relaxed"
+        />
+      </div>
+
+      <button
+        type="submit"
+        disabled={sending}
+        className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-primary py-3.5 text-xs font-bold text-white shadow-md hover:bg-primary/95 disabled:opacity-50 transition-all glowing-border duration-300 cursor-pointer"
+      >
+        {sending ? (
+          <RefreshCw className="h-4 w-4 animate-spin" />
+        ) : (
+          <Send className="h-4 w-4" />
+        )}
+        <span>{sending ? "Sending..." : "Submit Transmission"}</span>
+      </button>
+
+      {submitted && (
+        <div className="bg-emerald-500/5 border border-emerald-500/10 text-emerald-400 rounded-xl p-4 flex items-center gap-2.5 animate-pulse text-xs font-semibold biometric-glow mt-4">
+          <CheckCircle className="h-4.5 w-4.5 shrink-0" />
+          <span>Success! Transmission secure. Spacing loop dispatch scheduled shortly.</span>
+        </div>
+      )}
+    </form>
+  );
+}
+
+export default function ContactPage() {
   return (
     <div className="flex flex-col min-h-screen bg-[#040406] text-white neural-overlay relative select-none">
       <Navbar />
@@ -55,7 +180,9 @@ export default function ContactPage() {
             <div className="space-y-4 pt-6 border-t border-white/5 font-light">
               <div className="flex items-center gap-3 text-xs text-zinc-300">
                 <Mail className="h-4.5 w-4.5 text-primary shrink-0" />
-                <span>support@askme-ai.com</span>
+                <a href="mailto:suvampaul982@gmail.com" className="hover:text-primary transition-colors text-zinc-300">
+                  suvampaul982@gmail.com
+                </a>
               </div>
               <div className="flex items-center gap-3 text-xs text-zinc-300">
                 <HelpCircle className="h-4.5 w-4.5 text-primary shrink-0" />
@@ -73,78 +200,14 @@ export default function ContactPage() {
             <div className="absolute inset-x-0 h-1/2 w-full scanner-sweep pointer-events-none opacity-20" />
             <div className="absolute top-0 right-0 w-[200px] h-[200px] radial-glow opacity-25 pointer-events-none" />
 
-            <form onSubmit={handleSubmit} className="space-y-5">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label htmlFor="name" className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider">Your Name</label>
-                  <input
-                    type="text"
-                    id="name"
-                    required
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    placeholder="Enter name"
-                    className="w-full rounded-xl border border-white/5 bg-[#09090b]/60 px-4 py-3.5 text-xs text-white focus:border-primary focus:outline-none transition-all placeholder-zinc-700 font-light"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <label htmlFor="email" className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider">Email Address</label>
-                  <input
-                    type="email"
-                    id="email"
-                    required
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    placeholder="student@askme-ai.com"
-                    className="w-full rounded-xl border border-white/5 bg-[#09090b]/60 px-4 py-3.5 text-xs text-white focus:border-primary focus:outline-none transition-all placeholder-zinc-700 font-light"
-                  />
-                </div>
+            <Suspense fallback={
+              <div className="text-center py-20">
+                <RefreshCw className="h-8 w-8 animate-spin mx-auto text-primary" />
+                <p className="text-xs text-zinc-450 mt-2 font-light">Loading channel...</p>
               </div>
-
-              <div className="space-y-2">
-                <label htmlFor="topic" className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider">Reason for Sync</label>
-                <select
-                  id="topic"
-                  value={formData.topic}
-                  onChange={(e) => setFormData({ ...formData, topic: e.target.value })}
-                  className="w-full rounded-xl border border-white/5 bg-[#09090b]/80 px-4 py-3 text-xs text-zinc-300 focus:border-primary focus:outline-none transition-all"
-                >
-                  <option value="general">General Inquiry</option>
-                  <option value="support">Technical Support</option>
-                  <option value="sales">Pro / Institutional Licensing</option>
-                  <option value="job">Careers application</option>
-                </select>
-              </div>
-
-              <div className="space-y-2">
-                <label htmlFor="message" className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider">Your Transmission</label>
-                <textarea
-                  id="message"
-                  required
-                  rows={4}
-                  value={formData.message}
-                  onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                  placeholder="Explain your request..."
-                  className="w-full rounded-xl border border-white/5 bg-[#09090b]/60 px-4 py-3.5 text-xs text-white focus:border-primary focus:outline-none transition-all resize-none placeholder-zinc-750 font-light leading-relaxed"
-                />
-              </div>
-
-              <button
-                type="submit"
-                className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-primary py-3.5 text-xs font-bold text-white shadow-md hover:bg-primary/95 transition-all glowing-border duration-300"
-              >
-                <Send className="h-4 w-4" />
-                <span>Submit Transmission</span>
-              </button>
-
-              {submitted && (
-                <div className="bg-emerald-500/5 border border-emerald-500/10 text-emerald-400 rounded-xl p-4 flex items-center gap-2.5 animate-pulse text-xs font-semibold biometric-glow mt-4">
-                  <CheckCircle className="h-4.5 w-4.5 shrink-0" />
-                  <span>Success! Transmission secure. Spacing loop dispatch scheduled shortly.</span>
-                </div>
-              )}
-            </form>
+            }>
+              <ContactFormContent />
+            </Suspense>
           </div>
 
         </div>

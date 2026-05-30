@@ -1,0 +1,21 @@
+{
+  "name": "AskMe AI — Cognitive Learning OS",
+  "short_name": "AskMe AI",
+  "description": "AI-powered personal tutor from your own study notes",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "background_color": "#040406",
+  "theme_color": "#7C3AED",
+  "icons": [
+    {
+      "src": "/favicon.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/favicon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

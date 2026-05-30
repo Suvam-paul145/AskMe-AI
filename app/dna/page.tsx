@@ -5,6 +5,7 @@ import Navbar from "@/components/navbar";
 import Footer from "@/components/footer";
 import { useStore } from "@/lib/store";
 import { Activity, Target, ShieldCheck, Cpu } from "lucide-react";
+import Link from "next/link";
 
 // --- FUTURISTIC 8D RADAR CHART CANVAS COMPONENT ---
 function CognitiveRadarChart() {
@@ -183,6 +184,7 @@ function CognitiveRadarChart() {
 
 export default function DnaPage() {
   const { profile, attempts } = useStore();
+  const DNA_THRESHOLD = 5;
 
   const dnaMetrics = [
     { name: "Conceptual Depth", val: profile.conceptual, desc: "Abstract logic and theory mapping speeds." },
@@ -195,9 +197,40 @@ export default function DnaPage() {
     { name: "Cognitive Efficiency", val: profile.efficiency, desc: "Ratio of correct answers relative to time spent." }
   ];
 
-  // Check if profile has default placeholder values (no real data yet)
-  const isPlaceholderData = attempts.length < 3 && 
-    dnaMetrics.every(m => m.val === 50);
+  // Locked check: Fewer than 5 quiz attempts
+  if (attempts.length < DNA_THRESHOLD) {
+    const attemptCount = attempts.length;
+    const progressPct = Math.round((attemptCount / DNA_THRESHOLD) * 100);
+    return (
+      <div className="flex flex-col min-h-screen bg-[#040406] text-white neural-overlay relative select-none">
+        <Navbar />
+        <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-primary/5 rounded-full filter blur-[120px] pointer-events-none animate-breathe" />
+        <div className="absolute bottom-10 right-10 w-[300px] h-[300px] bg-[#6366f1]/5 rounded-full filter blur-[80px] pointer-events-none" />
+
+        <main className="flex-1 mx-auto max-w-7xl w-full px-4 py-16 sm:px-6 lg:px-8 flex flex-col justify-center items-center relative z-10">
+          <div className="flex flex-col items-center justify-center text-center gap-6 max-w-md p-8 bg-[#0d0d11]/80 border border-white/5 rounded-3xl glass-card relative overflow-hidden shadow-2xl matte-layer animate-drift">
+            <div className="absolute inset-x-0 h-1/2 w-full scanner-sweep pointer-events-none opacity-20" />
+            <div className="text-5xl animate-pulse">🧬</div>
+            <h2 className="text-xl font-extrabold text-white uppercase tracking-wider">Your DNA Is Forming...</h2>
+            <p className="text-xs text-zinc-400 leading-relaxed font-light">
+              Complete {DNA_THRESHOLD - attemptCount} more quiz{DNA_THRESHOLD - attemptCount !== 1 ? "zes" : ""} to unlock your personalized cognitive fingerprint and study archetype profile.
+            </p>
+            <div className="w-full bg-white/5 border border-white/10 rounded-full h-2 mb-2 relative overflow-hidden">
+              <div
+                className="bg-primary h-full rounded-full transition-all duration-500 shadow-[0_0_8px_rgba(139,92,246,0.5)]"
+                style={{ width: `${progressPct}%` }}
+              />
+            </div>
+            <span className="text-[10px] font-mono text-zinc-550 font-bold tracking-wider">{attemptCount} / {DNA_THRESHOLD} QUIZZES COMPLETED</span>
+            <Link href="/workspace" className="w-full py-3.5 bg-primary rounded-xl font-bold text-xs hover:bg-primary/95 transition-all text-center glowing-border cursor-pointer shadow-md mt-2">
+              Take a Quiz Now →
+            </Link>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col min-h-screen bg-[#040406] text-white neural-overlay relative select-none">
@@ -222,23 +255,6 @@ export default function DnaPage() {
             CLOS neural engine maps 8 dimensions of study performance, dynamically adjusting your cognitive profile indices on every interaction.
           </p>
         </div>
-
-        {/* Placeholder Banner for new users */}
-        {isPlaceholderData && (
-          <div className="max-w-2xl mx-auto rounded-2xl border border-amber-500/20 bg-amber-500/5 p-6 text-center space-y-3">
-            <div className="text-2xl">🧬</div>
-            <h3 className="text-sm font-bold text-amber-400">Your DNA Profile Is Initializing</h3>
-            <p className="text-xs text-zinc-400 font-light leading-relaxed">
-              Complete at least 3 quiz sessions to unlock your personalized cognitive profile. Currently showing default baseline values (50%).
-            </p>
-            <a
-              href="/workspace"
-              className="inline-flex items-center gap-2 rounded-xl bg-primary/10 border border-primary/20 px-4 py-2 text-xs font-semibold text-primary hover:bg-primary/20 transition-colors"
-            >
-              Take a Quiz to Build Your Profile →
-            </a>
-          </div>
-        )}
 
         {/* Radar & Archetype Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
@@ -281,6 +297,16 @@ export default function DnaPage() {
                   <span className="text-zinc-500 font-light">XP Calibrated:</span>
                   <span className="text-white font-mono font-bold">395 XP</span>
                 </div>
+
+                <button 
+                  onClick={() => {
+                    const url = `/api/dna-card?archetype=${encodeURIComponent(profile.archetype)}&conceptual=${profile.conceptual}&retention=${profile.retention}&analytical=${profile.analytical}&consistency=${profile.consistency}&discipline=${profile.discipline}&adaptability=${profile.adaptability}&calibration=${profile.calibration}&efficiency=${profile.efficiency}`;
+                    window.open(url, "_blank");
+                  }}
+                  className="mt-6 w-full py-2.5 rounded-xl border border-primary/20 bg-primary/10 hover:bg-primary/20 text-primary dark:text-purple-400 font-bold text-xs transition-all cursor-pointer text-center"
+                >
+                  📤 Download DNA Card
+                </button>
               </div>
             </div>
 

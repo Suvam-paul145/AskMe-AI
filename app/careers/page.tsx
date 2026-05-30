@@ -11,7 +11,7 @@ export default function CareersPage() {
     {
       title: "Senior Cognitive Systems Engineer",
       team: "Core RAG Engine",
-      location: "San Francisco, CA / Remote",
+      location: "Remote-First (India / Global)",
       type: "Full-Time",
       description: "Optimize high-dimensional vector coordinate retrievals and build contextual reference extraction architectures."
     },
@@ -25,8 +25,8 @@ export default function CareersPage() {
     {
       title: "Active Recall UX Designer",
       team: "Cognitive Science",
-      location: "Hybrid (New York, NY)",
-      type: "Part-Time / Intern",
+      location: "Remote",
+      type: "Part-Time / Internship",
       description: "Design cognitive stress evaluations, spaced-repetition spacing rates, and test student retention architectures."
     }
   ];
@@ -111,7 +111,7 @@ export default function CareersPage() {
                 </div>
 
                 <Link
-                  href="/contact"
+                  href={`/contact?reason=job&role=${encodeURIComponent(job.title)}`}
                   className="rounded-xl bg-primary px-5 py-3 text-xs font-bold text-white hover:bg-primary/95 transition-all w-full md:w-auto text-center glowing-border duration-300"
                 >
                   Apply Now

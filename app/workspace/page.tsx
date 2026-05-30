@@ -554,16 +554,24 @@ export default function WorkspacePage() {
                 })}
               </div>
 
-              {/* Launcher for Quiz */}
-              {docQuizQuestions.length > 0 && (
-                <Link
-                  href={`/quiz?docId=${activeDoc.id}`}
-                  className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary dark:text-purple-400 px-4 py-1.5 text-xs font-bold hover:bg-primary/20 transition-all shadow-[0_0_10px_rgba(139,92,246,0.1)]"
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setActiveTab("rtm")}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-violet-600/20 border border-violet-500/30 text-violet-400 px-4 py-1.5 text-xs font-bold hover:bg-violet-600/30 transition-all shadow-[0_0_10px_rgba(139,92,246,0.1)] cursor-pointer"
                 >
-                  <Cpu className="h-3.5 w-3.5 animate-pulse" />
-                  <span>Calibrate Quiz</span>
-                </Link>
-              )}
+                  <GraduationCap className="h-3.5 w-3.5" />
+                  <span>Teach Me (RTM)</span>
+                </button>
+                {docQuizQuestions.length > 0 && (
+                  <Link
+                    href={`/quiz?docId=${activeDoc.id}`}
+                    className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary dark:text-purple-400 px-4 py-1.5 text-xs font-bold hover:bg-primary/20 transition-all shadow-[0_0_10px_rgba(139,92,246,0.1)]"
+                  >
+                    <Cpu className="h-3.5 w-3.5 animate-pulse" />
+                    <span>Calibrate Quiz</span>
+                  </Link>
+                )}
+              </div>
             </div>
 
             {/* Dynamic Tab Body Panel */}

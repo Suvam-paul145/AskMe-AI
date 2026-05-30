@@ -99,7 +99,7 @@ function QuizContent() {
     setSelectedOption(idx);
   };
 
-  const handleSubmitAnswer = () => {
+  function handleSubmitAnswer() {
     if (selectedOption === null || isAnswerSubmitted) return;
 
     setIsAnswerSubmitted(true);
@@ -111,9 +111,9 @@ function QuizContent() {
     if (isCorrect) {
       setScore(s => s + 1);
     }
-  };
+  }
 
-  const handleNextQuestion = () => {
+  function handleNextQuestion() {
     setIsAnswerSubmitted(false);
     setSelectedOption(null);
 
@@ -142,7 +142,7 @@ function QuizContent() {
         origin: { y: 0.6 }
       });
     }
-  };
+  }
 
   const formatTime = (secs: number) => {
     const mins = Math.floor(secs / 60);

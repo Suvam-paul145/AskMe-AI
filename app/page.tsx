@@ -376,14 +376,18 @@ function ConversionChatSandbox() {
     if (typeof window !== "undefined") {
       const stored = localStorage.getItem("ephemeral_chats");
       if (stored) {
-        setMessages(JSON.parse(stored));
+        setTimeout(() => {
+          setMessages(JSON.parse(stored));
+        }, 0);
       } else {
         const welcome: SandboxMessage = {
           sender: "ai",
           text: "Welcome to the Cognitive Sandbox! I am your socratic study tutor. Ask me any question, or paste text here to see how my reasoning models break down concepts.",
           timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
         };
-        setMessages([welcome]);
+        setTimeout(() => {
+          setMessages([welcome]);
+        }, 0);
         localStorage.setItem("ephemeral_chats", JSON.stringify([welcome]));
       }
     }

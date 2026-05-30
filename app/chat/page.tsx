@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef, useMemo } from "react";
 import Navbar from "@/components/navbar";
 import { useStore } from "@/lib/store";
 import { optimizeUploadImage } from "@/lib/security/imageProcessor";
+import { MarkdownRenderer } from "@/components/markdown-renderer";
 import { 
   Send, 
   Bot, 
@@ -301,11 +302,15 @@ export default function ChatPage() {
 
   // Reset visible messages count on document change and pull templates prompt if exists
   useEffect(() => {
-    setVisibleCount(15);
+    setTimeout(() => {
+      setVisibleCount(15);
+    }, 0);
     if (typeof window !== "undefined") {
       const preloaded = localStorage.getItem("preloaded_prompt");
       if (preloaded) {
-        setInputText(preloaded);
+        setTimeout(() => {
+          setInputText(preloaded);
+        }, 0);
         localStorage.removeItem("preloaded_prompt");
       }
     }
@@ -548,7 +553,11 @@ export default function ChatPage() {
                         ? "bg-primary text-white font-medium" 
                         : "bg-card/90 border border-border text-foreground glass-card shadow-sm"
                     }`}>
-                      {msg.text}
+                      {msg.sender === "user" ? (
+                        msg.text
+                      ) : (
+                        <MarkdownRenderer content={msg.text} />
+                      )}
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="text-[9px] text-zinc-400 dark:text-zinc-300 px-1">{msg.timestamp}</span>

@@ -16,7 +16,7 @@ function getErrorMessage(error: unknown) {
 export async function POST(request: NextRequest) {
   try {
     // Enforce Rate Limiting (sliding-window IP check)
-    const ip = (request as any).ip || request.headers.get("x-forwarded-for") || "127.0.0.1";
+    const ip = (request as { ip?: string }).ip || request.headers.get("x-forwarded-for") || "127.0.0.1";
     const { rateLimit } = await import("@/lib/security/rate-limit");
     const rateLimitResult = rateLimit(ip, 3); // Max 3 document/image uploads per minute
     if (!rateLimitResult.success) {
@@ -157,7 +157,7 @@ export async function POST(request: NextRequest) {
     const chunks = chunkText(extractedText);
 
     // Step 5: Execute AI summary, embedding storage, and quiz generation in PARALLEL
-    const [summary, embeddingsResult, quizQuestions] = await Promise.all([
+    const [summary, , quizQuestions] = await Promise.all([
       generateSummary(extractedText),
       storeEmbeddings(chunks, document.id, user.id),
       generateQuiz(extractedText, 5)
@@ -180,7 +180,7 @@ export async function POST(request: NextRequest) {
       .select()
       .single();
 
-    const [updateDocResult, quizResult] = await Promise.all([
+    const [, quizResult] = await Promise.all([
       updateDocPromise,
       insertQuizPromise
     ]);

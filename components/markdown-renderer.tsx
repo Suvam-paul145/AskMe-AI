@@ -412,28 +412,13 @@ export function FlowchartRenderer({ code }: { code: string }) {
     };
   }, [zoom]);
 
-  // Auto-detect simulation topic from flowchart code
+  // Auto-detect simulation topic from flowchart code - strictly AI-driven via %% @simMode annotation
   const detectedMode = React.useMemo(() => {
     if (parsed.simMode && ['inertia', 'second', 'third', 'orbit', 'dynamic'].includes(parsed.simMode)) {
       return parsed.simMode as SimMode;
     }
-    const text = code.toLowerCase();
-    
-    // Check for specific physics concepts to ensure simulator relevance
-    if (text.includes("first law") || text.includes("inertia") || text.includes("friction") || text.includes("aristotle")) {
-      return "inertia";
-    }
-    if (text.includes("second law") || text.includes("f = ma") || text.includes("f=ma") || text.includes("acceleration") || text.includes("momentum")) {
-      return "second";
-    }
-    if (text.includes("third law") || text.includes("action and reaction") || text.includes("action & reaction") || (text.includes("action") && text.includes("reaction")) || text.includes("opposite force")) {
-      return "third";
-    }
-    if (text.includes("orbit") || text.includes("gravity") || text.includes("gravitational") || text.includes("kepler")) {
-      return "orbit";
-    }
-    return null; // Return null for standard concepts to avoid duplicating sandbox HUDs!
-  }, [code, parsed.simMode]);
+    return null; // Decided explicitly by the AI itself via %% @simMode annotation to preserve layout sanity
+  }, [parsed.simMode]);
 
   if (nodes.length === 0) {
     return (
@@ -1006,7 +991,9 @@ function PhysicsSimulator({
   const [mode, setMode] = React.useState<SimMode>(defaultMode);
 
   React.useEffect(() => {
-    setMode(defaultMode);
+    setTimeout(() => {
+      setMode(defaultMode);
+    }, 0);
   }, [defaultMode]);
   const [isRunning, setIsRunning] = React.useState(true);
   const [tickerMsg, setTickerMsg] = React.useState('');
@@ -1255,47 +1242,49 @@ function PhysicsSimulator({
 
   // Ticker updates reflecting physical laws in real-time
   React.useEffect(() => {
-    if (mode === 'inertia') {
-      const speed = Math.abs(puckVx).toFixed(2);
-      if (friction === 0) {
-        setTickerMsg(`⚡ Friction coefficient μ = 0 (Ideal Frictionless Surface). Pod slides infinitely at ${speed} m/s. This is Newton's First Law!`);
-      } else if (puckVx !== 0) {
-        setTickerMsg(`⚡ Friction opposes movement with kinetic force f_k = μ * m * g. Decelerating pod: current speed ${speed} m/s.`);
-      } else {
-        setTickerMsg(`⚡ Pod is at rest. Inertia holds this state. Apply an external force push to see it slide!`);
+    setTimeout(() => {
+      if (mode === 'inertia') {
+        const speed = Math.abs(puckVx).toFixed(2);
+        if (friction === 0) {
+          setTickerMsg(`⚡ Friction coefficient μ = 0 (Ideal Frictionless Surface). Pod slides infinitely at ${speed} m/s. This is Newton's First Law!`);
+        } else if (puckVx !== 0) {
+          setTickerMsg(`⚡ Friction opposes movement with kinetic force f_k = μ * m * g. Decelerating pod: current speed ${speed} m/s.`);
+        } else {
+          setTickerMsg(`⚡ Pod is at rest. Inertia holds this state. Apply an external force push to see it slide!`);
+        }
+      } else if (mode === 'second') {
+        const accel = (appliedForce / cartMass).toFixed(2);
+        const speed = (cartV * 0.5).toFixed(2);
+        if (cartX >= 420) {
+          setTickerMsg(`🏁 Cart reached track end. Reset cart to run another trial! Mass: ${cartMass}kg, Force: ${appliedForce}N.`);
+        } else {
+          setTickerMsg(`⚡ Acceleration a = F / m = ${appliedForce}N / ${cartMass}kg = ${accel} m/s². Speed: ${speed} m/s. Double force to double acceleration!`);
+        }
+      } else if (mode === 'third') {
+        const forceA = 35;
+        const accelA = (forceA / massA).toFixed(2);
+        const accelB = (forceA / massB).toFixed(2);
+        if (flashReactionTime > 0) {
+          setTickerMsg(`💥 ACTION-REACTION ACTIVES! Pod A pushes B: F_AB = ${forceA}N. Pod B pushes A: F_BA = -${forceA}N. Opposite and equal!`);
+        } else if (astA_V !== 0 || astB_V !== 0) {
+          setTickerMsg(`⚡ Drifting: Astronaut A (lighter, ${massA}kg) accelerates away at -${accelA} m/s². Astronaut B (${massB}kg) drifts at ${accelB} m/s².`);
+        } else {
+          setTickerMsg(`⚡ Click "Push Off Astronauts" to fire their thrusters and generate opposite force vectors!`);
+        }
+      } else if (mode === 'orbit') {
+        const dist = orbitR * (1 + eccentricity * Math.cos(orbitAngle));
+        const f_gravity = (5000 / (dist * dist)).toFixed(2);
+        setTickerMsg(`🪐 Keplerian Orbit. Central Gravity pulls planet inward (F_g = ${f_gravity}N). Velocity is perpendicular, creating stable orbit.`);
+      } else if (mode === 'dynamic') {
+        if (particles.length > 0) {
+          const activeNode = flowNodes.find(n => n.id === activeNodeId);
+          const activeLabel = activeNode ? `'${activeNode.label}'` : 'node modules';
+          setTickerMsg(`⚡ Concept Flow Lab. Tracing logic signals in real-time. Active node processing: ${activeLabel}.`);
+        } else {
+          setTickerMsg(`⚡ Concept Flow Lab. Click "Trigger Signal Pulse" to start the dynamic signal tracing animation!`);
+        }
       }
-    } else if (mode === 'second') {
-      const accel = (appliedForce / cartMass).toFixed(2);
-      const speed = (cartV * 0.5).toFixed(2);
-      if (cartX >= 420) {
-        setTickerMsg(`🏁 Cart reached track end. Reset cart to run another trial! Mass: ${cartMass}kg, Force: ${appliedForce}N.`);
-      } else {
-        setTickerMsg(`⚡ Acceleration a = F / m = ${appliedForce}N / ${cartMass}kg = ${accel} m/s². Speed: ${speed} m/s. Double force to double acceleration!`);
-      }
-    } else if (mode === 'third') {
-      const forceA = 35;
-      const accelA = (forceA / massA).toFixed(2);
-      const accelB = (forceA / massB).toFixed(2);
-      if (flashReactionTime > 0) {
-        setTickerMsg(`💥 ACTION-REACTION ACTIVES! Pod A pushes B: F_AB = ${forceA}N. Pod B pushes A: F_BA = -${forceA}N. Opposite and equal!`);
-      } else if (astA_V !== 0 || astB_V !== 0) {
-        setTickerMsg(`⚡ Drifting: Astronaut A (lighter, ${massA}kg) accelerates away at -${accelA} m/s². Astronaut B (${massB}kg) drifts at ${accelB} m/s².`);
-      } else {
-        setTickerMsg(`⚡ Click "Push Off Astronauts" to fire their thrusters and generate opposite force vectors!`);
-      }
-    } else if (mode === 'orbit') {
-      const dist = orbitR * (1 + eccentricity * Math.cos(orbitAngle));
-      const f_gravity = (5000 / (dist * dist)).toFixed(2);
-      setTickerMsg(`🪐 Keplerian Orbit. Central Gravity pulls planet inward (F_g = ${f_gravity}N). Velocity is perpendicular, creating stable orbit.`);
-    } else if (mode === 'dynamic') {
-      if (particles.length > 0) {
-        const activeNode = flowNodes.find(n => n.id === activeNodeId);
-        const activeLabel = activeNode ? `'${activeNode.label}'` : 'node modules';
-        setTickerMsg(`⚡ Concept Flow Lab. Tracing logic signals in real-time. Active node processing: ${activeLabel}.`);
-      } else {
-        setTickerMsg(`⚡ Concept Flow Lab. Click "Trigger Signal Pulse" to start the dynamic signal tracing animation!`);
-      }
-    }
+    }, 0);
   }, [mode, puckVx, friction, appliedForce, cartMass, cartV, cartX, massA, massB, astA_V, astB_V, flashReactionTime, orbitAngle, eccentricity, particles, activeNodeId, flowNodes]);
 
   return (
@@ -2056,7 +2045,7 @@ function parseLaTeXToReact(str: string): React.ReactNode {
 
                 return (
                   <span key={index} className="inline-flex flex-col items-center justify-center align-middle mx-1 text-center select-all">
-                    <span className="text-[10px] sm:text-xs leading-none pb-1 border-b border-zinc-500 dark:border-zinc-400 w-full text-center">
+                    <span className="text-[10px] sm:text-xs leading-none pb-1 border-b border-zinc-400 dark:border-zinc-500 w-full text-center">
                       {numNode}
                     </span>
                     <span className="text-[10px] sm:text-xs leading-none pt-1 w-full text-center">
@@ -2112,6 +2101,7 @@ function parseLaTeXToReact(str: string): React.ReactNode {
           'iff': '⟺',
           'cdot': '·',
           'times': '×',
+          'div': '÷',
           'alpha': 'α',
           'beta': 'β',
           'gamma': 'γ',

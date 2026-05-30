@@ -233,11 +233,13 @@ function SystemTelemetryPanel() {
 
   useEffect(() => {
     // Generate initial live telemetry logs
-    setLogs([
-      `[INFO] [${new Date().toLocaleTimeString()}] Telemetry autopilot warm container initialized.`,
-      `[INFO] [${new Date().toLocaleTimeString()}] Secure Edge RAG streaming tunnels operational.`,
-      `[SEC] [${new Date().toLocaleTimeString()}] Parameters injection scanners verified 100% immune.`
-    ]);
+    setTimeout(() => {
+      setLogs([
+        `[INFO] [${new Date().toLocaleTimeString()}] Telemetry autopilot warm container initialized.`,
+        `[INFO] [${new Date().toLocaleTimeString()}] Secure Edge RAG streaming tunnels operational.`,
+        `[SEC] [${new Date().toLocaleTimeString()}] Parameters injection scanners verified 100% immune.`
+      ]);
+    }, 0);
 
     const interval = setInterval(() => {
       setActiveSessions(prev => Math.max(10, Math.min(80, prev + (Math.random() > 0.5 ? 1 : -1))));

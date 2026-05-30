@@ -10,11 +10,13 @@ import { createAdminClient } from "@/lib/supabase/server";
  */
 export function chunkText(
   text: string,
-  chunkSize: number = 500,
-  overlap: number = 100
+  chunkSize: number = 600,
+  overlap: number = 120
 ): string[] {
   const chunks: string[] = [];
-  const cleanText = text.replace(/\s+/g, " ").trim();
+  
+  // Normalize horizontal spaces and tabs, but strictly preserve line breaks
+  const cleanText = text.replace(/[ \t]+/g, " ").replace(/\r\n/g, "\n").trim();
 
   if (cleanText.length <= chunkSize) {
     return [cleanText];
@@ -24,25 +26,36 @@ export function chunkText(
   while (start < cleanText.length) {
     let end = start + chunkSize;
 
-    // Try to break at sentence boundary
+    // Try to break at paragraph boundary (\n\n) or sentence boundary (\n or .)
     if (end < cleanText.length) {
-      const lastPeriod = cleanText.lastIndexOf(".", end);
+      const lastParagraph = cleanText.lastIndexOf("\n\n", end);
       const lastNewline = cleanText.lastIndexOf("\n", end);
-      const breakPoint = Math.max(lastPeriod, lastNewline);
+      const lastPeriod = cleanText.lastIndexOf(".", end);
+      
+      let breakPoint = -1;
+      if (lastParagraph > start + chunkSize * 0.4) {
+        breakPoint = lastParagraph + 2; // Break at paragraph end
+      } else if (lastNewline > start + chunkSize * 0.5) {
+        breakPoint = lastNewline + 1; // Break at newline
+      } else if (lastPeriod > start + chunkSize * 0.5) {
+        breakPoint = lastPeriod + 1; // Break at sentence end
+      }
 
-      if (breakPoint > start + chunkSize / 2) {
-        end = breakPoint + 1;
+      if (breakPoint > start) {
+        end = breakPoint;
       }
     }
 
     const chunk = cleanText.slice(start, end).trim();
-    if (chunk.length > 20) {
-      // Skip very short chunks
+    if (chunk.length > 25) {
       chunks.push(chunk);
     }
 
     start = end - overlap;
     if (start >= cleanText.length) break;
+    if (start < 0 || end <= start) {
+      start = end;
+    }
   }
 
   return chunks;

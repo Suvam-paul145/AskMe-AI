@@ -11,8 +11,9 @@ const rateLimitStore = new Map<string, RateLimitRecord>();
 
 // Clean up stale IP records every 5 minutes to prevent memory leaks in persisted runtime environments
 if (typeof global !== "undefined") {
-  if (!(global as any).rateLimitCleanupInterval) {
-    (global as any).rateLimitCleanupInterval = setInterval(() => {
+  const globalWithInterval = global as typeof globalThis & { rateLimitCleanupInterval?: NodeJS.Timeout };
+  if (!globalWithInterval.rateLimitCleanupInterval) {
+    globalWithInterval.rateLimitCleanupInterval = setInterval(() => {
       const now = Date.now();
       for (const [ip, record] of rateLimitStore.entries()) {
         const activeTimestamps = record.timestamps.filter((t) => now - t < 60000);

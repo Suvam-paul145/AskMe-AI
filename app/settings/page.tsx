@@ -40,12 +40,14 @@ export default function SettingsPage() {
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      setGeminiKey(localStorage.getItem("settings_gemini_key") || "");
-      setGroqKey(localStorage.getItem("settings_groq_key") || "");
-      setOpenrouterKey(localStorage.getItem("settings_openrouter_key") || "");
-      setOpenaiKey(localStorage.getItem("settings_openai_key") || "");
-      setTemp(parseFloat(localStorage.getItem("settings_temperature") || "0.7"));
-      setMaxTokens(parseInt(localStorage.getItem("settings_max_tokens") || "16384", 10));
+      setTimeout(() => {
+        setGeminiKey(localStorage.getItem("settings_gemini_key") || "");
+        setGroqKey(localStorage.getItem("settings_groq_key") || "");
+        setOpenrouterKey(localStorage.getItem("settings_openrouter_key") || "");
+        setOpenaiKey(localStorage.getItem("settings_openai_key") || "");
+        setTemp(parseFloat(localStorage.getItem("settings_temperature") || "0.7"));
+        setMaxTokens(parseInt(localStorage.getItem("settings_max_tokens") || "16384", 10));
+      }, 0);
     }
   }, []);
 

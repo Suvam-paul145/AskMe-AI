@@ -94,10 +94,18 @@ function ensure768Dimensions(vector: number[]): number[] {
 /**
  * Fallback text generation helper using Groq, OpenRouter, or OpenAI
  */
-async function generateTextFallback(prompt: string, systemInstruction?: string): Promise<string> {
-  const groqKey = process.env.GROQ_API_KEY;
-  const openRouterKey = process.env.OPENROUTER_API_KEY;
-  const openAiKey = process.env.OPENAI_API_KEY;
+async function generateTextFallback(
+  prompt: string, 
+  systemInstruction?: string,
+  keys?: {
+    groqKey?: string;
+    openrouterKey?: string;
+    openaiKey?: string;
+  }
+): Promise<string> {
+  const groqKey = keys?.groqKey || process.env.GROQ_API_KEY;
+  const openRouterKey = keys?.openrouterKey || process.env.OPENROUTER_API_KEY;
+  const openAiKey = keys?.openaiKey || process.env.OPENAI_API_KEY;
 
   // Tier 1: Groq (Ultra-high speed & generous free-tier throughput limits)
   if (groqKey) {
@@ -538,7 +546,11 @@ export async function generateChatResponseStream(
       }
 
       if (!fullText) {
-        fullText = await generateTextFallback(prompt);
+        fullText = await generateTextFallback(prompt, undefined, {
+          groqKey: activeGroqKey,
+          openrouterKey: activeOpenRouterKey,
+          openaiKey: activeOpenAIKey
+        });
       }
 
       return {
@@ -572,7 +584,11 @@ export async function generateChatResponseStream(
   } catch (err) {
     console.error("[Gemini API] Failed to initiate stream, trying OpenRouter/OpenAI fallback...", err);
     try {
-      const fullText = await generateTextFallback(prompt);
+      const fullText = await generateTextFallback(prompt, undefined, {
+        groqKey: activeGroqKey,
+        openrouterKey: activeOpenRouterKey,
+        openaiKey: activeOpenAIKey
+      });
       
       return {
         stream: {
@@ -583,9 +599,9 @@ export async function generateChatResponseStream(
           }
         }
       };
-    } catch (fallbackErr) {
-      console.error("[Fallback Failure] Failed to generate chat stream:", fallbackErr);
-      throw fallbackErr;
+    } catch {
+      console.error("[Fallback Failure] Failed to generate chat stream");
+      throw new Error("Failed to stream RAG response from primary and fallback engines.");
     }
   }
 }
@@ -671,7 +687,7 @@ export async function generateQuiz(
           if (provider !== "gemini") {
             try {
               response = await generateTextFallback(prompt);
-            } catch (fallbackErr) {
+            } catch {
               return null;
             }
           } else {
@@ -682,7 +698,7 @@ export async function generateQuiz(
               console.error(`[Gemini API] Failed to generate segmented question for chunk ${i}, trying fallback...`, err);
               try {
                 response = await generateTextFallback(prompt);
-              } catch (fallbackErr) {
+              } catch {
                 return null;
               }
             }

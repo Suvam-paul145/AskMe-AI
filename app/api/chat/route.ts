@@ -11,7 +11,7 @@ function getErrorMessage(error: unknown, fallback: string) {
 export async function POST(request: NextRequest) {
   try {
     // Enforce Rate Limiting (sliding-window IP check)
-    const ip = (request as any).ip || request.headers.get("x-forwarded-for") || "127.0.0.1";
+    const ip = (request as { ip?: string }).ip || request.headers.get("x-forwarded-for") || "127.0.0.1";
     const { rateLimit } = await import("@/lib/security/rate-limit");
     const rateLimitResult = rateLimit(ip, 15); // Max 15 chat prompts per minute
     if (!rateLimitResult.success) {

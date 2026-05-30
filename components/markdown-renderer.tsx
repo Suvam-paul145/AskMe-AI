@@ -1855,7 +1855,7 @@ export function MarkdownRenderer({ content }: { content: string }) {
   const parts = content.split(/(```[\s\S]*?```)/g);
 
   return (
-    <div className="space-y-3.5 text-xs text-zinc-200 leading-relaxed font-light">
+    <div className="space-y-3.5 text-[13.5px] sm:text-sm text-zinc-300 dark:text-zinc-100 leading-relaxed font-normal">
       {parts.map((part, idx) => {
         if (part.startsWith("```")) {
           // It's a code block
@@ -1905,19 +1905,19 @@ function MarkdownTextBlock({ text }: { text: string }) {
     if (trimmed.startsWith("## ")) {
       pushList(idx);
       const content = parseInline(trimmed.substring(3));
-      elements.push(<h3 key={idx} className="text-sm font-bold text-white uppercase tracking-wider mt-4 mb-2 biometric-glow">{content}</h3>);
+      elements.push(<h3 key={idx} className="text-base sm:text-lg font-extrabold text-white tracking-tight mt-6 mb-3 border-b border-white/10 pb-1.5">{content}</h3>);
       return;
     }
     if (trimmed.startsWith("### ")) {
       pushList(idx);
       const content = parseInline(trimmed.substring(4));
-      elements.push(<h4 key={idx} className="text-xs font-bold text-zinc-300 mt-3 mb-1.5">{content}</h4>);
+      elements.push(<h4 key={idx} className="text-sm sm:text-base font-bold text-zinc-100 mt-5 mb-2">{content}</h4>);
       return;
     }
     if (trimmed.startsWith("#### ")) {
       pushList(idx);
       const content = parseInline(trimmed.substring(5));
-      elements.push(<h5 key={idx} className="text-[11px] font-bold text-zinc-400 mt-2 mb-1">{content}</h5>);
+      elements.push(<h5 key={idx} className="text-xs sm:text-sm font-semibold text-zinc-300 mt-4 mb-1.5">{content}</h5>);
       return;
     }
 
@@ -1931,7 +1931,7 @@ function MarkdownTextBlock({ text }: { text: string }) {
     // List items: * or -
     if (trimmed.startsWith("* ") || trimmed.startsWith("- ")) {
       const content = parseInline(trimmed.substring(2));
-      listItems.push(<li key={`li-${idx}`} className="font-light">{content}</li>);
+      listItems.push(<li key={`li-${idx}`} className="font-normal text-zinc-300 dark:text-zinc-200 leading-relaxed mb-1">{content}</li>);
       return;
     }
 
@@ -1958,7 +1958,7 @@ function MarkdownTextBlock({ text }: { text: string }) {
     // Standard paragraph line
     pushList(idx);
     const content = parseInline(line);
-    elements.push(<p key={idx} className="mb-2 leading-relaxed font-light">{content}</p>);
+    elements.push(<p key={idx} className="mb-3 leading-relaxed font-normal text-zinc-300 dark:text-zinc-200">{content}</p>);
   });
 
   // Push remaining list items
@@ -2375,6 +2375,6 @@ function parseInline(text: string): React.ReactNode[] {
         </code>
       );
     }
-    return parseLaTeXToReact(part);
+    return part;
   });
 }

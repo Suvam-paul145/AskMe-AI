@@ -14,6 +14,7 @@ import {
   ArrowRight
 } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 interface ProjectedNode extends GraphNode {
   px: number;
@@ -23,7 +24,13 @@ interface ProjectedNode extends GraphNode {
 }
 
 // --- CUSTOM 3D CANVASES FOR DASHBOARD CORE ---
-function Custom3DCanvasDashboard({ onSelectNode }: { onSelectNode: (node: GraphNode) => void }) {
+function Custom3DCanvasDashboard({ 
+  onSelectNode,
+  onDoubleClickNode
+}: { 
+  onSelectNode: (node: GraphNode) => void;
+  onDoubleClickNode?: (node: GraphNode) => void;
+}) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const { nodes, links, theme } = useStore();
 
@@ -92,6 +99,22 @@ function Custom3DCanvasDashboard({ onSelectNode }: { onSelectNode: (node: GraphN
       });
     };
 
+    const onDblClick = (e: MouseEvent) => {
+      const rect = canvas.getBoundingClientRect();
+      const mX = e.clientX - rect.left;
+      const mY = e.clientY - rect.top;
+
+      projectedNodesRef.current.forEach(n => {
+        const dist = Math.sqrt((mX - n.px) * (mX - n.px) + (mY - n.py) * (mY - n.py));
+        if (dist < 20 * n.scale) {
+          const original = nodes.find(orig => orig.id === n.id);
+          if (original) {
+            onDoubleClickNode?.(original);
+          }
+        }
+      });
+    };
+
     const onMouseUp = () => {
       mouse.current.isDown = false;
     };
@@ -99,6 +122,7 @@ function Custom3DCanvasDashboard({ onSelectNode }: { onSelectNode: (node: GraphN
     canvas.addEventListener("mousedown", onMouseDown);
     canvas.addEventListener("mousemove", onMouseMove);
     canvas.addEventListener("click", onClick);
+    canvas.addEventListener("dblclick", onDblClick);
     window.addEventListener("mouseup", onMouseUp);
 
     const render = () => {
@@ -221,9 +245,10 @@ function Custom3DCanvasDashboard({ onSelectNode }: { onSelectNode: (node: GraphN
       canvas.removeEventListener("mousedown", onMouseDown);
       canvas.removeEventListener("mousemove", onMouseMove);
       canvas.removeEventListener("click", onClick);
+      canvas.removeEventListener("dblclick", onDblClick);
       window.removeEventListener("mouseup", onMouseUp);
     };
-  }, [nodes, links, onSelectNode, theme]);
+  }, [nodes, links, onSelectNode, onDoubleClickNode, theme]);
 
   const originalCoords = useRef<Record<string, { x: number; y: number }>>({});
   const projectedNodesRef = useRef<ProjectedNode[]>([]);
@@ -233,9 +258,25 @@ function Custom3DCanvasDashboard({ onSelectNode }: { onSelectNode: (node: GraphN
 
 // --- CONSCIOUS STUDENT DASHBOARD ---
 export default function DashboardPage() {
-  const { streak, dailyGoalProgress, weakTopics, nodes } = useStore();
+  const { streak, dailyGoalProgress, weakTopics, nodes, setSelectedDocId } = useStore();
   const [selectedNode, setSelectedNode] = useState<GraphNode | null>(null);
   const activeNode = selectedNode || nodes[0];
+  const router = useRouter();
+
+  const handleStudyNode = (nodeId: string) => {
+    setSelectedDocId(nodeId);
+    router.push("/workspace");
+  };
+
+  const handleStudyWeakTopic = (topic: string) => {
+    const matchedNode = nodes.find(n => 
+      n.label.toLowerCase().includes(topic.toLowerCase())
+    );
+    if (matchedNode) {
+      setSelectedDocId(matchedNode.id);
+    }
+    router.push("/workspace");
+  };
 
   const getStatusColor = (status: GraphNode["status"]) => {
     switch (status) {
@@ -334,7 +375,7 @@ export default function DashboardPage() {
 
             {/* Sticky 3D Graph Canvas */}
             <div className="flex-1 min-h-[260px] relative">
-              <Custom3DCanvasDashboard onSelectNode={setSelectedNode} />
+              <Custom3DCanvasDashboard onSelectNode={setSelectedNode} onDoubleClickNode={(node) => handleStudyNode(node.id)} />
             </div>
 
             {/* Node metadata info footer inside canvas card */}
@@ -342,9 +383,19 @@ export default function DashboardPage() {
               <div className="border-t border-white/5 pt-4 mt-2 flex items-center justify-between gap-4 animate-drift">
                 <div className="space-y-1">
                   <h4 className="text-xs font-bold text-white">{activeNode.label}</h4>
-                  <span className={`inline-block text-[8px] uppercase font-bold tracking-wider px-2.5 py-0.5 rounded-full border ${getStatusColor(activeNode.status)}`}>
-                    {activeNode.status}
-                  </span>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className={`inline-block text-[8px] uppercase font-bold tracking-wider px-2.5 py-0.5 rounded-full border ${getStatusColor(activeNode.status)}`}>
+                      {activeNode.status}
+                    </span>
+                    <button
+                      onClick={() => handleStudyNode(activeNode.id)}
+                      className="inline-flex items-center gap-1 rounded-xl bg-primary hover:bg-primary/95 text-[9px] font-bold px-2.5 py-0.5 text-white transition-all shadow-md active:scale-95 duration-200 cursor-pointer"
+                      title="Study this note's doubt solver chat session"
+                    >
+                      <span>Study Chat</span>
+                      <ArrowRight className="h-3 w-3" />
+                    </button>
+                  </div>
                 </div>
                 <div className="text-right">
                   <span className="text-xs text-primary dark:text-purple-400 font-extrabold">{activeNode.strength}% strength</span>
@@ -368,10 +419,18 @@ export default function DashboardPage() {
                   <p className="text-xs text-zinc-500 py-2">No critical memory decay predicted.</p>
                 ) : (
                   weakTopics.slice(0, 3).map((topic) => (
-                    <div key={topic} className="flex items-center justify-between bg-rose-500/5 border border-rose-500/10 rounded-xl p-3 text-xs text-rose-400 font-semibold shadow-[0_0_15px_rgba(244,63,94,0.03)]">
-                      <span>{topic}</span>
-                      <span className="text-[9px] bg-rose-500/10 px-2 py-0.5 rounded-full font-bold biometric-glow">Priority</span>
-                    </div>
+                    <button
+                      key={topic}
+                      onClick={() => handleStudyWeakTopic(topic)}
+                      className="w-full flex items-center justify-between bg-rose-500/5 hover:bg-rose-500/10 border border-rose-500/10 hover:border-rose-500/25 rounded-xl p-3 text-xs text-rose-400 font-semibold shadow-[0_0_15px_rgba(244,63,94,0.03)] text-left transition-all cursor-pointer group active:scale-95 duration-200"
+                      title={`Study ${topic} in Workspace`}
+                    >
+                      <span className="group-hover:text-rose-350 transition-colors">{topic}</span>
+                      <span className="text-[9px] bg-rose-500/10 px-2 py-0.5 rounded-full font-bold biometric-glow group-hover:bg-rose-500/20 transition-all flex items-center gap-1 shrink-0">
+                        <span>Priority</span>
+                        <ArrowRight className="h-2.5 w-2.5 opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
+                      </span>
+                    </button>
                   ))
                 )}
               </div>

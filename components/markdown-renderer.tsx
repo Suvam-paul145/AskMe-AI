@@ -1,5 +1,6 @@
 import React from "react";
 import { ZoomIn, ZoomOut, RotateCcw, Play, Pause, Info, HelpCircle, Activity } from "lucide-react";
+import { useStore } from "@/lib/store";
 
 // --- FLOWCHART TYPES & PARSER ---
 interface FlowNode {
@@ -331,6 +332,8 @@ function getConceptDetails(label: string) {
 
 // --- DIAGRAM RENDERER COMPONENT ---
 export function FlowchartRenderer({ code }: { code: string }) {
+  const { theme } = useStore();
+  const isLight = theme === "light";
   const parsed = React.useMemo(() => parseMermaid(code), [code]);
   const [nodes, setNodes] = React.useState<FlowNode[]>([]);
   const [links, setLinks] = React.useState<FlowLink[]>([]);
@@ -479,48 +482,48 @@ export function FlowchartRenderer({ code }: { code: string }) {
     
     if (text.match(/doc|raw|file|text|chunk|pdf|txt|csv|data|ingest|source|input/)) {
       return {
-        fill: "url(#grad-green)",
-        stroke: "#34d399",
-        glow: "rgba(52, 211, 153, 0.45)",
-        textColor: "#a7f3d0",
-        arrowId: "arrow-green"
+        fill: isLight ? "url(#grad-green-light)" : "url(#grad-green)",
+        stroke: isLight ? "#10b981" : "#34d399",
+        glow: isLight ? "rgba(16, 185, 129, 0.15)" : "rgba(52, 211, 153, 0.45)",
+        textColor: isLight ? "#065f46" : "#a7f3d0",
+        arrowId: isLight ? "arrow-green-light" : "arrow-green"
       };
     }
     if (text.match(/embed|vector|db|store|index|database|retriev/)) {
       return {
-        fill: "url(#grad-blue)",
-        stroke: "#60a5fa",
-        glow: "rgba(96, 165, 250, 0.45)",
-        textColor: "#bfdbfe",
-        arrowId: "arrow-blue"
+        fill: isLight ? "url(#grad-blue-light)" : "url(#grad-blue)",
+        stroke: isLight ? "#3b82f6" : "#60a5fa",
+        glow: isLight ? "rgba(59, 130, 246, 0.15)" : "rgba(96, 165, 250, 0.45)",
+        textColor: isLight ? "#1e3a8a" : "#bfdbfe",
+        arrowId: isLight ? "arrow-blue-light" : "arrow-blue"
       };
     }
     if (text.match(/query|user|prompt|question|search/)) {
       return {
-        fill: "url(#grad-orange)",
-        stroke: "#fb923c",
-        glow: "rgba(251, 146, 60, 0.45)",
-        textColor: "#ffedd5",
-        arrowId: "arrow-orange"
+        fill: isLight ? "url(#grad-orange-light)" : "url(#grad-orange)",
+        stroke: isLight ? "#f97316" : "#fb923c",
+        glow: isLight ? "rgba(249, 115, 22, 0.15)" : "rgba(251, 146, 60, 0.45)",
+        textColor: isLight ? "#9a3412" : "#ffedd5",
+        arrowId: isLight ? "arrow-orange-light" : "arrow-orange"
       };
     }
     if (text.match(/ai|llm|synth|model|generat|answer|result|final|response/)) {
       return {
-        fill: "url(#grad-pink)",
-        stroke: "#f472b6",
-        glow: "rgba(244, 114, 182, 0.45)",
-        textColor: "#fce7f3",
-        arrowId: "arrow-pink"
+        fill: isLight ? "url(#grad-pink-light)" : "url(#grad-pink)",
+        stroke: isLight ? "#ec4899" : "#f472b6",
+        glow: isLight ? "rgba(236, 72, 153, 0.15)" : "rgba(244, 114, 182, 0.45)",
+        textColor: isLight ? "#9d174d" : "#fce7f3",
+        arrowId: isLight ? "arrow-pink-light" : "arrow-pink"
       };
     }
     
     // Default fallback
     return {
-      fill: "url(#grad-slate)",
-      stroke: "#94a3b8",
-      glow: "rgba(148, 163, 184, 0.25)",
-      textColor: "#f1f5f9",
-      arrowId: "arrow-slate"
+      fill: isLight ? "url(#grad-slate-light)" : "url(#grad-slate)",
+      stroke: isLight ? "#64748b" : "#94a3b8",
+      glow: isLight ? "rgba(100, 116, 139, 0.1)" : "rgba(148, 163, 184, 0.25)",
+      textColor: isLight ? "#334155" : "#f1f5f9",
+      arrowId: isLight ? "arrow-slate-light" : "arrow-slate"
     };
   };
 
@@ -608,7 +611,7 @@ export function FlowchartRenderer({ code }: { code: string }) {
         <div className="w-full flex flex-col lg:flex-row gap-4 items-stretch z-10 min-h-0">
           <div 
             ref={containerRef}
-            className="flex-1 relative overflow-hidden select-none rounded-2xl bg-zinc-100/50 dark:bg-zinc-950/40 border border-zinc-200 dark:border-white/5 cursor-grab active:cursor-grabbing min-h-[200px] max-h-[360px]"
+            className="flex-1 relative overflow-hidden select-none rounded-2xl bg-zinc-50 dark:bg-zinc-950/40 border border-zinc-200 dark:border-white/5 grid-cyber cursor-grab active:cursor-grabbing min-h-[200px] max-h-[360px]"
             style={{ aspectRatio: '16/9' }}
           >
             <svg
@@ -641,7 +644,7 @@ export function FlowchartRenderer({ code }: { code: string }) {
                   <feComposite in="SourceGraphic" in2="blur" operator="over" />
                 </filter>
 
-                {/* Arrow markers for each workflow stage */}
+                {/* Dark Mode Arrow markers for each workflow stage */}
                 <marker id="arrow-green" viewBox="0 0 10 10" refX="22" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
                   <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#34d399" />
                 </marker>
@@ -658,7 +661,24 @@ export function FlowchartRenderer({ code }: { code: string }) {
                   <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#94a3b8" />
                 </marker>
 
-                {/* Vibrant gradients */}
+                {/* Light Mode Arrow markers */}
+                <marker id="arrow-green-light" viewBox="0 0 10 10" refX="22" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+                  <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#10b981" />
+                </marker>
+                <marker id="arrow-blue-light" viewBox="0 0 10 10" refX="22" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+                  <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#3b82f6" />
+                </marker>
+                <marker id="arrow-orange-light" viewBox="0 0 10 10" refX="22" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+                  <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#f97316" />
+                </marker>
+                <marker id="arrow-pink-light" viewBox="0 0 10 10" refX="22" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+                  <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#ec4899" />
+                </marker>
+                <marker id="arrow-slate-light" viewBox="0 0 10 10" refX="22" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+                  <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#64748b" />
+                </marker>
+
+                {/* Vibrant Dark Mode gradients */}
                 <linearGradient id="grad-green" x1="0%" y1="0%" x2="100%" y2="100%">
                   <stop offset="0%" stopColor="#064e3b" stopOpacity="0.8" />
                   <stop offset="100%" stopColor="#022c22" stopOpacity="0.9" />
@@ -678,6 +698,28 @@ export function FlowchartRenderer({ code }: { code: string }) {
                 <linearGradient id="grad-slate" x1="0%" y1="0%" x2="100%" y2="100%">
                   <stop offset="0%" stopColor="#1e293b" stopOpacity="0.85" />
                   <stop offset="100%" stopColor="#0f172a" stopOpacity="0.95" />
+                </linearGradient>
+
+                {/* Elegant Light Mode gradients */}
+                <linearGradient id="grad-green-light" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#ecfdf5" stopOpacity="0.95" />
+                  <stop offset="100%" stopColor="#d1fae5" stopOpacity="0.95" />
+                </linearGradient>
+                <linearGradient id="grad-blue-light" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#eff6ff" stopOpacity="0.95" />
+                  <stop offset="100%" stopColor="#dbeafe" stopOpacity="0.95" />
+                </linearGradient>
+                <linearGradient id="grad-orange-light" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#fff7ed" stopOpacity="0.95" />
+                  <stop offset="100%" stopColor="#ffedd5" stopOpacity="0.95" />
+                </linearGradient>
+                <linearGradient id="grad-pink-light" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#fdf2f8" stopOpacity="0.95" />
+                  <stop offset="100%" stopColor="#fce7f3" stopOpacity="0.95" />
+                </linearGradient>
+                <linearGradient id="grad-slate-light" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#f8fafc" stopOpacity="0.95" />
+                  <stop offset="100%" stopColor="#f1f5f9" stopOpacity="0.95" />
                 </linearGradient>
               </defs>
 
@@ -710,7 +752,7 @@ export function FlowchartRenderer({ code }: { code: string }) {
                         <path
                           d={pathD}
                           fill="none"
-                          stroke="rgba(255, 255, 255, 0.03)"
+                          stroke={isLight ? "rgba(0, 0, 0, 0.02)" : "rgba(255, 255, 255, 0.03)"}
                           strokeWidth="3.5"
                         />
                         {/* Animated dashflow path */}
@@ -727,7 +769,7 @@ export function FlowchartRenderer({ code }: { code: string }) {
                           <text
                             x={(x1 + x2) / 2}
                             y={(y1 + y2) / 2 - 5}
-                            fill="rgba(255,255,255,0.4)"
+                            fill={isLight ? "rgba(71, 85, 105, 0.8)" : "rgba(255, 255, 255, 0.4)"}
                             fontSize="7"
                             fontFamily="monospace"
                             textAnchor="middle"
@@ -791,7 +833,7 @@ export function FlowchartRenderer({ code }: { code: string }) {
                             fill={style.fill}
                             stroke={style.stroke}
                             strokeWidth="1.5"
-                            className="transition-colors group-hover:stroke-white duration-300"
+                            className="transition-colors group-hover:stroke-zinc-900 dark:group-hover:stroke-white duration-300"
                           />
                         ) : (
                           <rect
@@ -803,7 +845,7 @@ export function FlowchartRenderer({ code }: { code: string }) {
                             fill={style.fill}
                             stroke={style.stroke}
                             strokeWidth="1.5"
-                            className="transition-all group-hover:stroke-white duration-300"
+                            className="transition-all group-hover:stroke-zinc-900 dark:group-hover:stroke-white duration-300"
                           />
                         )}
 
@@ -815,7 +857,7 @@ export function FlowchartRenderer({ code }: { code: string }) {
                           fontWeight="bold"
                           fontFamily="sans-serif"
                           textAnchor="middle"
-                          className="pointer-events-none group-hover:fill-white transition-colors"
+                          className="pointer-events-none group-hover:fill-zinc-950 dark:group-hover:fill-white transition-colors duration-300"
                         >
                           {node.label.length > 22 ? `${node.label.substring(0, 20)}...` : node.label}
                         </text>
@@ -920,6 +962,8 @@ function PhysicsSimulator({
   flowNodes: FlowNode[];
   flowLinks: FlowLink[];
 }) {
+  const { theme } = useStore();
+  const isLight = theme === "light";
   const [mode, setMode] = React.useState<SimMode>(defaultMode);
   const [isRunning, setIsRunning] = React.useState(true);
   const [tickerMsg, setTickerMsg] = React.useState('');
@@ -1576,14 +1620,14 @@ function PhysicsSimulator({
         
         {/* Preset Selectors */}
         <div className="space-y-3.5">
-          <div className="flex items-center justify-between border-b border-white/5 pb-1.5">
+          <div className="flex items-center justify-between border-b border-zinc-200 dark:border-white/5 pb-1.5">
             <span className="text-[8px] uppercase tracking-widest font-mono text-zinc-500 dark:text-zinc-400 font-bold">
               Simulator HUD
             </span>
             <button
               type="button"
               onClick={() => setIsRunning(!isRunning)}
-              className="p-1 rounded bg-[#161622] hover:bg-[#1a1a2e] text-zinc-400 hover:text-white transition-all"
+              className="p-1 rounded bg-zinc-100 hover:bg-zinc-200 dark:bg-[#161622] dark:hover:bg-[#1a1a2e] text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white border border-zinc-200 dark:border-white/5 transition-all"
               title={isRunning ? "Pause Sandbox" : "Resume Sandbox"}
             >
               {isRunning ? <Pause className="h-2.5 w-2.5" /> : <Play className="h-2.5 w-2.5" />}
@@ -1598,8 +1642,8 @@ function PhysicsSimulator({
                 onClick={() => { setMode('inertia'); handlePushPuck('right'); }}
                 className={`px-2 py-1 text-[8.5px] font-bold text-left rounded transition-all border ${
                   mode === 'inertia'
-                    ? 'bg-primary/10 border-primary/20 text-white'
-                    : 'bg-transparent border-white/5 text-zinc-400 hover:text-white hover:bg-white/5'
+                    ? 'bg-primary text-white border-primary shadow-sm'
+                    : 'bg-transparent border-zinc-200 dark:border-white/5 text-zinc-600 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-white/5'
                 }`}
               >
                 1st Law: Inertia
@@ -1609,8 +1653,8 @@ function PhysicsSimulator({
                 onClick={() => { setMode('second'); handleResetCart(); }}
                 className={`px-2 py-1 text-[8.5px] font-bold text-left rounded transition-all border ${
                   mode === 'second'
-                    ? 'bg-primary/10 border-primary/20 text-white'
-                    : 'bg-transparent border-white/5 text-zinc-400 hover:text-white hover:bg-white/5'
+                    ? 'bg-primary text-white border-primary shadow-sm'
+                    : 'bg-transparent border-zinc-200 dark:border-white/5 text-zinc-600 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-white/5'
                 }`}
               >
                 2nd Law: F = ma
@@ -1620,8 +1664,8 @@ function PhysicsSimulator({
                 onClick={() => { setMode('third'); handleAstronautPush(); }}
                 className={`px-2 py-1 text-[8.5px] font-bold text-left rounded transition-all border ${
                   mode === 'third'
-                    ? 'bg-primary/10 border-primary/20 text-white'
-                    : 'bg-transparent border-white/5 text-zinc-400 hover:text-white hover:bg-white/5'
+                    ? 'bg-primary text-white border-primary shadow-sm'
+                    : 'bg-transparent border-zinc-200 dark:border-white/5 text-zinc-600 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-white/5'
                 }`}
               >
                 3rd Law: Action
@@ -1631,8 +1675,8 @@ function PhysicsSimulator({
                 onClick={() => setMode('orbit')}
                 className={`px-2 py-1 text-[8.5px] font-bold text-left rounded transition-all border ${
                   mode === 'orbit'
-                    ? 'bg-primary/10 border-primary/20 text-white'
-                    : 'bg-transparent border-white/5 text-zinc-400 hover:text-white hover:bg-white/5'
+                    ? 'bg-primary text-white border-primary shadow-sm'
+                    : 'bg-transparent border-zinc-200 dark:border-white/5 text-zinc-600 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-white/5'
                 }`}
               >
                 Orbit & Gravity
@@ -1642,8 +1686,8 @@ function PhysicsSimulator({
                 onClick={() => { setMode('dynamic'); handleResetSignalFlow(); }}
                 className={`px-2 py-1 text-[8.5px] font-bold text-left rounded transition-all border ${
                   mode === 'dynamic'
-                    ? 'bg-primary/10 border-primary/20 text-white'
-                    : 'bg-transparent border-white/5 text-zinc-400 hover:text-white hover:bg-white/5'
+                    ? 'bg-primary text-white border-primary shadow-sm'
+                    : 'bg-transparent border-zinc-200 dark:border-white/5 text-zinc-600 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-white/5'
                 }`}
               >
                 Concept Flow Lab
@@ -1652,12 +1696,12 @@ function PhysicsSimulator({
           </div>
 
           {/* DYNAMIC PARAMETER SLIDERS BASED ON SELECTED MODE */}
-          <div className="space-y-3.5 border-t border-white/5 pt-3">
+          <div className="space-y-3.5 border-t border-zinc-200 dark:border-white/5 pt-3">
             {mode === 'inertia' && (
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <label className="text-[7.5px] uppercase tracking-wider text-zinc-500 font-bold">Friction (μ)</label>
-                  <span className="text-[7.5px] font-mono font-bold text-zinc-300">{friction.toFixed(2)}</span>
+                  <span className="text-[7.5px] font-mono font-bold text-zinc-700 dark:text-zinc-300">{friction.toFixed(2)}</span>
                 </div>
                 <input
                   type="range"
@@ -1666,20 +1710,20 @@ function PhysicsSimulator({
                   step="0.01"
                   value={friction}
                   onChange={(e) => setFriction(parseFloat(e.target.value))}
-                  className="w-full h-1 bg-zinc-900 rounded-lg appearance-none cursor-pointer accent-primary"
+                  className="w-full h-1 bg-zinc-200 dark:bg-zinc-900 rounded-lg appearance-none cursor-pointer accent-primary"
                 />
                 <div className="flex gap-1 pt-1.5">
                   <button
                     type="button"
                     onClick={() => handlePushPuck('left')}
-                    className="flex-1 py-1 rounded bg-[#161622] hover:bg-white/5 border border-white/5 text-[8px] font-bold text-zinc-300 text-center transition-all"
+                    className="flex-1 py-1 rounded bg-zinc-100 hover:bg-zinc-200 dark:bg-[#161622] dark:hover:bg-white/5 border border-zinc-200 dark:border-white/10 text-[8px] font-bold text-zinc-700 dark:text-zinc-300 text-center transition-all"
                   >
                     ◀ Push Left
                   </button>
                   <button
                     type="button"
                     onClick={() => handlePushPuck('right')}
-                    className="flex-1 py-1 rounded bg-[#161622] hover:bg-white/5 border border-white/5 text-[8px] font-bold text-zinc-300 text-center transition-all"
+                    className="flex-1 py-1 rounded bg-zinc-100 hover:bg-zinc-200 dark:bg-[#161622] dark:hover:bg-white/5 border border-zinc-200 dark:border-white/10 text-[8px] font-bold text-zinc-700 dark:text-zinc-300 text-center transition-all"
                   >
                     Push Right ▶
                   </button>
@@ -1691,7 +1735,7 @@ function PhysicsSimulator({
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <label className="text-[7.5px] uppercase tracking-wider text-zinc-500 font-bold">Applied Force (F)</label>
-                  <span className="text-[7.5px] font-mono font-bold text-zinc-300">{appliedForce} N</span>
+                  <span className="text-[7.5px] font-mono font-bold text-zinc-700 dark:text-zinc-300">{appliedForce} N</span>
                 </div>
                 <input
                   type="range"
@@ -1700,12 +1744,12 @@ function PhysicsSimulator({
                   step="1"
                   value={appliedForce}
                   onChange={(e) => setAppliedForce(parseInt(e.target.value))}
-                  className="w-full h-1 bg-zinc-900 rounded-lg appearance-none cursor-pointer accent-primary"
+                  className="w-full h-1 bg-zinc-200 dark:bg-zinc-900 rounded-lg appearance-none cursor-pointer accent-primary"
                 />
 
                 <div className="flex items-center justify-between pt-1">
                   <label className="text-[7.5px] uppercase tracking-wider text-zinc-500 font-bold">Cart Mass (m)</label>
-                  <span className="text-[7.5px] font-mono font-bold text-zinc-300">{cartMass} kg</span>
+                  <span className="text-[7.5px] font-mono font-bold text-zinc-700 dark:text-zinc-300">{cartMass} kg</span>
                 </div>
                 <input
                   type="range"
@@ -1714,13 +1758,13 @@ function PhysicsSimulator({
                   step="1"
                   value={cartMass}
                   onChange={(e) => setCartMass(parseInt(e.target.value))}
-                  className="w-full h-1 bg-zinc-900 rounded-lg appearance-none cursor-pointer accent-primary"
+                  className="w-full h-1 bg-zinc-200 dark:bg-zinc-900 rounded-lg appearance-none cursor-pointer accent-primary"
                 />
 
                 <button
                   type="button"
                   onClick={handleResetCart}
-                  className="w-full mt-1.5 py-1 rounded bg-[#161622] hover:bg-white/5 border border-white/5 text-[8.5px] font-bold text-zinc-300 text-center transition-all"
+                  className="w-full mt-1.5 py-1 rounded bg-zinc-100 hover:bg-zinc-200 dark:bg-[#161622] dark:hover:bg-white/5 border border-zinc-200 dark:border-white/10 text-[8.5px] font-bold text-zinc-700 dark:text-zinc-300 text-center transition-all"
                 >
                   🚀 Reset / Run Cart
                 </button>
@@ -1731,7 +1775,7 @@ function PhysicsSimulator({
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <label className="text-[7.5px] uppercase tracking-wider text-zinc-500 font-bold">Mass A (Blue)</label>
-                  <span className="text-[7.5px] font-mono font-bold text-zinc-300">{massA} kg</span>
+                  <span className="text-[7.5px] font-mono font-bold text-zinc-700 dark:text-zinc-300">{massA} kg</span>
                 </div>
                 <input
                   type="range"
@@ -1740,12 +1784,12 @@ function PhysicsSimulator({
                   step="1"
                   value={massA}
                   onChange={(e) => setMassA(parseInt(e.target.value))}
-                  className="w-full h-1 bg-zinc-900 rounded-lg appearance-none cursor-pointer accent-primary"
+                  className="w-full h-1 bg-zinc-200 dark:bg-zinc-900 rounded-lg appearance-none cursor-pointer accent-primary"
                 />
 
                 <div className="flex items-center justify-between pt-1">
                   <label className="text-[7.5px] uppercase tracking-wider text-zinc-500 font-bold">Mass B (Pink)</label>
-                  <span className="text-[7.5px] font-mono font-bold text-zinc-300">{massB} kg</span>
+                  <span className="text-[7.5px] font-mono font-bold text-zinc-700 dark:text-zinc-300">{massB} kg</span>
                 </div>
                 <input
                   type="range"
@@ -1754,13 +1798,13 @@ function PhysicsSimulator({
                   step="1"
                   value={massB}
                   onChange={(e) => setMassB(parseInt(e.target.value))}
-                  className="w-full h-1 bg-zinc-900 rounded-lg appearance-none cursor-pointer accent-primary"
+                  className="w-full h-1 bg-zinc-200 dark:bg-zinc-900 rounded-lg appearance-none cursor-pointer accent-primary"
                 />
 
                 <button
                   type="button"
                   onClick={handleAstronautPush}
-                  className="w-full mt-1.5 py-1 rounded bg-[#161622] hover:bg-white/5 border border-white/5 text-[8.5px] font-bold text-zinc-300 text-center transition-all"
+                  className="w-full mt-1.5 py-1 rounded bg-zinc-100 hover:bg-zinc-200 dark:bg-[#161622] dark:hover:bg-white/5 border border-zinc-200 dark:border-white/10 text-[8.5px] font-bold text-zinc-700 dark:text-zinc-300 text-center transition-all"
                 >
                   💥 Push Astronauts
                 </button>
@@ -1771,7 +1815,7 @@ function PhysicsSimulator({
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <label className="text-[7.5px] uppercase tracking-wider text-zinc-500 font-bold">Eccentricity (e)</label>
-                  <span className="text-[7.5px] font-mono font-bold text-zinc-300">{eccentricity.toFixed(2)}</span>
+                  <span className="text-[7.5px] font-mono font-bold text-zinc-700 dark:text-zinc-300">{eccentricity.toFixed(2)}</span>
                 </div>
                 <input
                   type="range"
@@ -1780,12 +1824,12 @@ function PhysicsSimulator({
                   step="0.05"
                   value={eccentricity}
                   onChange={(e) => setEccentricity(parseFloat(e.target.value))}
-                  className="w-full h-1 bg-zinc-900 rounded-lg appearance-none cursor-pointer accent-primary"
+                  className="w-full h-1 bg-zinc-200 dark:bg-zinc-900 rounded-lg appearance-none cursor-pointer accent-primary"
                 />
 
                 <div className="flex items-center justify-between pt-1">
                   <label className="text-[7.5px] uppercase tracking-wider text-zinc-500 font-bold">Orbital Speed</label>
-                  <span className="text-[7.5px] font-mono font-bold text-zinc-300">{(orbitSpeed * 100).toFixed(0)}</span>
+                  <span className="text-[7.5px] font-mono font-bold text-zinc-700 dark:text-zinc-300">{(orbitSpeed * 100).toFixed(0)}</span>
                 </div>
                 <input
                   type="range"
@@ -1794,7 +1838,7 @@ function PhysicsSimulator({
                   step="0.01"
                   value={orbitSpeed}
                   onChange={(e) => setOrbitSpeed(parseFloat(e.target.value))}
-                  className="w-full h-1 bg-zinc-900 rounded-lg appearance-none cursor-pointer accent-primary"
+                  className="w-full h-1 bg-zinc-200 dark:bg-zinc-900 rounded-lg appearance-none cursor-pointer accent-primary"
                 />
               </div>
             )}
@@ -1803,7 +1847,7 @@ function PhysicsSimulator({
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <label className="text-[7.5px] uppercase tracking-wider text-zinc-500 font-bold">Signal Speed</label>
-                  <span className="text-[7.5px] font-mono font-bold text-zinc-300">{pulseSpeed.toFixed(1)}x</span>
+                  <span className="text-[7.5px] font-mono font-bold text-zinc-700 dark:text-zinc-300">{pulseSpeed.toFixed(1)}x</span>
                 </div>
                 <input
                   type="range"
@@ -1812,21 +1856,21 @@ function PhysicsSimulator({
                   step="0.1"
                   value={pulseSpeed}
                   onChange={(e) => setPulseSpeed(parseFloat(e.target.value))}
-                  className="w-full h-1 bg-zinc-900 rounded-lg appearance-none cursor-pointer accent-primary"
+                  className="w-full h-1 bg-zinc-200 dark:bg-zinc-900 rounded-lg appearance-none cursor-pointer accent-primary"
                 />
 
                 <div className="flex gap-1 pt-1.5">
                   <button
                     type="button"
                     onClick={handleTriggerPulse}
-                    className="flex-1 py-1 rounded bg-[#161622] hover:bg-white/5 border border-white/5 text-[8px] font-bold text-zinc-300 text-center transition-all flex items-center justify-center gap-1"
+                    className="flex-1 py-1 rounded bg-zinc-100 hover:bg-zinc-200 dark:bg-[#161622] dark:hover:bg-white/5 border border-zinc-200 dark:border-white/10 text-[8px] font-bold text-zinc-700 dark:text-zinc-300 text-center transition-all flex items-center justify-center gap-1"
                   >
                     ⚡ Trigger Pulse
                   </button>
                   <button
                     type="button"
                     onClick={handleResetSignalFlow}
-                    className="flex-1 py-1 rounded bg-[#161622] hover:bg-white/5 border border-white/5 text-[8px] font-bold text-zinc-300 text-center transition-all"
+                    className="flex-1 py-1 rounded bg-zinc-100 hover:bg-zinc-200 dark:bg-[#161622] dark:hover:bg-white/5 border border-zinc-200 dark:border-white/10 text-[8px] font-bold text-zinc-700 dark:text-zinc-300 text-center transition-all"
                   >
                     🔄 Clear Flow
                   </button>
@@ -1837,7 +1881,7 @@ function PhysicsSimulator({
         </div>
 
         {/* Small pedagogical guidance banner */}
-        <div className="text-[7.5px] text-zinc-500 font-light pt-2.5 border-t border-white/5 mt-3 space-y-0.5">
+        <div className="text-[7.5px] text-zinc-500 font-light pt-2.5 border-t border-zinc-200 dark:border-white/5 mt-3 space-y-0.5">
           <p>💡 Vectors scale according to mathematical values.</p>
           <p>💡 Toggle inputs to test physical hypotheses instantly.</p>
         </div>
@@ -1855,7 +1899,7 @@ export function MarkdownRenderer({ content }: { content: string }) {
   const parts = content.split(/(```[\s\S]*?```)/g);
 
   return (
-    <div className="space-y-3.5 text-[13.5px] sm:text-sm text-zinc-300 dark:text-zinc-100 leading-relaxed font-normal">
+    <div className="space-y-3.5 text-[13.5px] sm:text-sm text-zinc-800 dark:text-zinc-200 leading-relaxed font-normal">
       {parts.map((part, idx) => {
         if (part.startsWith("```")) {
           // It's a code block
@@ -1868,7 +1912,7 @@ export function MarkdownRenderer({ content }: { content: string }) {
           }
 
           return (
-            <pre key={idx} className="bg-zinc-950 p-4 rounded-2xl text-[10px] font-mono border border-white/5 overflow-x-auto text-zinc-300 leading-normal spatial-shadow-sm my-2">
+            <pre key={idx} className="bg-zinc-950 dark:bg-zinc-900/60 p-4 rounded-2xl text-[10px] font-mono border border-zinc-200 dark:border-white/5 overflow-x-auto text-zinc-300 leading-normal spatial-shadow-sm my-2">
               <code className="block">{code}</code>
             </pre>
           );
@@ -1905,33 +1949,33 @@ function MarkdownTextBlock({ text }: { text: string }) {
     if (trimmed.startsWith("## ")) {
       pushList(idx);
       const content = parseInline(trimmed.substring(3));
-      elements.push(<h3 key={idx} className="text-base sm:text-lg font-extrabold text-white tracking-tight mt-6 mb-3 border-b border-white/10 pb-1.5">{content}</h3>);
+      elements.push(<h3 key={idx} className="text-base sm:text-lg font-extrabold text-zinc-950 dark:text-white tracking-tight mt-6 mb-3 border-b border-zinc-200 dark:border-white/10 pb-1.5">{content}</h3>);
       return;
     }
     if (trimmed.startsWith("### ")) {
       pushList(idx);
       const content = parseInline(trimmed.substring(4));
-      elements.push(<h4 key={idx} className="text-sm sm:text-base font-bold text-zinc-100 mt-5 mb-2">{content}</h4>);
+      elements.push(<h4 key={idx} className="text-sm sm:text-base font-bold text-zinc-900 dark:text-zinc-100 mt-5 mb-2">{content}</h4>);
       return;
     }
     if (trimmed.startsWith("#### ")) {
       pushList(idx);
       const content = parseInline(trimmed.substring(5));
-      elements.push(<h5 key={idx} className="text-xs sm:text-sm font-semibold text-zinc-300 mt-4 mb-1.5">{content}</h5>);
+      elements.push(<h5 key={idx} className="text-xs sm:text-sm font-semibold text-zinc-800 dark:text-zinc-300 mt-4 mb-1.5">{content}</h5>);
       return;
     }
 
     // Dividers
     if (trimmed === "---" || trimmed === "___" || trimmed === "***") {
       pushList(idx);
-      elements.push(<div key={idx} className="h-[1px] bg-white/5 my-4 border-none" />);
+      elements.push(<div key={idx} className="h-[1px] bg-zinc-200 dark:bg-white/10 my-4 border-none" />);
       return;
     }
 
     // List items: * or -
     if (trimmed.startsWith("* ") || trimmed.startsWith("- ")) {
       const content = parseInline(trimmed.substring(2));
-      listItems.push(<li key={`li-${idx}`} className="font-normal text-zinc-300 dark:text-zinc-200 leading-relaxed mb-1">{content}</li>);
+      listItems.push(<li key={`li-${idx}`} className="font-normal text-zinc-800 dark:text-zinc-200 leading-relaxed mb-1">{content}</li>);
       return;
     }
 
@@ -1940,7 +1984,7 @@ function MarkdownTextBlock({ text }: { text: string }) {
       pushList(idx);
       const formula = trimmed.substring(2, trimmed.length - 2).trim();
       elements.push(
-        <div key={idx} className="bg-[#0f0f13]/80 border border-white/5 p-4 rounded-2xl my-3 text-center shadow-inner flex items-center justify-center select-all">
+        <div key={idx} className="bg-zinc-50 dark:bg-[#0f0f13]/80 border border-zinc-200 dark:border-white/5 p-4 rounded-2xl my-3 text-center shadow-inner flex items-center justify-center select-all">
           <span className="text-primary dark:text-purple-300 text-sm font-medium tracking-wide flex items-center justify-center gap-1">
             {parseLaTeXToReact(formula)}
           </span>
@@ -1958,7 +2002,7 @@ function MarkdownTextBlock({ text }: { text: string }) {
     // Standard paragraph line
     pushList(idx);
     const content = parseInline(line);
-    elements.push(<p key={idx} className="mb-3 leading-relaxed font-normal text-zinc-300 dark:text-zinc-200">{content}</p>);
+    elements.push(<p key={idx} className="mb-3 leading-relaxed font-normal text-zinc-800 dark:text-zinc-200">{content}</p>);
   });
 
   // Push remaining list items
@@ -2111,7 +2155,7 @@ function parseLaTeXToReact(str: string): React.ReactNode {
           'sqrt': '√'
         };
         const sym = symbols[cmd] || cmd;
-        return <span key={index} className="font-sans mx-0.5 text-zinc-200">{sym}</span>;
+        return <span key={index} className="font-sans mx-0.5 text-zinc-800 dark:text-zinc-200">{sym}</span>;
       }
     }
 
@@ -2157,11 +2201,11 @@ function parseLaTeXToReact(str: string): React.ReactNode {
 
     // Check if it's a variable (single letter) that needs math-serif rendering
     if (/[a-zA-Z]/.test(char)) {
-      return <span key={index} className="font-serif italic mr-0.5 text-zinc-100 select-all">{char}</span>;
+      return <span key={index} className="font-serif italic mr-0.5 text-zinc-900 dark:text-zinc-100 select-all">{char}</span>;
     }
 
     // Numbers or math operators
-    return <span key={index} className="font-sans text-zinc-300 mx-0.5 select-all">{char}</span>;
+    return <span key={index} className="font-sans text-zinc-700 dark:text-zinc-300 mx-0.5 select-all">{char}</span>;
   }
 
   const nodes: React.ReactNode[] = [];
@@ -2349,7 +2393,7 @@ function parseInline(text: string): React.ReactNode[] {
     if (part.startsWith("$$") && part.endsWith("$$")) {
       const formula = part.substring(2, part.length - 2).trim();
       return (
-        <span key={idx} className="inline-flex items-center text-primary dark:text-purple-300 font-medium px-2 py-0.5 bg-white/5 border border-white/5 rounded mx-1 select-all">
+        <span key={idx} className="inline-flex items-center text-primary dark:text-purple-300 font-medium px-2 py-0.5 bg-zinc-100 dark:bg-white/5 border border-zinc-200 dark:border-white/10 rounded mx-1 select-all">
           {parseLaTeXToReact(formula)}
         </span>
       );
@@ -2357,20 +2401,20 @@ function parseInline(text: string): React.ReactNode[] {
     if (part.startsWith("$") && part.endsWith("$")) {
       const formula = part.substring(1, part.length - 1).trim();
       return (
-        <span key={idx} className="inline-flex items-center text-primary dark:text-purple-300 font-medium px-1.5 py-0.5 bg-white/5 border border-white/5 rounded mx-0.5 select-all">
+        <span key={idx} className="inline-flex items-center text-primary dark:text-purple-300 font-medium px-1.5 py-0.5 bg-zinc-100 dark:bg-white/5 border border-zinc-200 dark:border-white/10 rounded mx-0.5 select-all">
           {parseLaTeXToReact(formula)}
         </span>
       );
     }
     if (part.startsWith("**") && part.endsWith("**")) {
-      return <strong key={idx} className="font-bold text-white">{part.substring(2, part.length - 2)}</strong>;
+      return <strong key={idx} className="font-bold text-zinc-950 dark:text-white">{part.substring(2, part.length - 2)}</strong>;
     }
     if (part.startsWith("*") && part.endsWith("*")) {
-      return <em key={idx} className="italic text-zinc-300">{part.substring(1, part.length - 1)}</em>;
+      return <em key={idx} className="italic text-zinc-700 dark:text-zinc-300">{part.substring(1, part.length - 1)}</em>;
     }
     if (part.startsWith("`") && part.endsWith("`")) {
       return (
-        <code key={idx} className="bg-white/5 border border-white/5 text-purple-400 px-1 py-0.5 rounded font-mono text-[10px] mx-0.5">
+        <code key={idx} className="bg-zinc-100 dark:bg-white/5 border border-zinc-200 dark:border-white/10 text-primary dark:text-purple-400 px-1 py-0.5 rounded font-mono text-[10px] mx-0.5">
           {part.substring(1, part.length - 1)}
         </code>
       );

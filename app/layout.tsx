@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { StoreProvider } from "@/lib/store";
+import Script from "next/script";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -46,6 +47,11 @@ export default function RootLayout({
         <StoreProvider>
           {children}
         </StoreProvider>
+        {/* Puter.js SDK — provides puter.ai.txt2img() for FLUX image generation */}
+        <Script
+          src="https://js.puter.com/v2/"
+          strategy="afterInteractive"
+        />
       </body>
     </html>
   );

@@ -1084,17 +1084,119 @@ function formatMath(text: string): string {
   return formatted;
 }
 
-// --- IMAGE WITH LOADING SKELETON PLACEHOLDER ---
-// Each image instance independently manages its loading state.
-// Multiple images in one response load in PARALLEL (browser HTTP/2 multiplexing),
-// each showing its own skeleton until ready.
+// --- FLUX-POWERED IMAGE GENERATOR WITH PUTER.JS ---
+// Detects flux:// protocol and generates images via Puter.js + FLUX models.
+// Falls back to standard URL loading for regular image URLs.
+// Each instance independently manages its own state — multiple images generate in PARALLEL.
 function ImageWithSkeleton({ src, alt }: { src: string; alt: string }) {
-  const [status, setStatus] = React.useState<'loading' | 'loaded' | 'error'>('loading');
+  const [status, setStatus] = React.useState<'loading' | 'generating' | 'loaded' | 'error'>('loading');
+  const [imageSrc, setImageSrc] = React.useState<string | null>(null);
+  const [progressMsg, setProgressMsg] = React.useState('Initializing...');
+  const generatedRef = React.useRef(false);
+
+  // Check if this is a FLUX generation request (flux:// protocol)
+  const isFluxRequest = src.startsWith('flux://');
+
+  React.useEffect(() => {
+    if (!isFluxRequest) return; // Standard URL — let the <img> tag handle it
+    if (generatedRef.current) return; // Prevent double-generation in StrictMode
+    generatedRef.current = true;
+
+    const generateWithFlux = async () => {
+      setStatus('generating');
+      setProgressMsg('Connecting to FLUX model...');
+
+      // Decode the prompt from the flux:// URL
+      const fluxPrompt = decodeURIComponent(src.replace('flux://', ''));
+
+      try {
+        // Wait for Puter.js SDK to be available (loaded async via script tag)
+        let attempts = 0;
+        while (typeof puter === 'undefined' && attempts < 30) {
+          await new Promise(r => setTimeout(r, 200));
+          attempts++;
+        }
+
+        if (typeof puter === 'undefined') {
+          throw new Error('Puter.js SDK not loaded');
+        }
+
+        setProgressMsg('FLUX model generating image...');
+
+        // Generate image using Puter.js + FLUX model
+        const imageElement = await puter.ai.txt2img(fluxPrompt, {
+          model: 'black-forest-labs/flux-1-schnell',  // Fast FLUX model
+        });
+
+        // Extract the base64 data URL from the returned HTMLImageElement
+        if (imageElement && imageElement.src) {
+          setImageSrc(imageElement.src);
+          setStatus('loaded');
+        } else {
+          throw new Error('No image data returned from FLUX model');
+        }
+      } catch (err) {
+        console.error('[FLUX Image Generation] Error:', err);
+        setProgressMsg('FLUX failed, trying fallback...');
+
+        // Fallback: Try Pollinations.ai with the same prompt
+        try {
+          const fallbackUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(
+            fluxPrompt + ', highly detailed textbook schematic, professionally designed educational diagram, 8k resolution'
+          )}?width=768&height=512&nologo=true`;
+          setImageSrc(fallbackUrl);
+          setStatus('loading'); // Let the <img> onLoad handle it
+        } catch {
+          setStatus('error');
+        }
+      }
+    };
+
+    generateWithFlux();
+  }, [isFluxRequest, src]);
+
+  // For FLUX-generated images (base64 result)
+  if (isFluxRequest && status === 'generating') {
+    return (
+      <div className="relative w-full my-3">
+        <div className="w-full aspect-[3/2] rounded-2xl border border-white/5 bg-[#0d0d11]/80 flex items-center justify-center relative overflow-hidden">
+          {/* Animated shimmer background */}
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/[0.03] to-transparent" style={{ animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite' }} />
+          {/* Decorative corner glows */}
+          <div className="absolute top-0 left-0 w-20 h-20 bg-primary/10 rounded-full filter blur-xl pointer-events-none" />
+          <div className="absolute bottom-0 right-0 w-20 h-20 bg-[#6366f1]/10 rounded-full filter blur-xl pointer-events-none" />
+          <div className="text-center space-y-3 relative z-10">
+            <div className="relative mx-auto w-10 h-10">
+              <div className="absolute inset-0 rounded-full border-2 border-primary/10" />
+              <div className="absolute inset-0 rounded-full border-2 border-primary/40 border-t-primary animate-spin" />
+              <div className="absolute inset-1.5 rounded-full border border-[#6366f1]/20 border-b-[#6366f1] animate-spin" style={{ animationDirection: 'reverse', animationDuration: '1.5s' }} />
+            </div>
+            <div className="space-y-1">
+              <span className="text-[10px] text-primary/80 uppercase tracking-wider font-bold block">
+                ⚡ FLUX Image Generation
+              </span>
+              <span className="text-[9px] text-zinc-500 block animate-pulse font-light">
+                {progressMsg}
+              </span>
+            </div>
+            <div className="flex items-center justify-center gap-1.5 pt-1">
+              <div className="h-1 w-1 rounded-full bg-primary/60 animate-bounce" style={{ animationDelay: '0ms' }} />
+              <div className="h-1 w-1 rounded-full bg-primary/60 animate-bounce" style={{ animationDelay: '150ms' }} />
+              <div className="h-1 w-1 rounded-full bg-primary/60 animate-bounce" style={{ animationDelay: '300ms' }} />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Determine the actual src for the img tag
+  const effectiveSrc = imageSrc || (isFluxRequest ? '' : src);
 
   return (
     <div className="relative w-full my-3">
-      {/* Skeleton placeholder frame while image generates in the background */}
-      {status === 'loading' && (
+      {/* Skeleton placeholder frame while image loads */}
+      {(status === 'loading' && !imageSrc && !isFluxRequest) && (
         <div className="w-full aspect-[3/2] rounded-2xl border border-white/5 bg-[#0d0d11]/80 animate-pulse flex items-center justify-center relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/[0.02] to-transparent" style={{ animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite' }} />
           <div className="text-center space-y-2.5 relative z-10">
@@ -1110,18 +1212,28 @@ function ImageWithSkeleton({ src, alt }: { src: string; alt: string }) {
           <span className="text-[10px] text-zinc-400 font-light">Image could not be loaded</span>
         </div>
       )}
-      {/* Actual image — always rendered to start loading immediately, hidden until ready */}
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={src}
-        alt={alt}
-        onLoad={() => setStatus('loaded')}
-        onError={() => setStatus('error')}
-        loading="eager"
-        className={`max-w-full w-full h-auto rounded-2xl border border-white/5 shadow-md block spatial-shadow object-contain transition-opacity duration-700 ${
-          status === 'loaded' ? 'opacity-100' : 'w-0 h-0 opacity-0 absolute overflow-hidden'
-        }`}
-      />
+      {/* Actual image — always rendered when we have a src, hidden until loaded */}
+      {effectiveSrc && (
+        <>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={effectiveSrc}
+            alt={alt}
+            onLoad={() => setStatus('loaded')}
+            onError={() => setStatus('error')}
+            loading="eager"
+            className={`max-w-full w-full h-auto rounded-2xl border border-white/5 shadow-md block spatial-shadow object-contain transition-opacity duration-700 ${
+              status === 'loaded' ? 'opacity-100' : 'w-0 h-0 opacity-0 absolute overflow-hidden'
+            }`}
+          />
+          {/* FLUX badge for AI-generated images */}
+          {status === 'loaded' && isFluxRequest && (
+            <div className="absolute top-2 right-2 px-2 py-0.5 rounded-md bg-black/60 backdrop-blur-sm border border-white/10 text-[8px] text-zinc-300 font-bold uppercase tracking-wider">
+              ⚡ FLUX AI
+            </div>
+          )}
+        </>
+      )}
     </div>
   );
 }
